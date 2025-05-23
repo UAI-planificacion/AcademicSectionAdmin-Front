@@ -35,18 +35,20 @@ export function SchedulerDashboard() {
         const { field, direction } = sortConfig
 
         if (field === "capacity") {
-        return direction === "asc" ? a.capacity - b.capacity : b.capacity - a.capacity
+            return direction === "asc" ? a.capacity - b.capacity : b.capacity - a.capacity
         } else if (field === "capacityGroup") {
-        return direction === "asc"
-            ? a.capacityGroup.localeCompare(b.capacityGroup)
-            : b.capacityGroup.localeCompare(a.capacityGroup)
+            return direction === "asc"
+                ? a.capacityGroup.localeCompare(b.capacityGroup)
+                : b.capacityGroup.localeCompare(a.capacityGroup)
         } else {
-        const aValue = a[field]
-        const bValue = b[field]
-        if (typeof aValue === "string" && typeof bValue === "string") {
-            return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue)
-        }
-        return 0
+            const aValue = a[field];
+            const bValue = b[field];
+
+            if (typeof aValue === "string" && typeof bValue === "string") {
+                return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue)
+            }
+
+            return 0;
         }
     })
 
@@ -70,7 +72,7 @@ export function SchedulerDashboard() {
 
         // Filter by periods (multiple selection)
         if (filters.periods.length > 0) {
-        filteredSecs = filteredSecs.filter((section) => filters.periods.includes(section.period))
+            filteredSecs = filteredSecs.filter((section) => filters.periods.includes(section.period))
         }
 
         // Filtrar salas
@@ -78,12 +80,12 @@ export function SchedulerDashboard() {
 
         // Filter by building
         if (filters.building && filters.building !== "") {
-        filteredRms = filteredRms.filter((room) => room.building === filters.building)
+            filteredRms = filteredRms.filter((room) => room.building === filters.building)
         }
 
         // Filter by capacity group
         if (filters.capacityGroup && filters.capacityGroup !== "") {
-        filteredRms = filteredRms.filter((room) => room.capacityGroup === filters.capacityGroup)
+            filteredRms = filteredRms.filter((room) => room.capacityGroup === filters.capacityGroup)
         }
 
         // Ahora filtramos las secciones para que solo incluyan las que están en las salas filtradas
@@ -127,17 +129,18 @@ export function SchedulerDashboard() {
 
     const handleUpdateSection = (updatedSection: Section) => {
         // Check for overlapping sections
-        const overlapping = sections.some((section) => {
-        if (section.id === updatedSection.id) return false
-        if (section.roomId !== updatedSection.roomId) return false
-        if (section.day !== updatedSection.day) return false
-        if (section.moduleId !== updatedSection.moduleId) return false
-        return true
+        const overlapping = sections.some(( section : Section ) => {
+            if ( section.id         === updatedSection.id )         return false;
+            if ( section.roomId     !== updatedSection.roomId )     return false;
+            if ( section.day        !== updatedSection.day )        return false;
+            if ( section.moduleId   !== updatedSection.moduleId )   return false;
+
+            return true;
         })
 
-        if (overlapping) {
-        alert("No se puede actualizar la sección porque ya existe una en ese módulo y sala.")
-        return false
+        if ( overlapping ) {
+            alert("No se puede actualizar la sección porque ya existe una en ese módulo y sala.")
+            return false
         }
 
         setSections((prev) => prev.map((section) => (section.id === updatedSection.id ? updatedSection : section)))
@@ -149,11 +152,12 @@ export function SchedulerDashboard() {
     }
 
     const handleSectionClick = (sectionId: string) => {
-        const section = sections.find((s) => s.id === sectionId)
-        if (section) {
-        setSelectedSection(section)
-        setIsModalOpen(true)
-        }
+        const section = sections.find(( s : Section ) => s.id === sectionId );
+
+        if ( !section ) return;
+
+        setSelectedSection( section );
+        setIsModalOpen( true );
     }
 
     const handleSectionMove = (
@@ -161,19 +165,19 @@ export function SchedulerDashboard() {
         newRoomId   : string,
         newDay      : number,
         newModuleId : string
-    ) => {
+    ) : boolean => {
         // Verificar si ya existe una sección en esa posición
-        const targetOccupied = sections.some(
-        (section) =>
-            section.id !== sectionId &&
-            section.roomId === newRoomId &&
-            section.day === newDay &&
-            section.moduleId === newModuleId,
-        )
+        const targetOccupied = sections
+            .some(( section : Section ) =>
+                section.id          !== sectionId   &&
+                section.roomId      === newRoomId   &&
+                section.day         === newDay      &&
+                section.moduleId    === newModuleId
+            );
 
-        if (targetOccupied) {
-        return false
-        }
+        console.log('🚀 ~ file: scheduler-dashboard.tsx:181 ~ targetOccupied:', targetOccupied)
+
+        if ( targetOccupied ) return false;
 
         // Actualizar la sección
         setSections((prev) =>
@@ -186,16 +190,18 @@ export function SchedulerDashboard() {
                         moduleId: newModuleId,
                     }
                 }
-                return section
+
+                return section;
             }),
         )
-        return true
+
+        return true;
     }
 
     return (
         <div className="space-y-4">
             <div className="flex flex-col ">
-                <div className="flex justify-between items-center px-5 py-3">
+                <div className="grid sm:flex justify-center sm:justify-between items-center px-5 py-3">
                     <FilterPanel rooms={rooms} onFilterChange={handleFilterChange} />
 
                     <Button onClick={() => setIsAddModalOpen(true)}>
@@ -204,27 +210,31 @@ export function SchedulerDashboard() {
                 </div>
 
                 <ModuleGrid
-                    sections={filteredSections}
-                    rooms={sortedRooms}
-                    onSectionClick={handleSectionClick}
-                    onSectionMove={handleSectionMove}
-                    onSortChange={handleSortChange}
-                    sortConfig={sortConfig}
+                    sections        = { filteredSections }
+                    rooms           = { sortedRooms }
+                    onSectionClick  = { handleSectionClick }
+                    onSectionMove   = { handleSectionMove }
+                    onSortChange    = { handleSortChange }
+                    sortConfig      = { sortConfig }
                 />
             </div>
 
             {isModalOpen && selectedSection && (
                 <SectionModal
-                    section={selectedSection}
-                    rooms={rooms}
-                    onClose={() => setIsModalOpen(false)}
-                    onUpdate={handleUpdateSection}
-                    onDelete={handleDeleteSection}
+                    section     = { selectedSection }
+                    rooms       = { rooms }
+                    onClose     = { () => setIsModalOpen( false )}
+                    onSave      = { handleUpdateSection }
+                    onDelete    = { handleDeleteSection }
                 />
             )}
 
             {isAddModalOpen && (
-                <AddSectionModal rooms={rooms} onClose={() => setIsAddModalOpen(false)} onAdd={handleAddSection} />
+                <AddSectionModal
+                    rooms   = { rooms }
+                    onClose = { () => setIsAddModalOpen( false )}
+                    onAdd   = { handleAddSection }
+                />
             )}
         </div>
     )
