@@ -25,8 +25,8 @@ export function FilterPanel({ rooms, onFilterChange }: FilterPanelProps) {
     // Aplicar filtros cuando cambian
     useEffect(() => {
         const handler = setTimeout(() => {
-        console.log("Enviando filtros desde FilterPanel:", localFilters)
-        onFilterChange(localFilters)
+            console.log("Enviando filtros desde FilterPanel:", localFilters)
+            onFilterChange(localFilters)
         }, 100)
 
         return () => clearTimeout(handler)
@@ -49,83 +49,75 @@ export function FilterPanel({ rooms, onFilterChange }: FilterPanelProps) {
         })
     }
 
-    const clearFilters = () => {
-        setLocalFilters({
-        periods: [],
-        building: "",
-        capacityGroup: "",
-        })
-    }
+    return (
+        <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-2">
+            <div className="space-y-2 w-64">
+                {/* <div className="flex items-center gap-2">
+                    <Filter className="h-5 w-5" />
 
-return (
-    <div className="w-full flex gap-4">
-        <div className="space-y-2 w-64">
-            {/* <div className="flex items-center gap-2">
-                <Filter className="h-5 w-5" />
+                    <h3 className="font-medium">Filtros</h3>
+                </div> */}
+                <Label>Periodos</Label>
 
-                <h3 className="font-medium">Filtros</h3>
-            </div> */}
-            <Label>Periodos</Label>
+                <div className="grid grid-cols-2 gap-2">
+                    {periods.map((period) => (
+                        <div key={period} className="flex items-center space-x-2">
+                            <Checkbox
+                                id={`period-${period}`}
+                                checked={localFilters.periods.includes(period)}
+                                onCheckedChange={() => handlePeriodToggle(period)}
+                            />
 
-            <div className="grid grid-cols-2 gap-2">
-                {periods.map((period) => (
-                    <div key={period} className="flex items-center space-x-2">
-                        <Checkbox
-                            id={`period-${period}`}
-                            checked={localFilters.periods.includes(period)}
-                            onCheckedChange={() => handlePeriodToggle(period)}
-                        />
+                            <label
+                                htmlFor={`period-${period}`}
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                                {period}
+                            </label>
+                        </div>
+                    ))}
+                </div>
+            </div>
 
-                        <label
-                            htmlFor={`period-${period}`}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                            {period}
-                        </label>
-                    </div>
-                ))}
+            <div className="space-y-2 w-64">
+                <Label htmlFor="building">Edificio</Label>
+
+                <Select value={localFilters.building || "all"} onValueChange={handleBuildingChange}>
+                    <SelectTrigger id="building">
+                        <SelectValue placeholder="Todos los edificios" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                        <SelectItem value="all">Todos los edificios</SelectItem>
+
+                        {buildings.map((building) => (
+                            <SelectItem key={building} value={building}>
+                                { building }
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+
+            <div className="space-y-2 w-64">
+                <Label htmlFor="capacityGroup">Talla</Label>
+
+                <Select value={localFilters.capacityGroup || "all"} onValueChange={handleCapacityGroupChange}>
+                    <SelectTrigger id="capacityGroup">
+                        <SelectValue placeholder="Todas las tallas" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                        <SelectItem value="all">Todas las tallas</SelectItem>
+
+                        {capacityGroups.map((group) => (
+                            <SelectItem key={group.value} value={group.value}>
+                                {group.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
         </div>
-
-        <div className="space-y-2 w-64">
-            <Label htmlFor="building">Edificio</Label>
-
-            <Select value={localFilters.building || "all"} onValueChange={handleBuildingChange}>
-                <SelectTrigger id="building">
-                    <SelectValue placeholder="Todos los edificios" />
-                </SelectTrigger>
-
-                <SelectContent>
-                    <SelectItem value="all">Todos los edificios</SelectItem>
-
-                    {buildings.map((building) => (
-                        <SelectItem key={building} value={building}>
-                            { building }
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-        </div>
-
-        <div className="space-y-2 w-64">
-            <Label htmlFor="capacityGroup">Talla</Label>
-
-            <Select value={localFilters.capacityGroup || "all"} onValueChange={handleCapacityGroupChange}>
-                <SelectTrigger id="capacityGroup">
-                    <SelectValue placeholder="Todas las tallas" />
-                </SelectTrigger>
-
-                <SelectContent>
-                    <SelectItem value="all">Todas las tallas</SelectItem>
-
-                    {capacityGroups.map((group) => (
-                        <SelectItem key={group.value} value={group.value}>
-                            {group.label}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-        </div>
-    </div>
     )
 }
