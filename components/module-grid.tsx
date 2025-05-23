@@ -4,25 +4,26 @@ import React, { useState, useRef } from "react"
 import { days, getModulesForDay } from "@/lib/data"
 import type { Section, Room, SortConfig } from "@/lib/types"
 import { cn } from "@/lib/utils"
-import { AlertCircle, ArrowDownAZ, ArrowUpAZ, X } from "lucide-react"
+import { AlertCircle, ArrowDownAZ, ArrowUpAZ } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { SectionCard } from "@/components/SectionCard"
 
 interface ModuleGridProps {
-  sections: Section[]
-  rooms: Room[]
-  onSectionClick: (sectionId: string) => void
-  onSectionMove: (sectionId: string, newRoomId: string, newDay: number, newModuleId: string) => boolean
-  onSortChange: (field: "name" | "building" | "capacityGroup" | "capacity", direction: "asc" | "desc") => void
-  sortConfig: SortConfig
+    sections: Section[]
+    rooms: Room[]
+    onSectionClick: (sectionId: string) => void
+    onSectionMove: (sectionId: string, newRoomId: string, newDay: number, newModuleId: string) => boolean
+    onSortChange: (field: "name" | "building" | "capacityGroup" | "capacity", direction: "asc" | "desc") => void
+    sortConfig: SortConfig
 }
 
 export function ModuleGrid({
-  sections,
-  rooms,
-  onSectionClick,
-  onSectionMove,
-  onSortChange,
-  sortConfig,
+    sections,
+    rooms,
+    onSectionClick,
+    onSectionMove,
+    onSortChange,
+    sortConfig,
 }: ModuleGridProps) {
     const [hoveredCell, setHoveredCell] = useState<string | null>(null)
     const [draggedSection, setDraggedSection] = useState<string | null>(null)
@@ -107,7 +108,7 @@ export function ModuleGrid({
 
         return (
         <th className={cn(
-            "border p-2 bg-gray-100 sticky top-0",
+            "border p-2 bg-zinc-100 sticky top-0",
             fixedColumnsConfig[field].widthClass,
             fixedColumnsConfig[field].leftClass,
             fixedColumnsConfig[field].zIndexClass
@@ -155,82 +156,82 @@ export function ModuleGrid({
 
             <div className="flex">
                 {/* Tabla para columnas fijas */}
-                <div className="z-10 overflow-y-auto w-[42rem] max-h-[calc(100vh-200px)]" ref={fixedTableRef} onScroll={handleScroll}>
+                <div className="z-10 overflow-y-auto w-[42rem] max-h-[calc(100vh-200px)] rounded-tl-lg" ref={fixedTableRef} onScroll={handleScroll}>
                     <table className="border-collapse">
                         <thead>
-                            <tr className="bg-gray-100 h-20">
+                            <tr className="h-20">
                                 <th
-                                    className={cn("px-2", fixedColumnsConfig.name.widthClass)}
+                                    className={cn("px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.name.widthClass)}
                                     onClick={() => onSortChange("name", sortConfig.field === "name" && sortConfig.direction === "asc" ? "desc" : "asc")}
                                 >
                                     <div className="flex items-center justify-between">
-                                        <span className="text-left">Sala</span>
+                                        <span className="text-left text-white">Sala</span>
 
                                         {sortConfig.field === "name" ? (
                                             sortConfig.direction === "asc" ? (
-                                                <ArrowUpAZ className="h-4 w-4" />
+                                                <ArrowUpAZ className="h-4 w-4 text-white" />
                                             ) : (
-                                                <ArrowDownAZ className="h-4 w-4" />
+                                                <ArrowDownAZ className="h-4 w-4 text-white" />
                                             )
                                         ) : (
-                                            <ArrowUpAZ className="h-4 w-4 opacity-30" />
+                                            <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
                                         )}
                                     </div>
                                 </th>
 
                                 <th
-                                    className={cn("border-l px-2", fixedColumnsConfig.building.widthClass)}
+                                    className={cn("border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.building.widthClass)}
                                     onClick={() => onSortChange("building", sortConfig.field === "building" && sortConfig.direction === "asc" ? "desc" : "asc")}
                                 >
                                     <div className="flex items-center justify-between">
-                                        <span>Edificio</span>
+                                        <span className="text-white">Edificio</span>
 
                                         {sortConfig.field === "building" ? (
                                             sortConfig.direction === "asc" ? (
-                                                <ArrowUpAZ className="h-4 w-4" />
+                                                <ArrowUpAZ className="h-4 w-4 text-white" />
                                             ) : (
-                                                <ArrowDownAZ className="h-4 w-4" />
+                                                <ArrowDownAZ className="h-4 w-4 text-white" />
                                             )
                                         ) : (
-                                            <ArrowUpAZ className="h-4 w-4 opacity-30" />
+                                            <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
                                         )}
                                     </div>
                                 </th>
 
                                 <th
-                                    className={cn("border-l px-2", fixedColumnsConfig.capacityGroup.widthClass)}
+                                    className={cn("border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.capacityGroup.widthClass)}
                                     onClick={() => onSortChange("capacityGroup", sortConfig.field === "capacityGroup" && sortConfig.direction === "asc" ? "desc" : "asc")}
                                 >
                                     <div className="flex items-center justify-between">
-                                        <span>Talla</span>
+                                        <span className="text-white">Talla</span>
 
                                         {sortConfig.field === "capacityGroup" ? (
                                             sortConfig.direction === "asc" ? (
-                                                <ArrowUpAZ className="h-4 w-4" />
+                                                <ArrowUpAZ className="h-4 w-4 text-white" />
                                             ) : (
-                                                <ArrowDownAZ className="h-4 w-4" />
+                                                <ArrowDownAZ className="h-4 w-4 text-white" />
                                             )
                                         ) : (
-                                            <ArrowUpAZ className="h-4 w-4 opacity-30" />
+                                            <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
                                         )}
                                     </div>
                                 </th>
 
                                 <th
-                                    className={cn("border-x border-r-zinc-400 px-2", fixedColumnsConfig.capacity.widthClass)}
+                                    className={cn("border-r border-r-zinc-700 px-2 bg-black", fixedColumnsConfig.capacity.widthClass)}
                                     onClick={() => onSortChange("capacity", sortConfig.field === "capacity" && sortConfig.direction === "asc" ? "desc" : "asc")}
                                 >
                                     <div className="flex items-center justify-between">
-                                        <span>Capacidad</span>
+                                        <span className="text-white">Capacidad</span>
 
                                         {sortConfig.field === "capacity" ? (
                                             sortConfig.direction === "asc" ? (
-                                                <ArrowUpAZ className="h-4 w-4" />
+                                                <ArrowUpAZ className="h-4 w-4 text-white" />
                                             ) : (
-                                                <ArrowDownAZ className="h-4 w-4" />
+                                                <ArrowDownAZ className="h-4 w-4 text-white" />
                                             )
                                         ) : (
-                                            <ArrowUpAZ className="h-4 w-4 opacity-30" />
+                                            <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
                                         )}
                                     </div>
                                 </th>
@@ -262,29 +263,29 @@ export function ModuleGrid({
                 {/* Tabla para contenido desplazable */}
                 <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-200px)]" ref={scrollableTableRef} onScroll={handleScroll}>
                     <table className="border-collapse">
-                        <thead className="sticky top-0 z-50 bg-white">
-                            <tr className="bg-gray-100 h-12">
+                        <thead className="sticky top-0 z-50 bg-black">
+                            <tr className="bg-black text-white h-12">
                                 {days.slice( 0, 6 ).map(( day ) => {
                                     const dayModules = getModulesForDay( day.id );
 
                                     return (
-                                        <th key={day.id} colSpan={dayModules.length} className="border-x border-b border-x-zinc-400 p-2 text-center">
+                                        <th key={day.id} colSpan={dayModules.length} className="border-x border-b border-zinc-700 p-2 text-center">
                                             {day.name}
                                         </th>
                                     )
                                 })}
                             </tr>
 
-                            <tr className="bg-gray-50 h-8 sticky top-12 z-40">
+                            <tr className="bg-zinc-800 text-white h-8 sticky top-12 z-40">
                                 {days.slice(0, 6).map(( day ) => {
                                     const dayModules = getModulesForDay( day.id );
 
                                     return dayModules.map(( module, moduleIndex ) => {
                                         return (
                                             <th key={`${day.id}-${module.id}`} className={cn(
-                                                "border-x border-l-zinc-400 text-xs min-w-[80px]",
-                                                moduleIndex === dayModules.length - 1 && "border-r-zinc-400",
-                                                moduleIndex !== dayModules.length - 1 && "border-r-zinc-200"
+                                                "border-x border-l-zinc-700 text-xs min-w-[80px]",
+                                                moduleIndex === dayModules.length - 1 && "border-r-zinc-900",
+                                                moduleIndex !== dayModules.length - 1 && "border-r-zinc-700"
                                             )}>
                                                 {module.name}
                                             </th>
@@ -308,46 +309,29 @@ export function ModuleGrid({
                                             const hasSection    = cellSections.length > 0
                                             const section       = hasSection ? cellSections[0] : null
                                             const isLastModule  = moduleIndex === dayModules.length - 1;
-                                            let isClick = false;
-
 
                                             return (
-                                                <td
+                                                <SectionCard
                                                     key={`${day.id}-${module.id}`}
-                                                    className={cn(
-                                                        "border p-1 text-center min-w-[80px] h-[40px]",
-                                                        isLastModule && "border-r-zinc-400",
-                                                        !isLastModule && "border-r-zinc-200",
-                                                        isHovered && "bg-gray-50",
-                                                        isDragOver && !hasSection && "bg-green-100",
-                                                        isDragOver && hasSection && "bg-red-100",
-                                                    )}
-                                                    onMouseEnter={() => setHoveredCell(cellId)}
-                                                    onMouseLeave={() => setHoveredCell(null)}
-                                                    onDragOver={(e) => handleDragOver(e, room.id, day.id, module.id)}
+                                                    section={section}
+                                                    dayId={day.id}
+                                                    moduleId={module.id}
+                                                    roomId={room.id}
+                                                    isLastModule={isLastModule}
+                                                    moduleIndex={moduleIndex}
+                                                    isHovered={isHovered}
+                                                    isDragOver={isDragOver}
+                                                    hasSection={hasSection}
+                                                    cellId={cellId}
+                                                    draggedSection={draggedSection}
+                                                    onSectionClick={onSectionClick}
+                                                    onDragStart={handleDragStart}
+                                                    onDragOver={handleDragOver}
                                                     onDragLeave={handleDragLeave}
-                                                    onDrop={(e) => handleDrop(e, room.id, day.id, module.id)}
-                                                >
-                                                    {section && (
-                                                        <div
-                                                            draggable
-                                                            onDragStart={(e) => handleDragStart(e, section.id)}
-                                                            className={cn(
-                                                                "bg-zinc-300 h-full p-1 rounded cursor-move text-xs truncate relative",
-                                                                draggedSection === section.id && "opacity-50",
-                                                            )}
-                                                            onDoubleClick={() => onSectionClick(section.id)}
-                                                            title="Doble clic para editar, arrastrar para mover"
-                                                            onClick={() => {isClick = true;}}
-                                                        >
-                                                            {section.courseCode}
-
-                                                            {/* <div className="absolute rounded-full -right-2 z-50 -top-2 bg-red-500 text-white p-0.5 rounded-br-md">
-                                                                <X className="w-3 h-3"/>
-                                                            </div> */}
-                                                        </div>
-                                                    )}
-                                                </td>
+                                                    onDrop={handleDrop}
+                                                    onMouseEnter={setHoveredCell}
+                                                    onMouseLeave={() => setHoveredCell(null)}
+                                                />
                                             )
                                         })
                                     })}
