@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
 import { periods, capacityGroups } from "@/lib/data"
 import type { Filters, Room } from "@/lib/types"
+import MultiSelectCombobox from "./inputs/Combobox"
 
 interface FilterPanelProps {
     rooms: Room[]
@@ -15,8 +14,8 @@ interface FilterPanelProps {
 export function FilterPanel({ rooms, onFilterChange }: FilterPanelProps) {
     const [localFilters, setLocalFilters] = useState<Filters>({
         periods: [],
-        building: "",
-        capacityGroup: "",
+        buildings: [],
+        capacityGroups: [],
     })
 
     // Extract unique buildings for filter options
@@ -32,91 +31,51 @@ export function FilterPanel({ rooms, onFilterChange }: FilterPanelProps) {
         return () => clearTimeout(handler)
     }, [localFilters, onFilterChange])
 
-    const handleBuildingChange = (value: string) => {
-        setLocalFilters((prev) => ({ ...prev, building: value === "all" ? "" : value }))
+    const handleBuildingsChange = (values: string[]) => {
+        setLocalFilters((prev) => ({ ...prev, buildings: values }))
     }
 
-    const handleCapacityGroupChange = (value: string) => {
-        setLocalFilters((prev) => ({ ...prev, capacityGroup: value === "all" ? "" : value }))
+    const handleCapacityGroupsChange = (values: string[]) => {
+        setLocalFilters((prev) => ({ ...prev, capacityGroups: values }))
     }
 
-    const handlePeriodToggle = (period: string) => {
-        setLocalFilters((prev) => {
-        const newPeriods = prev.periods.includes(period)
-            ? prev.periods.filter((p) => p !== period)
-            : [...prev.periods, period]
-        return { ...prev, periods: newPeriods }
-        })
+    const handlePeriodsChange = (values: string[]) => {
+        setLocalFilters((prev) => ({ ...prev, periods: values }))
     }
 
     return (
         <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-2">
             <div className="space-y-2 w-64">
-                {/* <div className="flex items-center gap-2">
-                    <Filter className="h-5 w-5" />
+                <Label htmlFor="periods">Periodos</Label>
 
-                    <h3 className="font-medium">Filtros</h3>
-                </div> */}
-                <Label>Periodos</Label>
-
-                <div className="grid grid-cols-2 gap-2">
-                    {periods.map((period) => (
-                        <div key={period} className="flex items-center space-x-2">
-                            <Checkbox
-                                id={`period-${period}`}
-                                checked={localFilters.periods.includes(period)}
-                                onCheckedChange={() => handlePeriodToggle(period)}
-                            />
-
-                            <label
-                                htmlFor={`period-${period}`}
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                                {period}
-                            </label>
-                        </div>
-                    ))}
-                </div>
+                <MultiSelectCombobox
+                    options={periods.map((period) => ({ value: period, label: period }))}
+                    placeholder="Todos los periodos"
+                    onSelectionChange={handlePeriodsChange}
+                    defaultValues={localFilters.periods}
+                />
             </div>
 
             <div className="space-y-2 w-64">
-                <Label htmlFor="building">Edificio</Label>
+                <Label htmlFor="buildings">Edificio</Label>
 
-                <Select value={localFilters.building || "all"} onValueChange={handleBuildingChange}>
-                    <SelectTrigger id="building">
-                        <SelectValue placeholder="Todos los edificios" />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                        <SelectItem value="all">Todos los edificios</SelectItem>
-
-                        {buildings.map((building) => (
-                            <SelectItem key={building} value={building}>
-                                { building }
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                <MultiSelectCombobox
+                    options={buildings.map((building) => ({ value: building, label: building }))}
+                    placeholder="Todos los edificios"
+                    onSelectionChange={handleBuildingsChange}
+                    defaultValues={localFilters.buildings}
+                />
             </div>
 
             <div className="space-y-2 w-64">
-                <Label htmlFor="capacityGroup">Talla</Label>
+                <Label htmlFor="capacityGroups">Talla</Label>
 
-                <Select value={localFilters.capacityGroup || "all"} onValueChange={handleCapacityGroupChange}>
-                    <SelectTrigger id="capacityGroup">
-                        <SelectValue placeholder="Todas las tallas" />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                        <SelectItem value="all">Todas las tallas</SelectItem>
-
-                        {capacityGroups.map((group) => (
-                            <SelectItem key={group.value} value={group.value}>
-                                {group.label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                <MultiSelectCombobox
+                    options={capacityGroups.map((group) => ({ value: group.value, label: group.label }))}
+                    placeholder="Todas las tallas"
+                    onSelectionChange={handleCapacityGroupsChange}
+                    defaultValues={localFilters.capacityGroups}
+                />
             </div>
         </div>
     )
