@@ -35,8 +35,8 @@ export type SortDirection = "asc" | "desc"
 
 export interface Filters {
     periods: string[]
-    building: string
-    capacityGroup: string
+    buildings: string[]
+    capacityGroups: string[]
 }
 
 export interface SortConfig {
