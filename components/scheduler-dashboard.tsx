@@ -1,16 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
 import { SectionModal } from "@/components/section-modal"
-import { AddSectionModal } from "@/components/add-section-modal"
 import { FilterPanel } from "@/components/filter-panel"
 import { ModuleGrid } from "@/components/module-grid"
-import { Plus } from "lucide-react"
 import type { Section, Room, SortDirection, SortField, Filters, SortConfig } from "@/lib/types"
 import { initialSections, initialRooms } from "@/lib/data"
 import { initializeLocalStorageIfNeeded } from "@/lib/initLocalStorage"
-import { extractDataFromSections, saveRoomsToStorage } from "@/lib/localStorage"
+import { extractDataFromSections } from "@/lib/localStorage"
 
 export function SchedulerDashboard() {
   // Inicializar estados con valores por defecto
@@ -20,15 +17,15 @@ export function SchedulerDashboard() {
     const [filteredRooms, setFilteredRooms] = useState<Room[]>([])
     const [selectedSection, setSelectedSection] = useState<Section | null>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+    // const [isAddModalOpen, setIsAddModalOpen] = useState(false)
     const [sortConfig, setSortConfig] = useState<SortConfig>({
         field: "name",
         direction: "asc",
     })
     const [filters, setFilters] = useState<Filters>({
         periods: [],
-        building: "",
-        capacityGroup: "",
+        buildings: [],
+        capacityGroups: [],
     })
     const [isInitialized, setIsInitialized] = useState(false)
 
@@ -83,14 +80,14 @@ export function SchedulerDashboard() {
         // Filtrar salas
         let filteredRms = [...rooms]
 
-        // Filter by building
-        if (filters.building && filters.building !== "") {
-            filteredRms = filteredRms.filter((room) => room.building === filters.building)
+        // Filter by buildings (multiple selection)
+        if (filters.buildings && filters.buildings.length > 0) {
+            filteredRms = filteredRms.filter((room) => filters.buildings.includes(room.building))
         }
 
-        // Filter by capacity group
-        if (filters.capacityGroup && filters.capacityGroup !== "") {
-            filteredRms = filteredRms.filter((room) => room.capacityGroup === filters.capacityGroup)
+        // Filter by capacity groups (multiple selection)
+        if (filters.capacityGroups && filters.capacityGroups.length > 0) {
+            filteredRms = filteredRms.filter((room) => filters.capacityGroups.includes(room.capacityGroup))
         }
 
         // Ahora filtramos las secciones para que solo incluyan las que están en las salas filtradas
@@ -114,30 +111,6 @@ export function SchedulerDashboard() {
         setSortConfig({ field, direction })
     }
 
-    const handleAddSection = (newSection: Section) => {
-        // Check for overlapping sections
-        const overlapping = sections.some((section) => {
-            if (section.roomId !== newSection.roomId) return false
-            if (section.day !== newSection.day) return false
-            if (section.moduleId !== newSection.moduleId) return false
-            return true
-        })
-
-        if (overlapping) {
-            alert("No se puede agregar la sección porque ya existe una en ese módulo y sala.")
-            return false
-        }
-
-        const newSectionWithId = { ...newSection, id: Date.now().toString() }
-        const updatedSections = [...sections, newSectionWithId]
-        
-        setSections(updatedSections)
-        
-        // Actualizar localStorage con los nuevos datos
-        extractDataFromSections(updatedSections)
-        
-        return true
-    }
 
     const handleUpdateSection = (updatedSection: Section) => {
         // Check for overlapping sections
@@ -199,8 +172,6 @@ export function SchedulerDashboard() {
                 section.moduleId    === newModuleId
             );
 
-        console.log('🚀 ~ file: scheduler-dashboard.tsx:181 ~ targetOccupied:', targetOccupied)
-
         if ( targetOccupied ) return false;
 
         // Actualizar la sección
@@ -226,13 +197,9 @@ export function SchedulerDashboard() {
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-col ">
-                <div className="grid sm:flex justify-center sm:justify-between items-center px-5 py-3">
+            <div className="flex flex-col">
+                <div className="container mx-auto my-0.5">
                     <FilterPanel rooms={rooms} onFilterChange={handleFilterChange} />
-
-                    <Button onClick={() => setIsAddModalOpen(true)}>
-                        <Plus className="h-4 w-4 mr-2" /> Agregar Sección
-                    </Button>
                 </div>
 
                 <ModuleGrid
@@ -252,14 +219,6 @@ export function SchedulerDashboard() {
                     onClose     = { () => setIsModalOpen( false )}
                     onSave      = { handleUpdateSection }
                     onDelete    = { handleDeleteSection }
-                />
-            )}
-
-            {isAddModalOpen && (
-                <AddSectionModal
-                    rooms   = { rooms }
-                    onClose = { () => setIsAddModalOpen( false )}
-                    onAdd   = { handleAddSection }
                 />
             )}
         </div>
