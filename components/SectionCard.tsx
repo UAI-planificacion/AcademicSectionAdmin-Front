@@ -85,12 +85,11 @@ export function SectionCard({
         <td
             key={`${dayId}-${moduleId}`}
             className={cn(
-                "border p-0.5 text-center min-w-[80px] h-[40px]",
+                "border p-0.5 text-center min-w-[80px] h-[40px] transition-none hover:bg-zinc-200/80 group",
                 isLastModule && "border-r-zinc-400",
                 !isLastModule && "border-r-zinc-200",
                 moduleIndex % 2 === 0 && "bg-white",
                 moduleIndex % 2 !== 0 && "bg-zinc-100",
-                isHovered && "bg-zinc-200",
                 isDragOver && !hasSection && "bg-green-100",
                 isDragOver && hasSection && "bg-red-100",
             )}
@@ -109,7 +108,7 @@ export function SectionCard({
             {!section && !isDragOver && (
                 <button 
                     onClick={handleCreateSection}
-                    className="w-full h-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+                    className="w-full z-0 h-full flex items-center justify-center opacity-0 group-hover:opacity-100"
                     title="Crear nueva sección"
                 >
                     <PlusCircle className="w-4 h-4 text-gray-400" />
