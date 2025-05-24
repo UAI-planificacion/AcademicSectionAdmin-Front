@@ -9,6 +9,8 @@ import { ModuleGrid } from "@/components/module-grid"
 import { Plus } from "lucide-react"
 import type { Section, Room, SortDirection, SortField, Filters, SortConfig } from "@/lib/types"
 import { initialSections, initialRooms } from "@/lib/data"
+import { initializeLocalStorageIfNeeded } from "@/lib/initLocalStorage"
+import { extractDataFromSections, saveRoomsToStorage } from "@/lib/localStorage"
 
 export function SchedulerDashboard() {
   // Inicializar estados con valores por defecto
@@ -59,6 +61,9 @@ export function SchedulerDashboard() {
         setRooms(initialRooms)
         setFilteredRooms(initialRooms)
         setIsInitialized(true)
+        
+        // Inicializar datos en localStorage si no existen
+        initializeLocalStorageIfNeeded()
     }, [])
 
     // Apply filters to sections and rooms
@@ -123,7 +128,14 @@ export function SchedulerDashboard() {
             return false
         }
 
-        setSections((prev) => [...prev, { ...newSection, id: Date.now().toString() }])
+        const newSectionWithId = { ...newSection, id: Date.now().toString() }
+        const updatedSections = [...sections, newSectionWithId]
+        
+        setSections(updatedSections)
+        
+        // Actualizar localStorage con los nuevos datos
+        extractDataFromSections(updatedSections)
+        
         return true
     }
 
@@ -143,12 +155,24 @@ export function SchedulerDashboard() {
             return false
         }
 
-        setSections((prev) => prev.map((section) => (section.id === updatedSection.id ? updatedSection : section)))
+        const updatedSections = sections.map((section) => 
+            (section.id === updatedSection.id ? updatedSection : section)
+        )
+        
+        setSections(updatedSections)
+        
+        // Actualizar localStorage con los datos actualizados
+        extractDataFromSections(updatedSections)
+        
         return true
     }
 
     const handleDeleteSection = (sectionId: string) => {
-        setSections((prev) => prev.filter((section) => section.id !== sectionId))
+        const updatedSections = sections.filter((section) => section.id !== sectionId)
+        setSections(updatedSections)
+        
+        // Actualizar localStorage con los datos actualizados
+        extractDataFromSections(updatedSections)
     }
 
     const handleSectionClick = (sectionId: string) => {
@@ -180,21 +204,23 @@ export function SchedulerDashboard() {
         if ( targetOccupied ) return false;
 
         // Actualizar la sección
-        setSections((prev) =>
-            prev.map((section) => {
-                if (section.id === sectionId) {
-                    return {
-                        ...section,
-                        roomId: newRoomId,
-                        day: newDay,
-                        moduleId: newModuleId,
-                    }
+        const updatedSections = sections.map((section) => {
+            if (section.id === sectionId) {
+                return {
+                    ...section,
+                    roomId: newRoomId,
+                    day: newDay,
+                    moduleId: newModuleId,
                 }
-
-                return section;
-            }),
-        )
-
+            }
+            return section;
+        })
+        
+        setSections(updatedSections)
+        
+        // Actualizar localStorage con los datos actualizados
+        extractDataFromSections(updatedSections)
+        
         return true;
     }
 
