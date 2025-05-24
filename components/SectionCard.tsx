@@ -1,7 +1,10 @@
-import { Section } from "@/lib/types"
-import React from "react"
+import { Section, Room } from "@/lib/types"
+import React, { useState } from "react"
 
 import { cn } from "@/lib/utils"
+import { SectionModal } from "@/components/section-modal"
+import { PlusCircle } from "lucide-react"
+import { getRoomsFromStorage } from "@/lib/localStorage"
 
 import {
     Tooltip,
@@ -29,6 +32,7 @@ interface SectionCardProps {
     onDrop: (e: React.DragEvent, roomId: string, dayId: number, moduleId: string) => void
     onMouseEnter: (cellId: string) => void
     onMouseLeave: () => void
+    onSaveSectionFromCard?: (section: Section) => boolean
 }
 
 export function SectionCard({
@@ -49,8 +53,34 @@ export function SectionCard({
     onDragLeave,
     onDrop,
     onMouseEnter,
-    onMouseLeave
+    onMouseLeave,
+    onSaveSectionFromCard
 }: SectionCardProps): React.ReactElement {
+    const [isMoving, setIsMoving] = useState(false);
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    
+    // Usamos la función importada para obtener las salas desde localStorage
+    
+    const handleCreateSection = () => {
+        setShowCreateModal(true);
+    };
+    
+    const handleCloseModal = () => {
+        setShowCreateModal(false);
+    };
+    
+    const handleSaveSection = (newSection: Section): boolean => {
+        if (onSaveSectionFromCard) {
+            return onSaveSectionFromCard(newSection);
+        }
+        return false;
+    };
+    
+    const handleDeleteSection = () => {
+        // No es necesario implementar esta función para la creación
+        setShowCreateModal(false);
+    };
+
     return (
         <td
             key={`${dayId}-${moduleId}`}
@@ -59,17 +89,51 @@ export function SectionCard({
                 isLastModule && "border-r-zinc-400",
                 !isLastModule && "border-r-zinc-200",
                 moduleIndex % 2 === 0 && "bg-white",
-                moduleIndex % 2 !== 0 && "bg-zinc-50",
-                isHovered && "bg-zinc-100",
+                moduleIndex % 2 !== 0 && "bg-zinc-100",
+                isHovered && "bg-zinc-200",
                 isDragOver && !hasSection && "bg-green-100",
                 isDragOver && hasSection && "bg-red-100",
             )}
-            onMouseEnter={() => onMouseEnter(cellId)}
-            onMouseLeave={onMouseLeave}
-            onDragOver={(e) => onDragOver(e, roomId, dayId, moduleId)}
+            onMouseEnter={() => onMouseEnter( cellId )}
+            onMouseLeave={ onMouseLeave }
+            onDragOver={(e) => {
+                setIsMoving( true );
+                onDragOver( e, roomId, dayId, moduleId );
+            }}
             onDragLeave={onDragLeave}
-            onDrop={(e) => onDrop(e, roomId, dayId, moduleId)}
+            onDrop={(e) => {
+                setIsMoving( false );
+                onDrop( e, roomId, dayId, moduleId );
+            }}
         >
+            {!section && !isDragOver && (
+                <button 
+                    onClick={handleCreateSection}
+                    className="w-full h-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+                    title="Crear nueva sección"
+                >
+                    <PlusCircle className="w-4 h-4 text-gray-400" />
+                </button>
+            )}
+            
+            {showCreateModal && (
+                <SectionModal
+                    section={{
+                        id: "", // Se generará al guardar
+                        courseCode: "", // Se seleccionará del combobox
+                        professor: "",
+                        roomId: roomId,
+                        day: dayId,
+                        moduleId: moduleId,
+                        period: "", // Se seleccionará del combobox
+                    }}
+                    rooms={getRoomsFromStorage()}
+                    onClose={handleCloseModal}
+                    onSave={handleSaveSection}
+                    onDelete={handleDeleteSection}
+                    isCreating={true}
+                />
+            )}
             {section && (
                 <TooltipProvider>
                     <Tooltip>
@@ -98,7 +162,7 @@ export function SectionCard({
                             </div>
                         </TooltipTrigger>
 
-                        <TooltipContent>
+                        {!isMoving && <TooltipContent>
                             <div className="grid">
                                 <span className="truncate">
                                     {section.courseCode}
@@ -112,7 +176,7 @@ export function SectionCard({
                                     {section.professor}
                                 </span>
                             </div>
-                        </TooltipContent>
+                        </TooltipContent>}
                     </Tooltip>
                 </TooltipProvider>
             )}
