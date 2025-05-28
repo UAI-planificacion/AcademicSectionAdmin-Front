@@ -1,20 +1,35 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { ThemeProvider } from '@/components/theme-provider'
+import Header from '@/components/Header'
+
 
 export const metadata: Metadata = {
-  title: 'Administrador de Secciones Académicas',
-  description: 'Administrador de Secciones Académicas',
-  generator: 'AcademicSectionAdmin',
+    title: 'Administrador de Secciones Académicas',
+    description: 'Administrador de Secciones Académicas',
+    generator: 'AcademicSectionAdmin',
 }
 
 export default function RootLayout({
-  children,
+    children,
 }: Readonly<{
-  children: React.ReactNode
+    children: React.ReactNode
 }>) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  )
+    return (
+        <html lang="es" suppressHydrationWarning={true} >
+            <body>
+                <ThemeProvider
+                    attribute       = "class"
+                    defaultTheme    = "system"
+                    enableSystem 
+                >
+                    <Header />
+
+                    <main className="flex-grow">
+                        {children}
+                    </main>
+                </ThemeProvider>
+            </body>
+        </html>
+    )
 }
