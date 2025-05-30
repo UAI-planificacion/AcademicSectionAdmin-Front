@@ -1,17 +1,19 @@
-import { Section, Room } from "@/lib/types"
-import React, { useState } from "react"
+"use client"
 
-import { cn } from "@/lib/utils"
-import { SectionModal } from "@/components/section-modal"
-import { PlusCircle } from "lucide-react"
-import { getRoomsFromStorage } from "@/lib/localStorage"
+import React, { useState } from 'react';
+
+import { PlusCircle } from 'lucide-react';
 
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
-} from "@/components/ui/tooltip"
+}                               from '@/components/ui/tooltip';
+import { SectionModal }         from '@/components/section-modal';
+import { Section }              from '@/lib/types';
+import { cn }                   from '@/lib/utils';
+import { getRoomsFromStorage }  from '@/lib/localStorage';
 
 interface SectionCardProps {
     section: Section | null
@@ -20,7 +22,6 @@ interface SectionCardProps {
     roomId: string
     isLastModule: boolean
     moduleIndex: number
-    isHovered: boolean
     isDragOver: boolean
     hasSection: boolean
     cellId: string
@@ -42,7 +43,6 @@ export function SectionCard({
     roomId,
     isLastModule,
     moduleIndex,
-    isHovered,
     isDragOver,
     hasSection,
     cellId,
@@ -58,26 +58,23 @@ export function SectionCard({
 }: SectionCardProps): React.ReactElement {
     const [isMoving, setIsMoving] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
-    
-    // Usamos la función importada para obtener las salas desde localStorage
-    
+
     const handleCreateSection = () => {
         setShowCreateModal(true);
     };
-    
+
     const handleCloseModal = () => {
         setShowCreateModal(false);
     };
-    
+
     const handleSaveSection = (newSection: Section): boolean => {
         if (onSaveSectionFromCard) {
             return onSaveSectionFromCard(newSection);
         }
         return false;
     };
-    
+
     const handleDeleteSection = () => {
-        // No es necesario implementar esta función para la creación
         setShowCreateModal(false);
     };
 
@@ -85,13 +82,13 @@ export function SectionCard({
         <td
             key={`${dayId}-${moduleId}`}
             className={cn(
-                "border p-0.5 text-center min-w-[80px] h-[40px] transition-none hover:bg-zinc-200/80 group",
-                isLastModule && "border-r-zinc-400",
-                !isLastModule && "border-r-zinc-200",
-                moduleIndex % 2 === 0 && "bg-white",
-                moduleIndex % 2 !== 0 && "bg-zinc-100",
-                isDragOver && !hasSection && "bg-green-100",
-                isDragOver && hasSection && "bg-red-100",
+                "border p-0.5 text-center min-w-[80px] h-[40px] transition-none hover:bg-zinc-200/80 dark:hover:bg-zinc-800/50 transition-colors group",
+                isLastModule && "border-r-zinc-400 dark:border-r-zinc-600 transition-colors",
+                !isLastModule && "border-r-zinc-200 dark:border-r-zinc-800 transition-colors",
+                moduleIndex % 2 === 0 && "bg-white dark:bg-zinc-900 transition-colors",
+                moduleIndex % 2 !== 0 && "bg-zinc-100 dark:bg-zinc-900/60 transition-colors",
+                isDragOver && !hasSection && "bg-green-100 dark:bg-green-900 transition-colors",
+                isDragOver && hasSection && "bg-red-100 dark:bg-red-900 transition-colors",
             )}
             onMouseEnter={() => onMouseEnter( cellId )}
             onMouseLeave={ onMouseLeave }
@@ -114,25 +111,26 @@ export function SectionCard({
                     <PlusCircle className="w-4 h-4 text-gray-400" />
                 </button>
             )}
-            
+
             {showCreateModal && (
                 <SectionModal
-                    section={{
-                        id: "", // Se generará al guardar
-                        courseCode: "", // Se seleccionará del combobox
-                        professor: "",
-                        roomId: roomId,
-                        day: dayId,
-                        moduleId: moduleId,
-                        period: "", // Se seleccionará del combobox
+                    rooms       = { getRoomsFromStorage() }
+                    onClose     = { handleCloseModal }
+                    onSave      = { handleSaveSection }
+                    onDelete    = { handleDeleteSection }
+                    isCreating  = { true }
+                    section     = {{
+                        id          : "",
+                        courseCode  : "",
+                        professor   : "",
+                        roomId      : roomId,
+                        day         : dayId,
+                        moduleId    : moduleId,
+                        period      : "",
                     }}
-                    rooms={getRoomsFromStorage()}
-                    onClose={handleCloseModal}
-                    onSave={handleSaveSection}
-                    onDelete={handleDeleteSection}
-                    isCreating={true}
                 />
             )}
+
             {section && (
                 <TooltipProvider>
                     <Tooltip>
