@@ -208,6 +208,20 @@ export const initialRooms: Room[] = [
         capacity: 70,
         capacityGroup: "L",
     },
+    {
+        id: "room17",
+        name: "LAB.208-B",
+        building: "A",
+        capacity: 80,
+        capacityGroup: "LAB.PCA",
+    },
+    {
+        id: "room18",
+        name: "104-A",
+        building: "A",
+        capacity: 55,
+        capacityGroup: "M",
+    }
 ]
 
 export const periods = ["2025-1", "2025-2", "2026-1", "2026-2"]
