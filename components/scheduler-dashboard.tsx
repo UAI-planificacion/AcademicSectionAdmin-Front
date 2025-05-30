@@ -1,35 +1,41 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { SectionModal } from "@/components/section-modal"
-import { FilterPanel } from "@/components/filter-panel"
-import { ModuleGrid } from "@/components/module-grid"
-import type { Section, Room, SortDirection, SortField, Filters, SortConfig } from "@/lib/types"
-import { initialSections, initialRooms } from "@/lib/data"
-import { initializeLocalStorageIfNeeded } from "@/lib/initLocalStorage"
-import { extractDataFromSections } from "@/lib/localStorage"
+import { useState, useEffect } from 'react';
+
+
+import type {
+    Section,
+    Room,
+    SortDirection,
+    SortField,
+    Filters,
+    SortConfig
+}                                           from '@/lib/types';
+import { initialSections, initialRooms }    from '@/lib/data';
+import { initializeLocalStorageIfNeeded }   from '@/lib/initLocalStorage';
+import { extractDataFromSections }          from '@/lib/localStorage';
+import { SectionModal }                     from '@/components/section-modal';
+import { FilterPanel }                      from '@/components/filter-panel';
+import { ModuleGrid }                       from '@/components/module-grid';
 
 export function SchedulerDashboard() {
-  // Inicializar estados con valores por defecto
-    const [sections, setSections] = useState<Section[]>([])
-    const [filteredSections, setFilteredSections] = useState<Section[]>([])
-    const [rooms, setRooms] = useState<Room[]>([])
-    const [filteredRooms, setFilteredRooms] = useState<Room[]>([])
-    const [selectedSection, setSelectedSection] = useState<Section | null>(null)
-    const [isModalOpen, setIsModalOpen] = useState(false)
-    // const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-    const [sortConfig, setSortConfig] = useState<SortConfig>({
+    const [sections, setSections]                   = useState<Section[]>([]);
+    const [filteredSections, setFilteredSections]   = useState<Section[]>([]);
+    const [rooms, setRooms]                         = useState<Room[]>([]);
+    const [filteredRooms, setFilteredRooms]         = useState<Room[]>([]);
+    const [selectedSection, setSelectedSection]     = useState<Section | null>(null);
+    const [isModalOpen, setIsModalOpen]             = useState(false);
+    const [isInitialized, setIsInitialized]         = useState(false);
+    const [sortConfig, setSortConfig]               = useState<SortConfig>({
         field: "name",
         direction: "asc",
-    })
+    });
     const [filters, setFilters] = useState<Filters>({
         periods: [],
         buildings: [],
         capacityGroups: [],
-    })
-    const [isInitialized, setIsInitialized] = useState(false)
+    });
 
-    // Sort rooms based on current sort config
     const sortedRooms = [...filteredRooms].sort((a, b) => {
         const { field, direction } = sortConfig
 
@@ -49,21 +55,17 @@ export function SchedulerDashboard() {
 
             return 0;
         }
-    })
+    });
 
-    // Cargar datos iniciales después del montaje para evitar problemas de hidratación
     useEffect(() => {
         setSections(initialSections)
         setFilteredSections(initialSections)
         setRooms(initialRooms)
         setFilteredRooms(initialRooms)
         setIsInitialized(true)
-        
-        // Inicializar datos en localStorage si no existen
         initializeLocalStorageIfNeeded()
     }, [])
 
-    // Apply filters to sections and rooms
     useEffect(() => {
         if (!isInitialized) return
 
@@ -196,7 +198,7 @@ export function SchedulerDashboard() {
     }
 
     return (
-        <div className="space-y-4">
+        <>
             <div className="flex flex-col">
                 <div className="container mx-auto my-0.5">
                     <FilterPanel rooms={rooms} onFilterChange={handleFilterChange} />
@@ -221,6 +223,6 @@ export function SchedulerDashboard() {
                     onDelete    = { handleDeleteSection }
                 />
             )}
-        </div>
-    )
+        </>
+    );
 }
