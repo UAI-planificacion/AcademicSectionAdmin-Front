@@ -11,7 +11,7 @@ import {
 }                   from "@/components/ui/dropdown-menu";
 import { Button }   from "@/components/ui/button";
 import SignIn   from "@/components/auth/SignIn";
-import { useSession, signOut, getSession } from "@/config/better-auth/auth-client";
+import { signOut, getSession } from "@/config/better-auth/auth-client";
 import { useEffect, useState } from "react";
 
 export default  function Header() {
@@ -73,12 +73,11 @@ export default  function Header() {
     };
 
     return (
-        <header className=" py-4 border-b border-gray-200">
+        <header className=" py-4 border-b border-gray-200 dark:border-gray-800 transition-colors">
             <div className="flex justify-between items-center container mx-auto ">
                 <h1 className="text-2xl font-bold">Administrador de Secciones Académicas</h1>
 
                 <div className="flex items-center gap-2">
-                {/* <SignMsal /> */}
                 {loading ? (
                     <Button variant="outline" disabled>Cargando...</Button>
                 ) : sessionData?.data?.user ? (
@@ -86,7 +85,7 @@ export default  function Header() {
                         variant="outline" 
                         onClick={async () => {
                             await signOut();
-                            refreshSession(); // Refrescar la sesión después de cerrar sesión
+                            refreshSession();
                         }}
                     >
                         Cerrar sesión
