@@ -41,13 +41,13 @@ export function SchedulerDashboard() {
 
         if (field === "capacity") {
             return direction === "asc" ? a.capacity - b.capacity : b.capacity - a.capacity
-        } else if (field === "capacityGroup") {
+        } else if (field === "size") {
             return direction === "asc"
-                ? a.capacityGroup.localeCompare(b.capacityGroup)
-                : b.capacityGroup.localeCompare(a.capacityGroup)
+                ? a.sizeId.localeCompare(b.sizeId)
+                : b.sizeId.localeCompare(a.sizeId)
         } else {
-            const aValue = a[field];
-            const bValue = b[field];
+            const aValue = a[field as keyof Room];
+            const bValue = b[field as keyof Room];
 
             if (typeof aValue === "string" && typeof bValue === "string") {
                 return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue)
@@ -89,12 +89,12 @@ export function SchedulerDashboard() {
 
         // Filter by capacity groups (multiple selection)
         if (filters.capacityGroups && filters.capacityGroups.length > 0) {
-            filteredRms = filteredRms.filter((room) => filters.capacityGroups.includes(room.capacityGroup))
+            filteredRms = filteredRms.filter((room) => filters.capacityGroups.includes(room.sizeId))
         }
 
         // Ahora filtramos las secciones para que solo incluyan las que están en las salas filtradas
         const filteredRoomIds = new Set(filteredRms.map((room) => room.id))
-        filteredSecs = filteredSecs.filter((section) => filteredRoomIds.has(section.roomId))
+        filteredSecs = filteredSecs.filter((section) => filteredRoomIds.has(section.room))
 
         console.log("Secciones filtradas:", filteredSecs.length)
         console.log("Salas filtradas:", filteredRms.length)
@@ -118,7 +118,7 @@ export function SchedulerDashboard() {
         // Check for overlapping sections
         const overlapping = sections.some(( section : Section ) => {
             if ( section.id         === updatedSection.id )         return false;
-            if ( section.roomId     !== updatedSection.roomId )     return false;
+            if ( section.room     !== updatedSection.room )     return false;
             if ( section.day        !== updatedSection.day )        return false;
             if ( section.moduleId   !== updatedSection.moduleId )   return false;
 
@@ -169,7 +169,7 @@ export function SchedulerDashboard() {
         const targetOccupied = sections
             .some(( section : Section ) =>
                 section.id          !== sectionId   &&
-                section.roomId      === newRoomId   &&
+                section.room        === newRoomId   &&
                 section.day         === newDay      &&
                 section.moduleId    === newModuleId
             );
@@ -181,7 +181,7 @@ export function SchedulerDashboard() {
             if (section.id === sectionId) {
                 return {
                     ...section,
-                    roomId: newRoomId,
+                    room: newRoomId,
                     day: newDay,
                     moduleId: newModuleId,
                 }
