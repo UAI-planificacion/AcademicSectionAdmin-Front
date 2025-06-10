@@ -22,12 +22,20 @@ export function AddSectionModal({ rooms, onClose, onAdd }: AddSectionModalProps)
     const dayModules = getModulesForDay(selectedDay)
 
     const [formData, setFormData] = useState<Omit<Section, "id">>({
-        courseCode: "",
-        professor: "",
-        roomId: "",
-        day: 0,
-        moduleId: dayModules.length > 0 ? dayModules[0].id : "",
-        period: periods[0],
+        code                    : 1,
+        session                 : "",
+        size                    : "",
+        correctedRegistrants    : 0,
+        realRegistrants         : 0,
+        plannedBuilding         : "",
+        chairsAvailable         : 0,
+        professor               : "",
+        room                    : "",
+        day                     : selectedDay,
+        moduleId                : dayModules.length > 0 ? dayModules[0].id : "",
+        subjectName             : "",
+        subjectId               : "",
+        period                  : periods[0],
     })
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,7 +62,7 @@ export function AddSectionModal({ rooms, onClose, onAdd }: AddSectionModalProps)
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
 
-        if (!formData.roomId) {
+        if (!formData.room) {
             alert("Por favor selecciona una sala")
             return
         }
@@ -109,7 +117,7 @@ export function AddSectionModal({ rooms, onClose, onAdd }: AddSectionModalProps)
                     <div className="space-y-1">
                         <Label htmlFor="roomId">Sigla Asignatura</Label>
 
-                        <Select value={formData.roomId} onValueChange={(value) => handleSelectChange("roomId", value)}>
+                        <Select value={formData.room} onValueChange={(value) => handleSelectChange("roomId", value)}>
 
                         <SelectTrigger id="roomId">
                             <SelectValue placeholder="Seleccionar sala" />
@@ -118,7 +126,7 @@ export function AddSectionModal({ rooms, onClose, onAdd }: AddSectionModalProps)
                         <SelectContent>
                             {rooms.map((room) => (
                                 <SelectItem key={room.id} value={room.id}>
-                                    {room.name} ({room.building}, {room.capacityGroup}, {room.capacity})
+                                    {room.id} ({room.building}, {room.sizeId}, {room.capacity})
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -131,7 +139,7 @@ export function AddSectionModal({ rooms, onClose, onAdd }: AddSectionModalProps)
                         <Input
                             id="courseCode"
                             name="courseCode"
-                            value={formData.courseCode}
+                            value={formData.realRegistrants.toString()}
                             onChange={handleChange}
                             required
                             type="number"
