@@ -1,18 +1,27 @@
 "use client"
 
 import React, { useState, useRef } from "react"
-import { days, getModulesForDay } from "@/lib/data"
-import type { Section, Room, SortConfig } from "@/lib/types"
-import { cn } from "@/lib/utils"
+
 import { AlertCircle, ArrowDownAZ, ArrowUpAZ } from "lucide-react"
-import { SectionCard } from "@/components/SectionCard"
+
+import type {
+    Section,
+    Room,
+    SortConfig,
+    SortField,
+    SortDirection
+}                                   from "@/lib/types";
+import { SectionCard }              from "@/components/SectionCard";
+import { days, getModulesForDay }   from "@/lib/data";
+import { cn }                       from "@/lib/utils";
+
 
 interface ModuleGridProps {
     sections        : Section[]
     rooms           : Room[]
     onSectionClick  : ( sectionId: string ) => void
     onSectionMove   : ( sectionId: string, newRoomId: string, newDay: number, newModuleId: string ) => boolean
-    onSortChange    : ( field: "name" | "building" | "capacityGroup" | "capacity", direction: "asc" | "desc" ) => void
+    onSortChange    : ( field: SortField, direction: SortDirection ) => void
     sortConfig      : SortConfig
 }
 
@@ -45,7 +54,7 @@ export function ModuleGrid({
     // Función para obtener las secciones para una sala, día y módulo específicos
     const getSectionsForCell = ( roomId: string, day: number, moduleId: string ) => 
         sections.filter(( section ) =>
-            section.roomId === roomId && section.day === day && section.moduleId === moduleId
+            section.room === roomId && section.day === day && section.moduleId === moduleId
         );
 
     // Manejadores de eventos para drag and drop
@@ -98,11 +107,23 @@ export function ModuleGrid({
     }
 
     const fixedColumnsConfig = {
-        name:          { widthClass: "w-[250px]",   leftClass: "left-0",       zIndexClass: "z-40" },
-        building:      { widthClass: "w-[130px]",   leftClass: "left-[120px]", zIndexClass: "z-30" },
-        capacityGroup: { widthClass: "w-[80px]",    leftClass: "left-[210px]", zIndexClass: "z-20" },
-        capacity:      { widthClass: "w-[140px]",   leftClass: "left-[290px]", zIndexClass: "z-10" },
+        name        : { widthClass: "w-[250px]",   leftClass: "left-0",       zIndexClass: "z-40" },
+        type        : { widthClass: "w-[130px]",   leftClass: "left-[120px]", zIndexClass: "z-30" },
+        building    : { widthClass: "w-[130px]",   leftClass: "left-[120px]", zIndexClass: "z-30" },
+        size        : { widthClass: "w-[80px]",    leftClass: "left-[210px]", zIndexClass: "z-20" },
+        capacity    : { widthClass: "w-[140px]",   leftClass: "left-[290px]", zIndexClass: "z-10" },
     };
+
+    const typeName = ( type: Room["type"] ) => ({
+        'ROOM'      : 'Sala',
+        'AUDITORIO' : 'Auditorio',
+        'DIS'       : 'Diseño',
+        'LAB'       : 'Laboratorio',
+        'LABPC'     : 'Lab. PC',
+        'GARAGE'    : 'Garaje',
+        'CORE'      : 'Core',
+        'COMMUNIC'  : 'Comunicaciones',
+    }[type]);
 
     return (
         <div className="border rounded-lg">
@@ -121,69 +142,85 @@ export function ModuleGrid({
                             <thead className="sticky top-0 z-50 bg-black hide-vertical-scrollbar">
                                 <tr className="h-20">
                                     <th
-                                    className={cn("px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.name.widthClass)}
-                                    onClick={() => onSortChange("name", sortConfig.field === "name" && sortConfig.direction === "asc" ? "desc" : "asc")}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-left text-white">Sala</span>
+                                        className={cn("cursor-pointer px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.name.widthClass)}
+                                        onClick={() => onSortChange("name", sortConfig.field === "name" && sortConfig.direction === "asc" ? "desc" : "asc")}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-left text-white">Sala</span>
 
-                                        {sortConfig.field === "name"
-                                            ? sortConfig.direction === "asc"
-                                                ? <ArrowUpAZ className="h-4 w-4 text-white" />
-                                                : <ArrowDownAZ className="h-4 w-4 text-white" />
-                                            : <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
-                                        }
-                                    </div>
-                                </th>
+                                            {sortConfig.field === "name"
+                                                ? sortConfig.direction === "asc"
+                                                    ? <ArrowUpAZ className="h-4 w-4 text-white" />
+                                                    : <ArrowDownAZ className="h-4 w-4 text-white" />
+                                                : <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
+                                            }
+                                        </div>
+                                    </th>
 
-                                <th
-                                    className={cn("border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.building.widthClass)}
-                                    onClick={() => onSortChange("building", sortConfig.field === "building" && sortConfig.direction === "asc" ? "desc" : "asc")}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-white">Edificio</span>
+                                    <th
+                                        className={cn("cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.building.widthClass)}
+                                        onClick={() => onSortChange("type", sortConfig.field === "type" && sortConfig.direction === "asc" ? "desc" : "asc")}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-white">Tipo</span>
 
-                                        {sortConfig.field === "building"
-                                            ? sortConfig.direction === "asc"
-                                                ? <ArrowUpAZ className="h-4 w-4 text-white" />
-                                                : <ArrowDownAZ className="h-4 w-4 text-white" />
-                                            : <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
-                                        }
-                                    </div>
-                                </th>
+                                            {sortConfig.field === "type"
+                                                ? sortConfig.direction === "asc"
+                                                    ? <ArrowUpAZ className="h-4 w-4 text-white" />
+                                                    : <ArrowDownAZ className="h-4 w-4 text-white" />
+                                                : <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
+                                            }
+                                        </div>
+                                    </th>
 
-                                <th
-                                    className={cn("border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.capacityGroup.widthClass)}
-                                    onClick={() => onSortChange("capacityGroup", sortConfig.field === "capacityGroup" && sortConfig.direction === "asc" ? "desc" : "asc")}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-white">Talla</span>
+                                    <th
+                                        className={cn("cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.building.widthClass)}
+                                        onClick={() => onSortChange("building", sortConfig.field === "building" && sortConfig.direction === "asc" ? "desc" : "asc")}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-white">Edificio</span>
 
-                                        {sortConfig.field === "capacityGroup"
-                                            ? sortConfig.direction === "asc"
-                                                ? <ArrowUpAZ className="h-4 w-4 text-white" />
-                                                : <ArrowDownAZ className="h-4 w-4 text-white" />
-                                            : <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
-                                        }
-                                    </div>
-                                </th>
+                                            {sortConfig.field === "building"
+                                                ? sortConfig.direction === "asc"
+                                                    ? <ArrowUpAZ className="h-4 w-4 text-white" />
+                                                    : <ArrowDownAZ className="h-4 w-4 text-white" />
+                                                : <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
+                                            }
+                                        </div>
+                                    </th>
 
-                                <th
-                                    className={cn("border-r border-r-zinc-700 px-2 bg-black", fixedColumnsConfig.capacity.widthClass)}
-                                    onClick={() => onSortChange("capacity", sortConfig.field === "capacity" && sortConfig.direction === "asc" ? "desc" : "asc")}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-white">Capacidad</span>
+                                    <th
+                                        className={cn("cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.size.widthClass)}
+                                        onClick={() => onSortChange("size", sortConfig.field === "size" && sortConfig.direction === "asc" ? "desc" : "asc")}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-white">Talla</span>
 
-                                        {sortConfig.field === "capacity"
-                                            ? sortConfig.direction === "asc"
-                                                ? <ArrowUpAZ className="h-4 w-4 text-white" />
-                                                : <ArrowDownAZ className="h-4 w-4 text-white" />
-                                            : <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
-                                        }
-                                    </div>
-                                </th>
-                            </tr>
+                                            {sortConfig.field === "size"
+                                                ? sortConfig.direction === "asc"
+                                                    ? <ArrowUpAZ className="h-4 w-4 text-white" />
+                                                    : <ArrowDownAZ className="h-4 w-4 text-white" />
+                                                : <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
+                                            }
+                                        </div>
+                                    </th>
+
+                                    <th
+                                        className={cn("cursor-pointer border-r border-r-zinc-700 px-2 bg-black", fixedColumnsConfig.capacity.widthClass)}
+                                        onClick={() => onSortChange("capacity", sortConfig.field === "capacity" && sortConfig.direction === "asc" ? "desc" : "asc")}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-white">Capacidad</span>
+
+                                            {sortConfig.field === "capacity"
+                                                ? sortConfig.direction === "asc"
+                                                    ? <ArrowUpAZ className="h-4 w-4 text-white" />
+                                                    : <ArrowDownAZ className="h-4 w-4 text-white" />
+                                                : <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
+                                            }
+                                        </div>
+                                    </th>
+                                </tr>
                             </thead>
 
                             <tbody>
@@ -191,7 +228,12 @@ export function ModuleGrid({
                                     <tr key={`fixed-${room.id}`} className="border-b h-16">
                                         {/* Sala */}
                                         <td className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors", fixedColumnsConfig.name.widthClass)}>
-                                            {room.name}
+                                            {room.id}
+                                        </td>
+
+                                        {/* Tipo */}
+                                        <td className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors", fixedColumnsConfig.name.widthClass)}>
+                                            {typeName(room.type)}
                                         </td>
 
                                         {/* Edificio */}
@@ -200,8 +242,8 @@ export function ModuleGrid({
                                         </td>
 
                                         {/* Talla */}
-                                        <td className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors", fixedColumnsConfig.capacityGroup.widthClass)}>
-                                            {room.capacityGroup}
+                                        <td className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors", fixedColumnsConfig.size.widthClass)}>
+                                            {room.sizeId}
                                         </td>
 
                                         {/* Capacidad */}
@@ -284,7 +326,7 @@ export function ModuleGrid({
                                                     onDragLeave     = { handleDragLeave }
                                                     onDrop          = { handleDrop }
                                                     onMouseEnter    = { setHoveredCell }
-                                                    onMouseLeave    = { () => setHoveredCell(null) }
+                                                    onMouseLeave    = { () => setHoveredCell( null )}
                                                 />
                                             )
                                         })
