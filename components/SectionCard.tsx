@@ -120,13 +120,21 @@ export function SectionCard({
                     onDelete    = { handleDeleteSection }
                     isCreating  = { true }
                     section     = {{
-                        id          : "",
-                        courseCode  : "",
-                        professor   : "",
-                        roomId      : roomId,
-                        day         : dayId,
-                        moduleId    : moduleId,
-                        period      : "",
+                        id                      : "",
+                        code                    : 1,
+                        session                 : "",
+                        size                    : "",
+                        correctedRegistrants    : 0,
+                        realRegistrants         : 0,
+                        plannedBuilding         : "",
+                        chairsAvailable         : 0,
+                        professor               : "",
+                        room                    : roomId,
+                        day                     : dayId,
+                        moduleId                : moduleId,
+                        subjectName             : "",
+                        subjectId               : "",
+                        period                  : "",
                     }}
                 />
             )}
@@ -146,7 +154,7 @@ export function SectionCard({
                                 title="Doble clic para editar, arrastrar para mover"
                             >
                                 <span className="truncate">
-                                    {section.courseCode}
+                                    {section.code}
                                 </span>
 
                                 <span className="truncate">
@@ -162,7 +170,7 @@ export function SectionCard({
                         {!isMoving && <TooltipContent>
                             <div className="grid">
                                 <span className="truncate">
-                                    {section.courseCode}
+                                    {section.code}
                                 </span>
 
                                 <span className="truncate">
