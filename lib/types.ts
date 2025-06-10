@@ -1,45 +1,63 @@
 export interface Section {
-    id: string
-    courseCode: string
-    professor: string
-    roomId: string
-    day: number // 0-6 (lunes a domingo)
-    moduleId: string // Ahora es string para permitir módulos como "2-a", "2-b", etc.
-    period: string
+    id                      : string;
+    code                    : number;
+    session                 : string;
+    size                    : string;
+    correctedRegistrants    : number;
+    realRegistrants         : number;
+    plannedBuilding         : string;
+    chairsAvailable         : number | null;
+    room                    : string;
+    professor               : string;
+    day                     : number;
+    moduleId                : string;
+    subjectName             : string;
+    subjectId               : string;
+    period                  : string;
 }
+
+
+export type Type = 'ROOM' | 'AUDITORIO' | 'DIS' | 'LAB' | 'LABPC' | 'GARAGE' | 'CORE' | 'COMMUNIC';
+export type Size = 'XS' | 'XE' | 'S' | 'SE' | 'MS' | 'M' | 'L' | 'XL' | 'XXL';
+
 
 export interface Room {
-    id: string
-    name: string
-    building: string
-    capacity: number
-    capacityGroup: "XS" | "S" | "MS" | "M" | "L" | "LAB.PCA" | "AUDITORIO"
+    id          : string;
+    building    : string;
+    capacity    : number;
+    type        : Type;
+    sizeId      : Size;
 }
+
 
 export interface Module {
-    id: string
-    name: string
-    startTime: string
-    endTime: string
-    dayId: number // A qué día pertenece este módulo
-    order: number // Para ordenar los módulos dentro de un día
+    id          : string;
+    name        : string;
+    startTime   : string;
+    endTime     : string;
+    dayId       : number;
+    order       : number;
 }
+
 
 export interface Day {
-    id: number
-    name: string
+    id      : number;
+    name    : string;
 }
 
-export type SortField = "name" | "building" | "capacityGroup" | "capacity"
-export type SortDirection = "asc" | "desc"
+
+export type SortField       = "name" | "type" | "building" | "size" | "capacity"
+export type SortDirection   = "asc" | "desc"
+
 
 export interface Filters {
-    periods: string[]
-    buildings: string[]
-    capacityGroups: string[]
+    periods         : string[];
+    buildings       : string[];
+    capacityGroups  : string[];
 }
 
+
 export interface SortConfig {
-    field: SortField
-    direction: SortDirection
+    field       : SortField;
+    direction   : SortDirection;
 }
