@@ -1,22 +1,34 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { Section, Room, Module } from "@/lib/types"
-import { days, getModulesForDay } from "@/lib/data"
+
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter
+}                   from "@/components/ui/dialog"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+}                   from "@/components/ui/select"
+import { Button }   from "@/components/ui/button"
+import { Input }    from "@/components/ui/input"
+import { Label }    from "@/components/ui/label"
 import {
     getRoomsFromStorage,
     getCourseCodesToStorage,
     getProfessorsFromStorage,
     getPeriodsFromStorage,
     getModulesFromStorage
-} from "@/lib/localStorage";
+}                                       from "@/lib/localStorage";
+import { days, getModulesForDay }       from "@/lib/data"
+import type { Section, Room, Module }   from "@/lib/types"
 
 
 interface SectionModalProps {
@@ -104,7 +116,7 @@ export function SectionModal({
                             </p>
 
                             <p className="text-sm">
-                                <span className="font-bold">Sigla:</span> {formData.courseCode}
+                                <span className="font-bold">Sigla:</span> {formData.subjectId}
                             </p>
 
                             <p className="text-sm">
@@ -118,8 +130,8 @@ export function SectionModal({
                     {isCreating && (
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1">
-                                <Label htmlFor="courseCode">Sigla</Label>
-                                <Select value={formData.courseCode} onValueChange={(value) => handleSelectChange("courseCode", value)}>
+                                <Label htmlFor="id">Sigla</Label>
+                                <Select value={formData.id} onValueChange={(value) => handleSelectChange("id", value)}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Seleccionar sigla" />
                                     </SelectTrigger>
@@ -155,7 +167,7 @@ export function SectionModal({
                         <div className="space-y-1">
                             <Label htmlFor="roomId">Sala</Label>
 
-                            <Select value={formData.roomId} onValueChange={(value) => handleSelectChange("roomId", value)}>
+                            <Select value={formData.room} onValueChange={(value) => handleSelectChange("roomId", value)}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Seleccionar sala" />
                                 </SelectTrigger>
@@ -163,7 +175,7 @@ export function SectionModal({
                                 <SelectContent>
                                     {availableRooms.map((room) => (
                                         <SelectItem key={room.id} value={room.id}>
-                                            {room.name} ({room.building}, {room.capacityGroup}, {room.capacity})
+                                            {room.id} ({room.building}, {room.sizeId}, {room.capacity})
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
