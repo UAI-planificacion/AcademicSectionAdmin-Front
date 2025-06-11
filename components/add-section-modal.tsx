@@ -9,7 +9,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Section, Room } from "@/lib/types"
-import { periods, days, getModulesForDay } from "@/lib/data"
+import { periods } from "@/lib/data"
+import { useDays } from "@/hooks/use-days"
+import { useModules, getModulesForDay } from "@/hooks/use-modules"
 
 interface AddSectionModalProps {
     rooms: Room[]
@@ -19,7 +21,9 @@ interface AddSectionModalProps {
 
 export function AddSectionModal({ rooms, onClose, onAdd }: AddSectionModalProps) {
     const [selectedDay, setSelectedDay] = useState<number>(0)
-    const dayModules = getModulesForDay(selectedDay)
+    const { days } = useDays();
+    const { modules } = useModules();
+    const dayModules = getModulesForDay(modules, selectedDay)
 
     const [formData, setFormData] = useState<Omit<Section, "id">>({
         code                    : 1,
@@ -48,7 +52,7 @@ export function AddSectionModal({ rooms, onClose, onAdd }: AddSectionModalProps)
             setSelectedDay(Number(value))
             // Reset moduleId when day changes to avoid invalid combinations
             const newDay = Number(value)
-            const newDayModules = getModulesForDay(newDay)
+            const newDayModules = getModulesForDay(modules, newDay)
             setFormData((prev) => ({
                 ...prev,
                 day: newDay,
