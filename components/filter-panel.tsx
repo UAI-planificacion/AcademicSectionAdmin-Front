@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Label } from "@/components/ui/label"
-import { periods, capacityGroups } from "@/lib/data"
+import { periods, sizes } from "@/lib/data"
 import type { Filters, Room } from "@/lib/types"
 import MultiSelectCombobox from "./inputs/Combobox"
 
@@ -15,7 +15,7 @@ export function FilterPanel({ rooms, onFilterChange }: FilterPanelProps) {
     const [localFilters, setLocalFilters] = useState<Filters>({
         periods: [],
         buildings: [],
-        capacityGroups: [],
+        sizes: [],
     })
 
     // Extract unique buildings for filter options
@@ -36,7 +36,7 @@ export function FilterPanel({ rooms, onFilterChange }: FilterPanelProps) {
     }
 
     const handleCapacityGroupsChange = (values: string[]) => {
-        setLocalFilters((prev) => ({ ...prev, capacityGroups: values }))
+        setLocalFilters((prev) => ({ ...prev, sizes: values }))
     }
 
     const handlePeriodsChange = (values: string[]) => {
@@ -71,10 +71,10 @@ export function FilterPanel({ rooms, onFilterChange }: FilterPanelProps) {
                 <Label htmlFor="capacityGroups">Talla</Label>
 
                 <MultiSelectCombobox
-                    options={capacityGroups.map((group) => ({ value: group.value, label: group.label }))}
+                    options={sizes.map((group) => ({ value: group.value, label: group.label }))}
                     placeholder="Todas las tallas"
                     onSelectionChange={handleCapacityGroupsChange}
-                    defaultValues={localFilters.capacityGroups}
+                    defaultValues={localFilters.sizes}
                 />
             </div>
         </div>
