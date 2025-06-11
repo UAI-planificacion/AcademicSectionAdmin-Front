@@ -80,7 +80,6 @@ export function SectionCard({
 
     return (
         <td
-            key={`${dayId}-${moduleId}`}
             className={cn(
                 "border p-0.5 text-center min-w-[80px] h-[40px] transition-none hover:bg-zinc-200/80 dark:hover:bg-zinc-800/50 transition-colors group",
                 isLastModule && "border-r-zinc-400 dark:border-r-zinc-600 transition-colors",
