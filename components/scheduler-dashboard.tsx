@@ -11,14 +11,17 @@ import type {
     Filters,
     SortConfig
 }                                           from '@/lib/types';
-import { initialSections, initialRooms }    from '@/lib/data';
-import { initializeLocalStorageIfNeeded }   from '@/lib/initLocalStorage';
+import { useSections } from '@/hooks/use-sections';
+import { useSpaces } from '@/hooks/use-spaces';
 import { extractDataFromSections }          from '@/lib/localStorage';
 import { SectionModal }                     from '@/components/section-modal';
 import { FilterPanel }                      from '@/components/filter-panel';
 import { ModuleGrid }                       from '@/components/module-grid';
 
 export function SchedulerDashboard() {
+    const { sections: initialSections, loading: sectionsLoading, error: sectionsError } = useSections();
+    const { spaces: initialRooms, loading: spacesLoading, error: spacesError } = useSpaces();
+
     const [sections, setSections]                   = useState<Section[]>([]);
     const [filteredSections, setFilteredSections]   = useState<Section[]>([]);
     const [rooms, setRooms]                         = useState<Room[]>([]);
@@ -33,7 +36,7 @@ export function SchedulerDashboard() {
     const [filters, setFilters] = useState<Filters>({
         periods: [],
         buildings: [],
-        capacityGroups: [],
+        sizes: [],
     });
 
     const sortedRooms = [...filteredRooms].sort((a, b) => {
@@ -41,11 +44,13 @@ export function SchedulerDashboard() {
 
         if (field === "capacity") {
             return direction === "asc" ? a.capacity - b.capacity : b.capacity - a.capacity
-        } else if (field === "size") {
+        }
+        else if (field === "size") {
             return direction === "asc"
                 ? a.sizeId.localeCompare(b.sizeId)
                 : b.sizeId.localeCompare(a.sizeId)
-        } else {
+        }
+        else {
             const aValue = a[field as keyof Room];
             const bValue = b[field as keyof Room];
 
@@ -58,21 +63,22 @@ export function SchedulerDashboard() {
     });
 
     useEffect(() => {
-        setSections(initialSections)
-        setFilteredSections(initialSections)
-        setRooms(initialRooms)
-        setFilteredRooms(initialRooms)
-        setIsInitialized(true)
-        initializeLocalStorageIfNeeded()
-    }, [])
+        if (!sectionsLoading && !spacesLoading) {
+            setSections(initialSections);
+            setFilteredSections(initialSections);
+            setRooms(initialRooms);
+            setFilteredRooms(initialRooms);
+            setIsInitialized(true);
+        }
+    }, [initialSections, initialRooms, sectionsLoading, spacesLoading]);
 
     useEffect(() => {
-        if (!isInitialized) return
+        if ( !isInitialized ) return;
 
-        console.log("Aplicando filtros:", filters)
+        console.log("Aplicando filtros:", filters);
 
         // Filtrar secciones
-        let filteredSecs = [...sections]
+        let filteredSecs = [...sections];
 
         // Filter by periods (multiple selection)
         if (filters.periods.length > 0) {
@@ -88,8 +94,8 @@ export function SchedulerDashboard() {
         }
 
         // Filter by capacity groups (multiple selection)
-        if (filters.capacityGroups && filters.capacityGroups.length > 0) {
-            filteredRms = filteredRms.filter((room) => filters.capacityGroups.includes(room.sizeId))
+        if (filters.sizes && filters.sizes.length > 0) {
+            filteredRms = filteredRms.filter((room) => filters.sizes.includes(room.sizeId))
         }
 
         // Ahora filtramos las secciones para que solo incluyan las que están en las salas filtradas
@@ -115,10 +121,9 @@ export function SchedulerDashboard() {
 
 
     const handleUpdateSection = (updatedSection: Section) => {
-        // Check for overlapping sections
         const overlapping = sections.some(( section : Section ) => {
             if ( section.id         === updatedSection.id )         return false;
-            if ( section.room     !== updatedSection.room )     return false;
+            if ( section.room       !== updatedSection.room )       return false;
             if ( section.day        !== updatedSection.day )        return false;
             if ( section.moduleId   !== updatedSection.moduleId )   return false;
 
