@@ -1,12 +1,17 @@
-import { Room, Section, Module } from './types';
+import { Room, Section, Module, Day } from './types';
+
+export const saveSectionsToStorage = (sections: Section[]): void => {
+    localStorage.setItem('sections', JSON.stringify(sections));
+};
+
+export const getSectionsFromStorage = (): Section[] | null => {
+    const storedSections = localStorage.getItem('sections');
+    return storedSections ? JSON.parse(storedSections) : null;
+};
 
 // Funciones para guardar datos en localStorage
 export const saveRoomsToStorage = (rooms: Room[]): void => {
     localStorage.setItem('rooms', JSON.stringify(rooms));
-};
-
-export const saveCourseCodesToStorage = (courseCodes: string[]): void => {
-    localStorage.setItem('courseCodes', JSON.stringify(courseCodes));
 };
 
 export const saveProfessorsToStorage = (professors: string[]): void => {
@@ -27,10 +32,6 @@ export const getRoomsFromStorage = (): Room[] => {
     return storedRooms ? JSON.parse(storedRooms) : [];
 };
 
-export const getCourseCodesToStorage = (): string[] => {
-    const storedCourseCodes = localStorage.getItem('courseCodes');
-    return storedCourseCodes ? JSON.parse(storedCourseCodes) : [];
-};
 
 export const getProfessorsFromStorage = (): string[] => {
     const storedProfessors = localStorage.getItem('professors');
@@ -47,13 +48,18 @@ export const getModulesFromStorage = (): Module[] => {
     return storedModules ? JSON.parse(storedModules) : [];
 };
 
+// Days
+export const saveDaysToStorage = (days: Day[]): void => {
+    localStorage.setItem('days', JSON.stringify(days));
+};
+
+export const getDaysFromStorage = (): Day[] | null => {
+    const storedDays = localStorage.getItem('days');
+    return storedDays ? JSON.parse(storedDays) : null;
+};
+
 // Función para extraer datos únicos de las secciones existentes
 export const extractDataFromSections = (sections: Section[]): void => {
-    // Extraer códigos de curso únicos
-    const courseCodes = sections.map(section => section.id);
-    const uniqueCourseCodes = Array.from(new Set(courseCodes));
-    saveCourseCodesToStorage(uniqueCourseCodes);
-
     // Extraer profesores únicos
     const professors = sections.map(section => section.professor);
     const uniqueProfessors = Array.from(new Set(professors));
