@@ -27,12 +27,15 @@ export interface Room {
     capacity    : number;
     type        : Type;
     sizeId      : Size;
+    createdAt?  : string;
+    updatedAt?  : string;
 }
 
 
 export interface Module {
     id          : string;
     name        : string;
+    difference? : string;
     startTime   : string;
     endTime     : string;
     dayId       : number;
@@ -43,6 +46,8 @@ export interface Module {
 export interface Day {
     id      : number;
     name    : string;
+    shortName : string;
+    mediumName : string;
 }
 
 
@@ -51,13 +56,23 @@ export type SortDirection   = "asc" | "desc"
 
 
 export interface Filters {
-    periods         : string[];
-    buildings       : string[];
-    capacityGroups  : string[];
+    periods     : string[];
+    buildings   : string[];
+    sizes       : string[];
 }
 
 
 export interface SortConfig {
     field       : SortField;
     direction   : SortDirection;
+}
+
+
+export interface Sizes {
+    id              : string;
+    detail          : string;
+    min?            : number;
+    max?            : number;
+    lessThan?       : number;
+    greaterThan?    : number;
 }
