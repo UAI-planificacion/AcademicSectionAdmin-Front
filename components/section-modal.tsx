@@ -22,12 +22,12 @@ import { Input }    from "@/components/ui/input"
 import { Label }    from "@/components/ui/label"
 import {
     getRoomsFromStorage,
-    getCourseCodesToStorage,
     getProfessorsFromStorage,
     getPeriodsFromStorage,
     getModulesFromStorage
 }                                       from "@/lib/localStorage";
-import { days, getModulesForDay }       from "@/lib/data"
+import { useDays } from '@/hooks/use-days';
+import { useModules, getModulesForDay } from '@/hooks/use-modules';
 import type { Section, Room, Module }   from "@/lib/types"
 
 
@@ -49,58 +49,59 @@ export function SectionModal({
     onDelete,
     isCreating = false
 }: SectionModalProps ): React.JSX.Element {
-    const [formData, setFormData] = useState<Section>({ ...section });
-    const [selectedDay, setSelectedDay] = useState<number>( section.day );
-    const [courseCodes, setCourseCodes] = useState<string[]>([]);
-    const [professors, setProfessors] = useState<string[]>([]);
-    const [periods, setPeriods] = useState<string[]>([]);
-    const [allModules, setAllModules] = useState<Module[]>([]);
-    const [availableRooms, setAvailableRooms] = useState<Room[]>(rooms);
-    const dayModules = getModulesForDay( selectedDay );
+    const [formData, setFormData]               = useState<Section>({ ...section });
+    const [selectedDay, setSelectedDay]         = useState<number>( section.day );
+    // const [courseCodes, setCourseCodes]         = useState<string[]>( [] );
+    const [professors, setProfessors]           = useState<string[]>( [] );
+    const [periods, setPeriods]                 = useState<string[]>( [] );
+    // const [allModules, setAllModules]           = useState<Module[]>( [] );
+    const [availableRooms, setAvailableRooms]   = useState<Room[]>( rooms );
+    const { days, loading: daysLoading } = useDays();
+    const { modules, loading: modulesLoading } = useModules();
+    const dayModules = getModulesForDay(modules, selectedDay);
+
     
     // Cargar datos desde localStorage al montar el componente
     useEffect(() => {
         // Usar las funciones de localStorage para cargar los datos
-        setAvailableRooms(getRoomsFromStorage());
-        setCourseCodes(getCourseCodesToStorage());
-        setProfessors(getProfessorsFromStorage());
-        setPeriods(getPeriodsFromStorage());
-        setAllModules(getModulesFromStorage());
+        setAvailableRooms( getRoomsFromStorage() );
+        setProfessors( getProfessorsFromStorage() );
+        setPeriods( getPeriodsFromStorage() );
+        // setAllModules( getModulesFromStorage() );
     }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
-        setFormData((prev) => ({ ...prev, [name]: value }))
+        setFormData(( prev ) => ({ ...prev, [ name ]: value }))
     }
 
-    const handleSelectChange = (name: string, value: string | number) => {
-        if (name === "day") {
-            setSelectedDay(Number(value))
+    const handleSelectChange = ( name: string, value: string | number ) => {
+        if ( name === "day" ) {
+            setSelectedDay( Number( value ));
             // Reset moduleId when day changes to avoid invalid combinations
-            const newDay = Number(value)
-            const newDayModules = getModulesForDay(newDay)
-            setFormData((prev) => ({
+            const newDay        = Number( value );
+            const newDayModules = getModulesForDay( modules, newDay );
+            setFormData(( prev ) => ({
                 ...prev,
-                day: newDay,
-                moduleId: newDayModules.length > 0 ? newDayModules[0].id : "",
+                day       : newDay,
+                moduleId  : newDayModules.length > 0 ? newDayModules[0].id : "",
             }))
         } else {
-            setFormData((prev) => ({ ...prev, [name]: value }))
+            setFormData(( prev ) => ({ ...prev, [ name ]: value }))
         }
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        const success = onSave(formData)
-        if (success) {
-            onClose()
-        }
+    const handleSubmit = ( e: React.FormEvent ) => {
+        e.preventDefault();
+        const success = onSave( formData );
+
+        if ( success ) onClose();
     }
 
     const handleDelete = () => {
-        if (window.confirm("¿Estás seguro de que deseas eliminar esta sección?")) {
-            onDelete(section.id)
-            onClose()
+        if ( window.confirm( "¿Estás seguro de que deseas eliminar esta sección?" )) {
+            onDelete( section.id );
+            onClose();
         }
     }
 
@@ -116,7 +117,7 @@ export function SectionModal({
                             </p>
 
                             <p className="text-sm">
-                                <span className="font-bold">Sigla:</span> {formData.subjectId}
+                                <span className="font-bold">Asignatura:</span> {formData.subjectId} - {formData.subjectName}
                             </p>
 
                             <p className="text-sm">
@@ -124,12 +125,28 @@ export function SectionModal({
                             </p>
                         </div>
                     )}
+
+                    {/* {isCreating && (
+                        <div className="grid grid-cols-3 gap-2">
+                            <p className="text-sm">
+                                <span className="font-bold">Sala:</span> {formData.room}
+                            </p>
+
+                            <p className="text-sm">
+                                <span className="font-bold">Módulo:</span> {formData.moduleId}
+                            </p>
+
+                            <p className="text-sm">
+                                <span className="font-bold">Día:</span> {formData.day}
+                            </p>
+                        </div>
+                    )} */}
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {isCreating && (
                         <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1">
+                            {/* <div className="space-y-1">
                                 <Label htmlFor="id">Sigla</Label>
                                 <Select value={formData.id} onValueChange={(value) => handleSelectChange("id", value)}>
                                     <SelectTrigger>
@@ -143,8 +160,8 @@ export function SectionModal({
                                         ))}
                                     </SelectContent>
                                 </Select>
-                            </div>
-                            
+                            </div> */}
+
                             <div className="space-y-1">
                                 <Label htmlFor="period">Periodo</Label>
                                 <Select value={formData.period} onValueChange={(value) => handleSelectChange("period", value)}>
@@ -175,7 +192,7 @@ export function SectionModal({
                                 <SelectContent>
                                     {availableRooms.map((room) => (
                                         <SelectItem key={room.id} value={room.id}>
-                                            {room.id} ({room.building}, {room.sizeId}, {room.capacity})
+                                            {room.id} ({room.type}, {room.sizeId}, {room.capacity})
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -204,6 +221,7 @@ export function SectionModal({
                             <Label htmlFor="day">Día</Label>
 
                             <Select
+                                disabled={daysLoading}
                                 value={formData.day.toString()}
                                 onValueChange={(value) => handleSelectChange("day", Number.parseInt(value))}
                             >
