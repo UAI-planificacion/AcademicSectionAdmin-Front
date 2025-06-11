@@ -2,7 +2,8 @@
 
 import React, { useState, useRef } from "react"
 
-import { AlertCircle, ArrowDownAZ, ArrowUpAZ } from "lucide-react"
+import { v7 as uuid }                           from 'uuid';
+import { AlertCircle, ArrowDownAZ, ArrowUpAZ }  from "lucide-react"
 
 import type {
     Section,
@@ -10,10 +11,11 @@ import type {
     SortConfig,
     SortField,
     SortDirection
-}                                   from "@/lib/types";
-import { SectionCard }              from "@/components/SectionCard";
-import { days, getModulesForDay }   from "@/lib/data";
-import { cn }                       from "@/lib/utils";
+}                                       from "@/lib/types";
+import { SectionCard }                  from "@/components/SectionCard";
+import { useDays }                      from "@/hooks/use-days";
+import { useModules, getModulesForDay } from "@/hooks/use-modules";
+import { cn }                           from "@/lib/utils";
 
 
 interface ModuleGridProps {
@@ -41,6 +43,9 @@ export function ModuleGrid({
     // Referencias para sincronizar el scroll
     const fixedTableRef         = useRef<HTMLDivElement>( null );
     const scrollableTableRef    = useRef<HTMLDivElement>( null );
+
+    const { days, loading: daysLoading, error: daysError } = useDays();
+    const { modules, loading: modulesLoading, error: modulesError } = useModules();
 
     // Función para sincronizar el scroll vertical
     const handleScroll = ( e: React.UIEvent<HTMLDivElement> ) => {
@@ -158,7 +163,7 @@ export function ModuleGrid({
                                     </th>
 
                                     <th
-                                        className={cn("cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.building.widthClass)}
+                                        className={cn("cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.type.widthClass)}
                                         onClick={() => onSortChange("type", sortConfig.field === "type" && sortConfig.direction === "asc" ? "desc" : "asc")}
                                     >
                                         <div className="flex items-center justify-between">
@@ -232,7 +237,7 @@ export function ModuleGrid({
                                         </td>
 
                                         {/* Tipo */}
-                                        <td className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors", fixedColumnsConfig.name.widthClass)}>
+                                        <td className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors", fixedColumnsConfig.type.widthClass)}>
                                             {typeName(room.type)}
                                         </td>
 
@@ -264,10 +269,10 @@ export function ModuleGrid({
                         <thead className="sticky top-0 z-50 bg-black">
                             <tr className="bg-black text-white h-12">
                                 {days.slice( 0, 6 ).map(( day ) => {
-                                    const dayModules = getModulesForDay( day.id );
+                                    const dayModules = getModulesForDay( modules, day.id );
 
                                     return (
-                                        <th key={day.id} colSpan={dayModules.length} className="border-x border-b border-zinc-700 p-2 text-center">
+                                        <th key={uuid()} colSpan={dayModules.length} className="border-x border-b border-zinc-700 p-2 text-center">
                                             {day.name}
                                         </th>
                                     )
@@ -276,15 +281,15 @@ export function ModuleGrid({
 
                             <tr className="bg-zinc-800 text-white h-8 sticky top-12 z-40">
                                 {days.slice(0, 6).map(( day ) => {
-                                    const dayModules = getModulesForDay( day.id );
+                                    const dayModules = getModulesForDay( modules, day.id );
 
                                     return dayModules.map(( module, moduleIndex ) => {
                                         return (
-                                            <th key={`${day.id}-${module.id}`} className={cn(
-                                                "border-x border-l-zinc-700 text-xs min-w-[80px]",
-                                                moduleIndex === dayModules.length - 1 && "border-r-zinc-900",
-                                                moduleIndex !== dayModules.length - 1 && "border-r-zinc-700"
-                                            )}>
+                                            <th key={uuid()} className={cn(
+                                                    "border-x border-l-zinc-700 text-xs min-w-[80px]",
+                                                    moduleIndex === dayModules.length - 1 ? "border-r-zinc-400 dark:border-r-zinc-600" : "border-r-zinc-700"
+                                                )}
+                                            >
                                                 {module.name}
                                             </th>
                                         );
@@ -295,9 +300,9 @@ export function ModuleGrid({
 
                         <tbody>
                             {rooms.map((room) => (
-                                <tr key={`scroll-${room.id}`} className="border-b h-16">
+                                <tr key={uuid()} className="border-b h-16">
                                     {days.slice(0, 6).map(( day ) => {
-                                        const dayModules = getModulesForDay( day.id )
+                                        const dayModules = getModulesForDay( modules, day.id )
 
                                         return dayModules.map((module, moduleIndex) => {
                                             const cellSections  = getSectionsForCell(room.id, day.id, module.id);
@@ -309,7 +314,7 @@ export function ModuleGrid({
 
                                             return (
                                                 <SectionCard
-                                                    key             = { `${day.id}-${module.id}` }
+                                                    key             = { uuid() }
                                                     section         = { section }
                                                     dayId           = { day.id }
                                                     moduleId        = { module.id }
