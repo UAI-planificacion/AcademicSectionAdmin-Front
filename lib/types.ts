@@ -75,4 +75,19 @@ export interface Sizes {
     max?            : number;
     lessThan?       : number;
     greaterThan?    : number;
+    label : string;
+}
+
+
+export interface Periods {
+    id              : string;
+    name            : string;
+    startDate       : Date | null;
+    endDate         : Date | null;
+    openingDate     : Date | null;
+    closingDate     : Date | null;
+    status          : 'InProgress' | 'Closed' | 'Open';
+    createdAt       : string;
+    updatedAt       : string;
+    label           : string;
 }
