@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useState, memo, useCallback } from 'react';
 
 import { PlusCircle } from 'lucide-react';
 
@@ -36,7 +36,8 @@ interface SectionCardProps {
     onSaveSectionFromCard?: (section: Section) => boolean
 }
 
-export function SectionCard({
+// Using React.memo to prevent unnecessary re-renders
+export const SectionCard = memo(function SectionCard({
     section,
     dayId,
     moduleId,
@@ -59,24 +60,49 @@ export function SectionCard({
     const [isMoving, setIsMoving] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
 
-    const handleCreateSection = () => {
+    const handleCreateSection = useCallback(() => {
         setShowCreateModal(true);
-    };
+    }, []);
 
-    const handleCloseModal = () => {
+    const handleCloseModal = useCallback(() => {
         setShowCreateModal(false);
-    };
+    }, []);
 
-    const handleSaveSection = (newSection: Section): boolean => {
+    const handleSaveSection = useCallback((newSection: Section): boolean => {
         if (onSaveSectionFromCard) {
             return onSaveSectionFromCard(newSection);
         }
         return false;
-    };
+    }, [onSaveSectionFromCard]);
 
-    const handleDeleteSection = () => {
+    const handleDeleteSection = useCallback(() => {
         setShowCreateModal(false);
-    };
+    }, []);
+    
+    const handleMouseEnter = useCallback(() => onMouseEnter(cellId), [onMouseEnter, cellId]);
+    const handleMouseLeave = useCallback(() => onMouseLeave(), [onMouseLeave]);
+    
+    const handleDragOver = useCallback((e: React.DragEvent) => {
+        setIsMoving(true);
+        onDragOver(e, roomId, dayId, moduleId);
+    }, [onDragOver, roomId, dayId, moduleId]);
+    
+    const handleDrop = useCallback((e: React.DragEvent) => {
+        setIsMoving(false);
+        onDrop(e, roomId, dayId, moduleId);
+    }, [onDrop, roomId, dayId, moduleId]);
+    
+    const handleSectionClick = useCallback(() => {
+        if (section) {
+            onSectionClick(section.id);
+        }
+    }, [section, onSectionClick]);
+    
+    const handleDragStart = useCallback((e: React.DragEvent) => {
+        if (section) {
+            onDragStart(e, section.id);
+        }
+    }, [section, onDragStart]);
 
     return (
         <td
@@ -89,17 +115,11 @@ export function SectionCard({
                 isDragOver && !hasSection && "bg-green-100 dark:bg-green-900 transition-colors",
                 isDragOver && hasSection && "bg-red-100 dark:bg-red-900 transition-colors",
             )}
-            onMouseEnter={() => onMouseEnter( cellId )}
-            onMouseLeave={ onMouseLeave }
-            onDragOver={(e) => {
-                setIsMoving( true );
-                onDragOver( e, roomId, dayId, moduleId );
-            }}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            onDragOver={handleDragOver}
             onDragLeave={onDragLeave}
-            onDrop={(e) => {
-                setIsMoving( false );
-                onDrop( e, roomId, dayId, moduleId );
-            }}
+            onDrop={handleDrop}
         >
             {!section && !isDragOver && (
                 <button 
@@ -144,12 +164,12 @@ export function SectionCard({
                         <TooltipTrigger>
                             <div
                                 draggable
-                                onDragStart={(e) => onDragStart(e, section.id)}
+                                onDragStart={handleDragStart}
                                 className={cn(
                                     "max-w-24 grid grid-rows-2 bg-black text-white h-full p-1 rounded cursor-move text-xs",
                                     draggedSection === section.id && "opacity-50",
                                 )}
-                                onDoubleClick={() => onSectionClick(section.id)}
+                                onDoubleClick={handleSectionClick}
                                 title="Doble clic para editar, arrastrar para mover"
                             >
                                 <span className="truncate">
@@ -185,5 +205,15 @@ export function SectionCard({
                 </TooltipProvider>
             )}
         </td>
-    )
-}
+    );
+}, (prevProps, nextProps) => {
+    // Custom comparison function to prevent unnecessary re-renders
+    // Only re-render if these props change
+    return (
+        prevProps.section?.id === nextProps.section?.id &&
+        prevProps.isDragOver === nextProps.isDragOver &&
+        prevProps.hasSection === nextProps.hasSection &&
+        prevProps.draggedSection === nextProps.draggedSection &&
+        prevProps.cellId === nextProps.cellId
+    );
+});
