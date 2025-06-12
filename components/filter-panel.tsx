@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { Label } from "@/components/ui/label"
-import { periods, sizes } from "@/lib/data"
 import type { Filters, Room } from "@/lib/types"
 import MultiSelectCombobox from "./inputs/Combobox"
+import { usePeriods } from "@/hooks/use-periods"
+import { useSizes } from "@/hooks/use-sizes"
 
 interface FilterPanelProps {
     rooms: Room[]
@@ -17,6 +18,10 @@ export function FilterPanel({ rooms, onFilterChange }: FilterPanelProps) {
         buildings: [],
         sizes: [],
     })
+    
+    // Use the periods hook
+    const { periods, loading: periodsLoading } = usePeriods();
+    const { sizes, loading: sizesLoading } = useSizes();
 
     // Extract unique buildings for filter options
     const buildings = Array.from(new Set(rooms.map((room) => room.building)))
@@ -49,7 +54,7 @@ export function FilterPanel({ rooms, onFilterChange }: FilterPanelProps) {
                 <Label htmlFor="periods">Periodos</Label>
 
                 <MultiSelectCombobox
-                    options={periods.map((period) => ({ value: period, label: period }))}
+                    options={periods.map((period) => ({ value: period.id, label: period.label }))}
                     placeholder="Todos los periodos"
                     onSelectionChange={handlePeriodsChange}
                     defaultValues={localFilters.periods}
@@ -71,7 +76,7 @@ export function FilterPanel({ rooms, onFilterChange }: FilterPanelProps) {
                 <Label htmlFor="capacityGroups">Talla</Label>
 
                 <MultiSelectCombobox
-                    options={sizes.map((group) => ({ value: group.value, label: group.label }))}
+                    options={sizes.map((size) => ({ value: size.id, label: size.label }))}
                     placeholder="Todas las tallas"
                     onSelectionChange={handleCapacityGroupsChange}
                     defaultValues={localFilters.sizes}
