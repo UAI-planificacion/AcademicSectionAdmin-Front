@@ -1,4 +1,4 @@
-import { Room, Section, Module, Day } from './types';
+import { Room, Section, Module, Day, Sizes, Periods } from './types';
 
 export const saveSectionsToStorage = (sections: Section[]): void => {
     localStorage.setItem('sections', JSON.stringify(sections));
@@ -56,6 +56,16 @@ export const saveDaysToStorage = (days: Day[]): void => {
 export const getDaysFromStorage = (): Day[] | null => {
     const storedDays = localStorage.getItem('days');
     return storedDays ? JSON.parse(storedDays) : null;
+};
+
+// Sizes
+export const saveSizesToStorage = (sizes: Sizes[]): void => {
+    localStorage.setItem('sizes', JSON.stringify(sizes));
+};
+
+export const getSizesFromStorage = (): Sizes[] => {
+    const storedSizes = localStorage.getItem('sizes');
+    return storedSizes ? JSON.parse(storedSizes) : [];
 };
 
 // Función para extraer datos únicos de las secciones existentes
