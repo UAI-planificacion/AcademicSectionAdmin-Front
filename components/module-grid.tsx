@@ -2,7 +2,19 @@
 
 import React, { useState, useRef, useCallback, useMemo } from "react"
 
-import { AlertCircle, Armchair, ArrowDown01, ArrowDownAZ, ArrowUp10, ArrowUpAZ, Building2, MemoryStick, Ruler, FilterIcon, Filter, Diameter }  from "lucide-react"
+import {
+    AlertCircle,
+    Armchair,
+    ArrowDownAZ,
+    ArrowUpAZ,
+    Building2,
+    Ruler,
+    Filter,
+    Cuboid,
+    Proportions,
+    ArrowUp01,
+    ArrowDown10
+}  from "lucide-react"
 
 import type {
     Section,
@@ -125,11 +137,11 @@ export function ModuleGrid({
     }
 
     const fixedColumnsConfig = {
-        name        : { widthClass: "w-[120px] max-w-[120px]",   leftClass: "left-0",       zIndexClass: "z-40" },
-        type        : { widthClass: "w-[100px] max-w-[100px]",   leftClass: "left-[120px]", zIndexClass: "z-30" },
-        building    : { widthClass: "w-[80px] max-w-[80px]",   leftClass: "left-[120px]", zIndexClass: "z-30" },
-        size        : { widthClass: "w-[80px] max-w-[80px]",    leftClass: "left-[210px]", zIndexClass: "z-20" },
-        capacity    : { widthClass: "w-[8px] max-w-[80px]",   leftClass: "left-[290px]", zIndexClass: "z-10" },
+        name        : { widthClass: "w-[100px] max-w-[100px] truncate" },
+        type        : { widthClass: "w-[80px] max-w-[80px] truncate" },
+        building    : { widthClass: "w-[80px] max-w-[80px] truncate text-center" },
+        size        : { widthClass: "w-[80px] max-w-[80px] truncate text-center" },
+        capacity    : { widthClass: "w-[80px] max-w-[80px] truncate text-center" },
     };
 
     const typeName = ( type: Room["type"] ) => ({
@@ -153,20 +165,21 @@ export function ModuleGrid({
             )}
 
             {/* Tabla para columnas fijas */}
-            <div className="z-10 overflow-y-auto w-[78rem] max-h-[calc(100vh-95px)] rounded-tl-lg relative hide-vertical-scrollbar" ref={fixedTableRef} onScroll={handleScroll}>
+            <div className="z-10 overflow-y-auto w-[85rem] max-h-[calc(100vh-95px)] rounded-tl-lg relative hide-vertical-scrollbar" ref={fixedTableRef} onScroll={handleScroll}>
                 <div className="relative hide-vertical-scrollbar">
                     <table className="border-collapse w-full hide-vertical-scrollbar">
                         <thead className="sticky top-0 z-50 bg-black hide-vertical-scrollbar">
                             <tr className="h-20">
                                 <th
-                                    className={cn("cursor-pointer px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.name.widthClass)}
+                                    className={cn("cursor-pointer px-2 bg-black border-r border-zinc-700 w-[120px] max-w-[120px]", fixedColumnsConfig.name.widthClass)}
                                     onClick={() => onSortChange("name", sortConfig.field === "name" && sortConfig.direction === "asc" ? "desc" : "asc")}
                                 >
                                     <div className="flex items-center justify-between">
-                                        <span className="text-left text-white text-sm">Sala</span>
+                                        {/* <span className="text-left text-white text-sm">Sala</span> */}
+                                        <Cuboid className="text-white w-5 h-5" />
+
                                         <Filter className="text-white w-4 h-4" />
 
-                                        {/* <Armchair className="text-white w-5 h-5" /> */}
                                         {sortConfig.field === "name"
                                             ? sortConfig.direction === "asc"
                                                 ? <ArrowUpAZ className="h-4 w-4 text-white" />
@@ -181,7 +194,10 @@ export function ModuleGrid({
                                     onClick={() => onSortChange("type", sortConfig.field === "type" && sortConfig.direction === "asc" ? "desc" : "asc")}
                                 >
                                     <div className="flex items-center justify-between">
-                                        <span className="text-white text-sm">Tipo</span>
+                                        {/* <span className="text-white text-sm">Tipo</span> */}
+                                        {/* <RockingChair className="text-white w-5 h-5" /> */}
+                                        <Armchair className="text-white w-5 h-5" />
+
                                         <Filter className="text-white w-4 h-4" />
 
                                         {sortConfig.field === "type"
@@ -200,6 +216,7 @@ export function ModuleGrid({
                                     <div className="flex items-center justify-between">
                                         {/* <span className="text-white text-sm">Edificio</span> */}
                                         <Building2 className="text-white w-5 h-5" />
+
                                         <Filter className="text-white w-4 h-4" />
 
                                         {sortConfig.field === "building"
@@ -217,7 +234,8 @@ export function ModuleGrid({
                                 >
                                     <div className="flex items-center justify-between">
                                         {/* <span className="text-white text-sm">Talla</span> */}
-                                        <Ruler className="text-white w-5 h-5" />
+                                        <Proportions className="text-white w-5 h-5" />
+
                                         <Filter className="text-white w-4 h-4" />
 
                                         {sortConfig.field === "size"
@@ -235,14 +253,15 @@ export function ModuleGrid({
                                 >
                                     <div className="flex items-center justify-between">
                                         {/* <span className="text-white text-sm">Capacidad</span> */}
-                                        <MemoryStick className="text-white w-5 h-5" />
+                                        <Ruler className="text-white w-5 h-5" />
+
                                         <Filter className="text-white w-4 h-4" />
 
                                         {sortConfig.field === "capacity"
                                             ? sortConfig.direction === "asc"
-                                                ? <ArrowUp10 className="h-4 w-4 text-white" />
-                                                : <ArrowDown01 className="h-4 w-4 text-white" />
-                                            : <ArrowUp10 className="h-4 w-4 opacity-50 text-white" />
+                                                ? <ArrowUp01 className="h-4 w-4 text-white" />
+                                                : <ArrowDown10 className="h-4 w-4 text-white" />
+                                            : <ArrowUp01 className="h-4 w-4 opacity-50 text-white" />
                                         }
                                     </div>
                                 </th>
@@ -253,7 +272,7 @@ export function ModuleGrid({
                             {rooms.map((room) => (
                                 <tr key={`fixed-${room.id}`} className="border-b h-16">
                                     {/* Sala */}
-                                    <td className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm truncate", fixedColumnsConfig.name.widthClass)}>
+                                    <td className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm", fixedColumnsConfig.name.widthClass)}>
                                         {room.id}
                                     </td>
 
