@@ -204,7 +204,7 @@ export function SchedulerDashboard() {
 
     return (
         <>
-            <div className="flex flex-col">
+            {/* <div className="flex flex-col">
                 <div className="container mx-auto my-0.5">
                     <FilterPanel rooms={rooms} onFilterChange={handleFilterChange} />
                 </div>
@@ -217,7 +217,16 @@ export function SchedulerDashboard() {
                     onSortChange    = { handleSortChange }
                     sortConfig      = { sortConfig }
                 />
-            </div>
+            </div> */}
+
+            <ModuleGrid
+                    sections        = { filteredSections }
+                    rooms           = { sortedRooms }
+                    onSectionClick  = { handleSectionClick }
+                    onSectionMove   = { handleSectionMove }
+                    onSortChange    = { handleSortChange }
+                    sortConfig      = { sortConfig }
+                />
 
             {isModalOpen && selectedSection && (
                 <SectionModal
