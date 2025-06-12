@@ -9,9 +9,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Section, Room } from "@/lib/types"
-import { periods } from "@/lib/data"
 import { useDays } from "@/hooks/use-days"
 import { useModules, getModulesForDay } from "@/hooks/use-modules"
+import { usePeriods } from "@/hooks/use-periods"
 
 interface AddSectionModalProps {
     rooms: Room[]
@@ -20,6 +20,7 @@ interface AddSectionModalProps {
 }
 
 export function AddSectionModal({ rooms, onClose, onAdd }: AddSectionModalProps) {
+    const { periods } = usePeriods();
     const [selectedDay, setSelectedDay] = useState<number>(0)
     const { days } = useDays();
     const { modules } = useModules();
@@ -39,7 +40,7 @@ export function AddSectionModal({ rooms, onClose, onAdd }: AddSectionModalProps)
         moduleId                : dayModules.length > 0 ? dayModules[0].id : "",
         subjectName             : "",
         subjectId               : "",
-        period                  : periods[0],
+        period                  : periods[0].id,
     })
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,7 +51,6 @@ export function AddSectionModal({ rooms, onClose, onAdd }: AddSectionModalProps)
     const handleSelectChange = (name: string, value: string | number) => {
         if (name === "day") {
             setSelectedDay(Number(value))
-            // Reset moduleId when day changes to avoid invalid combinations
             const newDay = Number(value)
             const newDayModules = getModulesForDay(modules, newDay)
             setFormData((prev) => ({
@@ -96,8 +96,8 @@ export function AddSectionModal({ rooms, onClose, onAdd }: AddSectionModalProps)
 
                             <SelectContent>
                                 {periods.map((period) => (
-                                    <SelectItem key={period} value={period}>
-                                        {period}
+                                    <SelectItem key={period.id} value={period.id}>
+                                        {period.label}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
