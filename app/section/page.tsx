@@ -20,7 +20,7 @@ const SchedulerDashboard = dynamic(
 
 export default function SectionPage() {
     return (
-        <main className="h-[calc(100vh-10rem)] overflow-y-auto">
+        <main className="max-h-[calc(100vh-73px)] overflow-y-hidden">
             <SchedulerDashboard />
         </main>
     )
