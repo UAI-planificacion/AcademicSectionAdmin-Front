@@ -29,6 +29,7 @@ import {
 import { useDays } from '@/hooks/use-days';
 import { useModules, getModulesForDay } from '@/hooks/use-modules';
 import type { Section, Room, Module }   from "@/lib/types"
+import { usePeriods } from "@/hooks/use-periods"
 
 
 interface SectionModalProps {
@@ -51,13 +52,11 @@ export function SectionModal({
 }: SectionModalProps ): React.JSX.Element {
     const [formData, setFormData]               = useState<Section>({ ...section });
     const [selectedDay, setSelectedDay]         = useState<number>( section.day );
-    // const [courseCodes, setCourseCodes]         = useState<string[]>( [] );
     const [professors, setProfessors]           = useState<string[]>( [] );
-    const [periods, setPeriods]                 = useState<string[]>( [] );
-    // const [allModules, setAllModules]           = useState<Module[]>( [] );
+    const { periods }                           = usePeriods();
     const [availableRooms, setAvailableRooms]   = useState<Room[]>( rooms );
-    const { days, loading: daysLoading } = useDays();
-    const { modules, loading: modulesLoading } = useModules();
+    const { days }                              = useDays();
+    const { modules }                           = useModules();
     const dayModules = getModulesForDay(modules, selectedDay);
 
     
@@ -66,7 +65,7 @@ export function SectionModal({
         // Usar las funciones de localStorage para cargar los datos
         setAvailableRooms( getRoomsFromStorage() );
         setProfessors( getProfessorsFromStorage() );
-        setPeriods( getPeriodsFromStorage() );
+        // setPeriods( getPeriodsFromStorage() );
         // setAllModules( getModulesFromStorage() );
     }, []);
 
@@ -125,22 +124,6 @@ export function SectionModal({
                             </p>
                         </div>
                     )}
-
-                    {/* {isCreating && (
-                        <div className="grid grid-cols-3 gap-2">
-                            <p className="text-sm">
-                                <span className="font-bold">Sala:</span> {formData.room}
-                            </p>
-
-                            <p className="text-sm">
-                                <span className="font-bold">Módulo:</span> {formData.moduleId}
-                            </p>
-
-                            <p className="text-sm">
-                                <span className="font-bold">Día:</span> {formData.day}
-                            </p>
-                        </div>
-                    )} */}
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -170,8 +153,8 @@ export function SectionModal({
                                     </SelectTrigger>
                                     <SelectContent>
                                         {periods.map((period) => (
-                                            <SelectItem key={period} value={period}>
-                                                {period}
+                                            <SelectItem key={period.id} value={period.id}>
+                                                {period.label}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -209,8 +192,8 @@ export function SectionModal({
 
                                 <SelectContent>
                                     {periods.map((period) => (
-                                    <SelectItem key={period} value={period}>
-                                        {period}
+                                    <SelectItem key={period.id} value={period.id}>
+                                        {period.label}
                                     </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -221,7 +204,6 @@ export function SectionModal({
                             <Label htmlFor="day">Día</Label>
 
                             <Select
-                                disabled={daysLoading}
                                 value={formData.day.toString()}
                                 onValueChange={(value) => handleSelectChange("day", Number.parseInt(value))}
                             >
