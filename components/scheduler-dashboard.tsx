@@ -10,17 +10,16 @@ import type {
     SortField,
     Filters,
     SortConfig
-}                                           from '@/lib/types';
-import { useSections } from '@/hooks/use-sections';
-import { useSpaces } from '@/hooks/use-spaces';
-import { extractDataFromSections }          from '@/lib/localStorage';
-import { SectionModal }                     from '@/components/section-modal';
-import { FilterPanel }                      from '@/components/filter-panel';
-import { ModuleGrid }                       from '@/components/module-grid';
+}                                   from '@/lib/types';
+import { useSections }              from '@/hooks/use-sections';
+import { useSpaces }                from '@/hooks/use-spaces';
+import { extractDataFromSections }  from '@/lib/localStorage';
+import { SectionModal }             from '@/components/section-modal';
+import { ModuleGrid }               from '@/components/module-grid';
 
 export function SchedulerDashboard() {
-    const { sections: initialSections, loading: sectionsLoading, error: sectionsError } = useSections();
-    const { spaces: initialRooms, loading: spacesLoading, error: spacesError } = useSpaces();
+    const { sections: initialSections, loading: sectionsLoading }   = useSections();
+    const { spaces: initialRooms, loading: spacesLoading }          = useSpaces();
 
     const [sections, setSections]                   = useState<Section[]>([]);
     const [filteredSections, setFilteredSections]   = useState<Section[]>([]);
@@ -37,6 +36,9 @@ export function SchedulerDashboard() {
         periods: [],
         buildings: [],
         sizes: [],
+        rooms: [],
+        types: [],
+        capacities: [],
     });
 
     const sortedRooms = [...filteredRooms].sort((a, b) => {
@@ -97,6 +99,21 @@ export function SchedulerDashboard() {
         if (filters.sizes && filters.sizes.length > 0) {
             filteredRms = filteredRms.filter((room) => filters.sizes.includes(room.sizeId))
         }
+        
+        // Filter by room IDs (multiple selection)
+        if (filters.rooms && filters.rooms.length > 0) {
+            filteredRms = filteredRms.filter((room) => filters.rooms!.includes(room.id))
+        }
+        
+        // Filter by room types (multiple selection)
+        if (filters.types && filters.types.length > 0) {
+            filteredRms = filteredRms.filter((room) => filters.types!.includes(room.type))
+        }
+        
+        // Filter by capacities (multiple selection)
+        if (filters.capacities && filters.capacities.length > 0) {
+            filteredRms = filteredRms.filter((room) => filters.capacities!.includes(room.capacity.toString()))
+        }
 
         // Ahora filtramos las secciones para que solo incluyan las que están en las salas filtradas
         const filteredRoomIds = new Set(filteredRms.map((room) => room.id))
@@ -111,14 +128,13 @@ export function SchedulerDashboard() {
     }, [filters, sections, rooms, isInitialized])
 
     const handleFilterChange = (newFilters: Filters) => {
-        console.log("Nuevos filtros:", newFilters)
-        setFilters(newFilters)
+        console.log("Aplicando nuevos filtros:", newFilters);
+        setFilters(newFilters);
     }
 
     const handleSortChange = (field: SortField, direction: SortDirection) => {
-        setSortConfig({ field, direction })
+        setSortConfig({ field, direction });
     }
-
 
     const handleUpdateSection = (updatedSection: Section) => {
         const overlapping = sections.some(( section : Section ) => {
@@ -204,29 +220,14 @@ export function SchedulerDashboard() {
 
     return (
         <>
-            {/* <div className="flex flex-col">
-                <div className="container mx-auto my-0.5">
-                    <FilterPanel rooms={rooms} onFilterChange={handleFilterChange} />
-                </div>
-
-                <ModuleGrid
-                    sections        = { filteredSections }
-                    rooms           = { sortedRooms }
-                    onSectionClick  = { handleSectionClick }
-                    onSectionMove   = { handleSectionMove }
-                    onSortChange    = { handleSortChange }
-                    sortConfig      = { sortConfig }
-                />
-            </div> */}
-
             <ModuleGrid
-                    sections        = { filteredSections }
-                    rooms           = { sortedRooms }
-                    onSectionClick  = { handleSectionClick }
-                    onSectionMove   = { handleSectionMove }
-                    onSortChange    = { handleSortChange }
-                    sortConfig      = { sortConfig }
-                />
+                sections        = { filteredSections }
+                rooms           = { sortedRooms }
+                onSectionClick  = { handleSectionClick }
+                onSectionMove   = { handleSectionMove }
+                onSortChange    = { handleSortChange }
+                sortConfig      = { sortConfig }
+            />
 
             {isModalOpen && selectedSection && (
                 <SectionModal
