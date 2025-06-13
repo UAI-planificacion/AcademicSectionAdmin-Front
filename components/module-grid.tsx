@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef, useCallback, useMemo } from "react"
+import React, { useState, useRef, useCallback, useMemo, useEffect } from "react"
 
 import {
     AlertCircle,
@@ -21,21 +21,34 @@ import type {
     Room,
     SortConfig,
     SortField,
-    SortDirection
-}                                       from "@/lib/types";
-import { SectionCard }                  from "@/components/SectionCard";
+    SortDirection,
+    Filters
+}               from "@/lib/types";
+import { cn }   from "@/lib/utils";
+
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger
+}                           from "@/components/ui/popover";
+import { SectionCard }      from "@/components/SectionCard";
+import MultiSelectCombobox  from "@/components/inputs/Combobox";
+
 import { useDays }                      from "@/hooks/use-days";
 import { useModules, getModulesForDay } from "@/hooks/use-modules";
-import { cn }                           from "@/lib/utils";
+import { usePeriods }                   from "@/hooks/use-periods";
+import { useSizes }                     from "@/hooks/use-sizes";
+import { Button }                       from "@/components/ui/button";
 
 
 interface ModuleGridProps {
-    sections        : Section[]
-    rooms           : Room[]
-    onSectionClick  : ( sectionId: string ) => void
-    onSectionMove   : ( sectionId: string, newRoomId: string, newDay: number, newModuleId: string ) => boolean
-    onSortChange    : ( field: SortField, direction: SortDirection ) => void
-    sortConfig      : SortConfig
+    sections        : Section[];
+    rooms           : Room[];
+    onSectionClick  : ( sectionId: string ) => void;
+    onSectionMove   : ( sectionId: string, newRoomId: string, newDay: number, newModuleId: string ) => boolean;
+    onSortChange    : ( field: SortField, direction: SortDirection ) => void;
+    sortConfig      : SortConfig;
+    onFilterChange? : ( filters: Filters ) => void;
 }
 
 export function ModuleGrid({
@@ -45,11 +58,24 @@ export function ModuleGrid({
     onSectionMove,
     onSortChange,
     sortConfig,
+    onFilterChange,
 }: ModuleGridProps ): React.JSX.Element{
-    const [_, setHoveredCell]                   = useState<string | null>( null );
+    // Filtrar las salas localmente
+    const [filteredRooms, setFilteredRooms]     = useState<Room[]>(rooms);
+    // const [_, setHoveredCell]                   = useState<string | null>( null );
     const [draggedSection, setDraggedSection]   = useState<string | null>( null );
     const [dragOverCell, setDragOverCell]       = useState<string | null>( null );
     const [errorMessage, setErrorMessage]       = useState<string | null>( null );
+
+    // Estados para los filtros
+    const [localFilters, setLocalFilters] = useState<Filters & { rooms?: string[], types?: string[], capacities?: string[] }>({
+        periods: [],
+        buildings: [],
+        sizes: [],
+        rooms: [],
+        types: [],
+        capacities: [],
+    });
 
     // Referencias para sincronizar el scroll
     const fixedTableRef         = useRef<HTMLDivElement>( null );
@@ -57,6 +83,72 @@ export function ModuleGrid({
 
     const { days }      = useDays();
     const { modules }   = useModules();
+    const { periods }   = usePeriods();
+    const { sizes }     = useSizes();
+
+    // Extraer valores únicos para los filtros
+    const uniqueRoomIds     = useMemo(() => Array.from(new Set(rooms.map(room => room.id))), [rooms]);
+    const uniqueTypes       = useMemo(() => Array.from(new Set(rooms.map(room => room.type))), [rooms]);
+    const uniqueBuildings   = useMemo(() => Array.from(new Set(rooms.map(room => room.building))), [rooms]);
+
+    // Función para aplicar filtros localmente
+    const applyFilters = useCallback((filters: Filters) => {
+        let filtered = [...rooms];
+
+        // Filtrar por sala (ID)
+        if (filters.rooms && filters.rooms.length > 0) {
+            filtered = filtered.filter(room => filters.rooms!.includes(room.id));
+        }
+
+        // Filtrar por tipo
+        if (filters.types && filters.types.length > 0) {
+            filtered = filtered.filter(room => filters.types!.includes(room.type));
+        }
+
+        // Filtrar por edificio
+        if (filters.buildings && filters.buildings.length > 0) {
+            filtered = filtered.filter(room => filters.buildings.includes(room.building));
+        }
+
+        // Filtrar por talla
+        if (filters.sizes && filters.sizes.length > 0) {
+            filtered = filtered.filter(room => filters.sizes.includes(room.sizeId));
+        }
+
+        // Filtrar por capacidad
+        if (filters.capacities && filters.capacities.length > 0) {
+            filtered = filtered.filter(room => filters.capacities!.includes(room.capacity.toString()));
+        }
+
+        setFilteredRooms(filtered);
+    }, [rooms]);
+    
+    // Manejar cambios en los filtros
+    const handleFilterChange = useCallback((filterType: keyof Filters, values: string[]) => {
+        setLocalFilters(prev => {
+            const newFilters = { ...prev, [filterType]: values };
+            // Aplicar filtros localmente
+            applyFilters(newFilters);
+            // Notificar al componente padre si es necesario
+            if (onFilterChange) {
+                onFilterChange(newFilters);
+            }
+            return newFilters;
+        });
+    }, [onFilterChange, applyFilters]);
+    
+    // Efecto para aplicar los filtros iniciales y cuando cambian las salas
+    useEffect(() => {
+        setFilteredRooms(rooms);
+        applyFilters(localFilters);
+    }, [rooms, applyFilters, localFilters]);
+
+    // Efecto para notificar al componente padre sobre los filtros iniciales
+    useEffect(() => {
+        if (onFilterChange) {
+            onFilterChange(localFilters);
+        }
+    }, [onFilterChange, localFilters]);
 
     // Función para sincronizar el scroll vertical
     const handleScroll = ( e: React.UIEvent<HTMLDivElement> ) => {
@@ -170,106 +262,240 @@ export function ModuleGrid({
                     <table className="border-collapse w-full hide-vertical-scrollbar">
                         <thead className="sticky top-0 z-50 bg-black hide-vertical-scrollbar">
                             <tr className="h-20">
-                                <th
-                                    className={cn("cursor-pointer px-2 bg-black border-r border-zinc-700 w-[120px] max-w-[120px]", fixedColumnsConfig.name.widthClass)}
-                                    onClick={() => onSortChange("name", sortConfig.field === "name" && sortConfig.direction === "asc" ? "desc" : "asc")}
-                                >
+                                <th className={
+                                    cn( "cursor-pointer px-2 bg-black border-r border-zinc-700 w-[120px] max-w-[120px]", fixedColumnsConfig.name.widthClass )
+                                }>
                                     <div className="flex items-center justify-between">
                                         {/* <span className="text-left text-white text-sm">Sala</span> */}
-                                        <Cuboid className="text-white w-5 h-5" />
+                                        <Cuboid className="text-white w-5 h-5 mx-2" />
 
-                                        <Filter className="text-white w-4 h-4" />
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="ghost" className="px-2">
+                                                    <Filter className="w-4 h-4 cursor-pointer" />
+                                                </Button>
+                                            </PopoverTrigger>
 
-                                        {sortConfig.field === "name"
-                                            ? sortConfig.direction === "asc"
-                                                ? <ArrowUpAZ className="h-4 w-4 text-white" />
-                                                : <ArrowDownAZ className="h-4 w-4 text-white" />
-                                            : <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
-                                        }
+                                            <PopoverContent className="w-64 h-[29rem] p-0" align="center">
+                                                <div className="p-2">
+                                                    <MultiSelectCombobox
+                                                        options={uniqueRoomIds.map((id) => ({ value: id, label: id }))}
+                                                        placeholder="Filtrar por sala"
+                                                        onSelectionChange={(values) => handleFilterChange('rooms', values)}
+                                                        defaultValues={localFilters.rooms || []}
+                                                    />
+                                                </div>
+                                                <div className="p-2 border-t">
+                                                    <MultiSelectCombobox
+                                                        options={periods.map((period) => ({ value: period.id, label: period.label }))}
+                                                        placeholder="Filtrar por periodo"
+                                                        onSelectionChange={(values) => handleFilterChange('periods', values)}
+                                                        defaultValues={localFilters.periods}
+                                                    />
+                                                </div>
+                                            </PopoverContent>
+                                        </Popover>
+
+                                        <Button
+                                            variant="ghost"
+                                            className="px-2"
+                                            onClick={() => onSortChange("name", sortConfig.field === "name" && sortConfig.direction === "asc" ? "desc" : "asc")}
+                                        >
+                                            {sortConfig.field === "name"
+                                                ? sortConfig.direction === "asc"
+                                                    ? <ArrowUpAZ className="h-4 w-4 text-white" />
+                                                    : <ArrowDownAZ className="h-4 w-4 text-white" />
+                                                : <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
+                                            }
+                                        </Button>
                                     </div>
                                 </th>
 
-                                <th
-                                    className={cn("cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.type.widthClass)}
-                                    onClick={() => onSortChange("type", sortConfig.field === "type" && sortConfig.direction === "asc" ? "desc" : "asc")}
-                                >
+                                <th className={
+                                    cn( "cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.type.widthClass )
+                                }>
                                     <div className="flex items-center justify-between">
                                         {/* <span className="text-white text-sm">Tipo</span> */}
-                                        {/* <RockingChair className="text-white w-5 h-5" /> */}
-                                        <Armchair className="text-white w-5 h-5" />
+                                        <Armchair className="text-white w-5 h-5 mx-1" />
 
-                                        <Filter className="text-white w-4 h-4" />
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="ghost" className="px-2">
+                                                    <Filter className="w-4 h-4 cursor-pointer" />
+                                                </Button>
+                                            </PopoverTrigger>
 
+                                            <PopoverContent className="w-64 h-[21.6rem] p-0" align="center">
+                                                <div className="p-2">
+                                                    <MultiSelectCombobox
+                                                        options={uniqueTypes.map((type) => ({ 
+                                                            value: type, 
+                                                            label: typeName(type) 
+                                                        }))}
+                                                        placeholder="Filtrar por tipo"
+                                                        onSelectionChange={(values) => handleFilterChange('types', values)}
+                                                        defaultValues={localFilters.types || []}
+                                                        isOpen={true}   
+                                                    />
+                                                </div>
+                                            </PopoverContent>
+                                        </Popover>
+
+                                        <Button
+                                            variant="ghost"
+                                            className="px-2"
+                                            onClick={() => onSortChange("type", sortConfig.field === "type" && sortConfig.direction === "asc" ? "desc" : "asc")}
+                                        >
                                         {sortConfig.field === "type"
                                             ? sortConfig.direction === "asc"
                                                 ? <ArrowUpAZ className="h-4 w-4 text-white" />
                                                 : <ArrowDownAZ className="h-4 w-4 text-white" />
                                             : <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
                                         }
+                                        </Button>
                                     </div>
                                 </th>
 
-                                <th
-                                    className={cn("cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.building.widthClass)}
-                                    onClick={() => onSortChange("building", sortConfig.field === "building" && sortConfig.direction === "asc" ? "desc" : "asc")}
-                                >
+                                <th className={
+                                    cn( "cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.building.widthClass )
+                                }>
                                     <div className="flex items-center justify-between">
                                         {/* <span className="text-white text-sm">Edificio</span> */}
-                                        <Building2 className="text-white w-5 h-5" />
+                                        <Building2 className="text-white w-5 h-5 ml-0.5 mr-1.5" />
 
-                                        <Filter className="text-white w-4 h-4" />
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="ghost" className="px-2">
+                                                    <Filter className="w-4 h-4 cursor-pointer" />
+                                                </Button>
+                                            </PopoverTrigger>
 
-                                        {sortConfig.field === "building"
-                                            ? sortConfig.direction === "asc"
-                                                ? <ArrowUpAZ className="h-4 w-4 text-white" />
-                                                : <ArrowDownAZ className="h-4 w-4 text-white" />
-                                            : <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
-                                        }
+                                            <PopoverContent className="w-64 h-96 p-0" align="center">
+                                                <div className="p-2">
+                                                    <MultiSelectCombobox
+                                                        options={uniqueBuildings.map((building) => ({ 
+                                                            value: building, 
+                                                            label: building 
+                                                        }))}
+                                                        placeholder="Filtrar por edificio"
+                                                        onSelectionChange={(values) => handleFilterChange('buildings', values)}
+                                                        defaultValues={localFilters.buildings}
+                                                        isOpen={true}
+                                                    />
+                                                </div>
+                                            </PopoverContent>
+                                        </Popover>
+
+                                        <Button
+                                            variant="ghost"
+                                            className="px-2"
+                                            onClick={() => onSortChange("building", sortConfig.field === "building" && sortConfig.direction === "asc" ? "desc" : "asc")}
+                                        >
+                                            {sortConfig.field === "building"
+                                                ? sortConfig.direction === "asc"
+                                                    ? <ArrowUpAZ className="h-4 w-4 text-white" />
+                                                    : <ArrowDownAZ className="h-4 w-4 text-white" />
+                                                : <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
+                                            }
+                                        </Button>
                                     </div>
                                 </th>
 
-                                <th
-                                    className={cn("cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.size.widthClass)}
-                                    onClick={() => onSortChange("size", sortConfig.field === "size" && sortConfig.direction === "asc" ? "desc" : "asc")}
-                                >
+                                <th className={
+                                    cn( "cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.size.widthClass )
+                                }>
                                     <div className="flex items-center justify-between">
                                         {/* <span className="text-white text-sm">Talla</span> */}
-                                        <Proportions className="text-white w-5 h-5" />
+                                        <Proportions className="text-white w-5 h-5 ml-0.5 mr-1.5" />
 
-                                        <Filter className="text-white w-4 h-4" />
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="ghost" className="px-2">
+                                                    <Filter className="w-4 h-4 cursor-pointer" />
+                                                </Button>
+                                            </PopoverTrigger>
 
-                                        {sortConfig.field === "size"
-                                            ? sortConfig.direction === "asc"
-                                                ? <ArrowUpAZ className="h-4 w-4 text-white" />
-                                                : <ArrowDownAZ className="h-4 w-4 text-white" />
-                                            : <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
-                                        }
+                                            <PopoverContent className="w-64 h-[21.6rem] p-0" align="center">
+                                                <div className="p-2">
+                                                    <MultiSelectCombobox
+                                                        options={sizes.map((size) => ({ 
+                                                            value: size.id, 
+                                                            label: size.label 
+                                                        }))}
+                                                        placeholder="Filtrar por talla"
+                                                        onSelectionChange={(values) => handleFilterChange('sizes', values)}
+                                                        defaultValues={localFilters.sizes}
+                                                        isOpen={true}
+                                                    />
+                                                </div>
+                                            </PopoverContent>
+                                        </Popover>
+
+                                        <Button
+                                            variant="ghost"
+                                            className="px-2"
+                                            onClick={() => onSortChange("size", sortConfig.field === "size" && sortConfig.direction === "asc" ? "desc" : "asc")}
+                                        >
+                                            {sortConfig.field === "size"
+                                                ? sortConfig.direction === "asc"
+                                                    ? <ArrowUpAZ className="h-4 w-4 text-white" />
+                                                    : <ArrowDownAZ className="h-4 w-4 text-white" />
+                                                : <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
+                                            }
+                                        </Button>
                                     </div>
                                 </th>
 
                                 <th
                                     className={cn("cursor-pointer border-r border-r-zinc-700 px-2 bg-black", fixedColumnsConfig.capacity.widthClass)}
-                                    onClick={() => onSortChange("capacity", sortConfig.field === "capacity" && sortConfig.direction === "asc" ? "desc" : "asc")}
                                 >
                                     <div className="flex items-center justify-between">
                                         {/* <span className="text-white text-sm">Capacidad</span> */}
-                                        <Ruler className="text-white w-5 h-5" />
+                                        <Ruler className="text-white w-5 h-5 ml-0.5 mr-1.5" />
 
-                                        <Filter className="text-white w-4 h-4" />
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                            <Button variant="ghost" className="px-2">
+                                                    <Filter className="w-4 h-4 cursor-pointer" />
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-64 h-[25.5rem] p-0" align="center">
+                                                <div className="p-2">
+                                                    <MultiSelectCombobox
+                                                        options={Array.from(new Set(rooms.map(room => room.capacity)))
+                                                            .sort((a, b) => a - b)
+                                                            .map(capacity => ({
+                                                                value: capacity.toString(),
+                                                                label: capacity.toString()
+                                                            }))}
+                                                        placeholder="Filtrar por capacidad"
+                                                        onSelectionChange={(values) => handleFilterChange('capacities', values)}
+                                                        defaultValues={localFilters.capacities || []}
+                                                        isOpen={true}
+                                                    />
+                                                </div>
+                                            </PopoverContent>
+                                        </Popover>
 
-                                        {sortConfig.field === "capacity"
-                                            ? sortConfig.direction === "asc"
-                                                ? <ArrowUp01 className="h-4 w-4 text-white" />
-                                                : <ArrowDown10 className="h-4 w-4 text-white" />
-                                            : <ArrowUp01 className="h-4 w-4 opacity-50 text-white" />
-                                        }
+                                        <Button
+                                            variant="ghost"
+                                            className="px-2"
+                                            onClick={() => onSortChange("capacity", sortConfig.field === "capacity" && sortConfig.direction === "asc" ? "desc" : "asc")}
+                                        >
+                                            {sortConfig.field === "capacity"
+                                                ? sortConfig.direction === "asc"
+                                                    ? <ArrowUp01 className="h-4 w-4 text-white" />
+                                                    : <ArrowDown10 className="h-4 w-4 text-white" />
+                                                : <ArrowUp01 className="h-4 w-4 opacity-50 text-white" />
+                                            }
+                                        </Button>
                                     </div>
                                 </th>
                             </tr>
                         </thead>
 
                         <tbody>
-                            {rooms.map((room) => (
+                            {filteredRooms.map((room) => (
                                 <tr key={`fixed-${room.id}`} className="border-b h-16">
                                     {/* Sala */}
                                     <td className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm", fixedColumnsConfig.name.widthClass)}>
@@ -347,8 +573,8 @@ export function ModuleGrid({
                                 });
                                 return map;
                             }, [days, modules]);
-                            
-                            return rooms.map((room) => (
+
+                            return filteredRooms.map(( room ) => (
                                 <tr key={`room-row-${room.id}`} className="border-b h-16">
                                     {days.slice(0, 6).map(( day ) => {
                                         const dayModules = dayModulesMap.get(day.id) || [];
@@ -372,15 +598,12 @@ export function ModuleGrid({
                                                     moduleIndex     = { moduleIndex }
                                                     isDragOver      = { isDragOver }
                                                     hasSection      = { hasSection }
-                                                    cellId          = { cellId }
                                                     draggedSection  = { draggedSection }
                                                     onSectionClick  = { onSectionClick }
                                                     onDragStart     = { handleDragStart }
                                                     onDragOver      = { handleDragOver }
                                                     onDragLeave     = { handleDragLeave }
                                                     onDrop          = { handleDrop }
-                                                    onMouseEnter    = { setHoveredCell }
-                                                    onMouseLeave    = { () => setHoveredCell( null )}
                                                 />
                                             )
                                         })
@@ -392,5 +615,5 @@ export function ModuleGrid({
                 </table>
             </div>
         </div>
-    )
+    );
 }
