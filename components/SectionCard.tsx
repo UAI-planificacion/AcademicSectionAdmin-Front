@@ -16,27 +16,23 @@ import { cn }                   from '@/lib/utils';
 import { getRoomsFromStorage }  from '@/lib/localStorage';
 
 interface SectionCardProps {
-    section: Section | null
-    dayId: number
-    moduleId: string
-    roomId: string
-    isLastModule: boolean
-    moduleIndex: number
-    isDragOver: boolean
-    hasSection: boolean
-    cellId: string
-    draggedSection: string | null
-    onSectionClick: (sectionId: string) => void
-    onDragStart: (e: React.DragEvent, sectionId: string) => void
-    onDragOver: (e: React.DragEvent, roomId: string, dayId: number, moduleId: string) => void
-    onDragLeave: () => void
-    onDrop: (e: React.DragEvent, roomId: string, dayId: number, moduleId: string) => void
-    onMouseEnter: (cellId: string) => void
-    onMouseLeave: () => void
-    onSaveSectionFromCard?: (section: Section) => boolean
+    section                 : Section | null;
+    dayId                   : number;
+    moduleId                : string;
+    roomId                  : string;
+    isLastModule            : boolean;
+    moduleIndex             : number;
+    isDragOver              : boolean;
+    hasSection              : boolean;
+    draggedSection          : string | null;
+    onSectionClick          : ( sectionId: string ) => void;
+    onDragStart             : ( e: React.DragEvent, sectionId: string ) => void;
+    onDragOver              : ( e: React.DragEvent, roomId: string, dayId: number, moduleId: string ) => void;
+    onDragLeave             : () => void;
+    onDrop                  : ( e: React.DragEvent, roomId: string, dayId: number, moduleId: string ) => void;
+    onSaveSectionFromCard?  : ( section: Section ) => boolean;
 }
 
-// Using React.memo to prevent unnecessary re-renders
 export const SectionCard = memo(function SectionCard({
     section,
     dayId,
@@ -46,15 +42,12 @@ export const SectionCard = memo(function SectionCard({
     moduleIndex,
     isDragOver,
     hasSection,
-    cellId,
     draggedSection,
     onSectionClick,
     onDragStart,
     onDragOver,
     onDragLeave,
     onDrop,
-    onMouseEnter,
-    onMouseLeave,
     onSaveSectionFromCard
 }: SectionCardProps): React.ReactElement {
     const [isMoving, setIsMoving] = useState(false);
@@ -78,26 +71,23 @@ export const SectionCard = memo(function SectionCard({
     const handleDeleteSection = useCallback(() => {
         setShowCreateModal(false);
     }, []);
-    
-    const handleMouseEnter = useCallback(() => onMouseEnter(cellId), [onMouseEnter, cellId]);
-    const handleMouseLeave = useCallback(() => onMouseLeave(), [onMouseLeave]);
-    
+
     const handleDragOver = useCallback((e: React.DragEvent) => {
         setIsMoving(true);
         onDragOver(e, roomId, dayId, moduleId);
     }, [onDragOver, roomId, dayId, moduleId]);
-    
+
     const handleDrop = useCallback((e: React.DragEvent) => {
         setIsMoving(false);
         onDrop(e, roomId, dayId, moduleId);
     }, [onDrop, roomId, dayId, moduleId]);
-    
+
     const handleSectionClick = useCallback(() => {
         if (section) {
             onSectionClick(section.id);
         }
     }, [section, onSectionClick]);
-    
+
     const handleDragStart = useCallback((e: React.DragEvent) => {
         if (section) {
             onDragStart(e, section.id);
@@ -106,7 +96,10 @@ export const SectionCard = memo(function SectionCard({
 
     return (
         <td
-            className={cn(
+            onDragOver  = { handleDragOver }
+            onDragLeave = { onDragLeave }
+            onDrop      = { handleDrop }
+            className   = { cn(
                 "border p-0.5 text-center min-w-[80px] h-[40px] transition-none hover:bg-zinc-200/80 dark:hover:bg-zinc-800/50 transition-colors group",
                 isLastModule && "border-r-zinc-400 dark:border-r-zinc-600 transition-colors",
                 !isLastModule && "border-r-zinc-200 dark:border-r-zinc-800 transition-colors",
@@ -115,11 +108,6 @@ export const SectionCard = memo(function SectionCard({
                 isDragOver && !hasSection && "bg-green-100 dark:bg-green-900 transition-colors",
                 isDragOver && hasSection && "bg-red-100 dark:bg-red-900 transition-colors",
             )}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-            onDragOver={handleDragOver}
-            onDragLeave={onDragLeave}
-            onDrop={handleDrop}
         >
             {!section && !isDragOver && (
                 <button 
@@ -206,14 +194,11 @@ export const SectionCard = memo(function SectionCard({
             )}
         </td>
     );
-}, (prevProps, nextProps) => {
-    // Custom comparison function to prevent unnecessary re-renders
-    // Only re-render if these props change
+}, ( prevProps, nextProps ) => {
     return (
-        prevProps.section?.id === nextProps.section?.id &&
-        prevProps.isDragOver === nextProps.isDragOver &&
-        prevProps.hasSection === nextProps.hasSection &&
-        prevProps.draggedSection === nextProps.draggedSection &&
-        prevProps.cellId === nextProps.cellId
+        prevProps.section?.id       === nextProps.section?.id   &&
+        prevProps.isDragOver        === nextProps.isDragOver    &&
+        prevProps.hasSection        === nextProps.hasSection    &&
+        prevProps.draggedSection    === nextProps.draggedSection
     );
 });
