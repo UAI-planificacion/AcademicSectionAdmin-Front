@@ -1,14 +1,20 @@
 "use client"
 
 import type React from "react"
-import { useState, useMemo, useCallback, useRef } from "react"
-import { Check, ChevronDown, X, Search } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { FixedSizeList as List } from "react-window"
+import { useState, useMemo, useCallback, useRef } from "react";
+
+import { Check, ChevronDown, X, Search }    from "lucide-react";
+import { FixedSizeList as List }            from "react-window";
+
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger
+}                   from "@/components/ui/popover";
+import { Button }   from "@/components/ui/button";
+import { Input }    from "@/components/ui/input";
+import { Badge }    from "@/components/ui/badge";
+import { cn }       from "@/lib/utils";
 
 
 export type Option = {
@@ -33,6 +39,7 @@ export function isGroupOption(item: ComboboxItem): item is GroupOption {
 
 
 interface MultiSelectComboboxProps {
+    isOpen?: boolean
     options: ComboboxItem[]
     defaultValues?: string[]
     placeholder?: string
@@ -54,15 +61,16 @@ const ITEM_HEIGHT = 40
 const MAX_HEIGHT = 300
 
 export default function MultiSelectCombobox({
+    isOpen = false,
     options,
     defaultValues = [],
     placeholder = "Seleccionar opciones...",
     searchPlaceholder = "Buscar...",
     className,
     onSelectionChange,
-    maxDisplayItems = 3,
+    maxDisplayItems = 1,
 }: MultiSelectComboboxProps) {
-    const [open, setOpen] = useState(false)
+    const [open, setOpen] = useState(isOpen);
     const [searchValue, setSearchValue] = useState("")
     const [selectedValues, setSelectedValues] = useState<Set<string>>(new Set(defaultValues))
     const listRef = useRef<List>(null)
@@ -302,7 +310,7 @@ export default function MultiSelectCombobox({
     )
 
     return (
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={ isOpen ?? open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
                 <Button
                     variant="outline"
@@ -337,7 +345,7 @@ export default function MultiSelectCombobox({
                 </Button>
             </PopoverTrigger>
 
-            <PopoverContent className="w-full p-0" align="start">
+            <PopoverContent className="w-full p-0 -mr-1.5" align="start">
                 <div className="flex items-center border-b px-3">
                     <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
 
