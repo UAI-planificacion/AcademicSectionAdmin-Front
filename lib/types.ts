@@ -59,6 +59,9 @@ export interface Filters {
     periods     : string[];
     buildings   : string[];
     sizes       : string[];
+    rooms       : string[];
+    types       : string[];
+    capacities  : string[];
 }
 
 
