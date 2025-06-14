@@ -1,7 +1,7 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect } from "react"
+import type React   from "react";
+import { useState } from "react";
 
 import {
     Dialog,
@@ -20,16 +20,18 @@ import {
 import { Button }   from "@/components/ui/button"
 import { Input }    from "@/components/ui/input"
 import { Label }    from "@/components/ui/label"
+import { useDays }  from '@/hooks/use-days';
+
 import {
-    getRoomsFromStorage,
-    getProfessorsFromStorage,
-    getPeriodsFromStorage,
-    getModulesFromStorage
-}                                       from "@/lib/localStorage";
-import { useDays } from '@/hooks/use-days';
+    SECTION_BUILDING_PLANNED,
+    SECTION_SESSION
+}                               from "@/lib/section"
+import type { Section, Room }   from "@/lib/types"
+
+import { usePeriods }                   from "@/hooks/use-periods"
+import { useSubjects }                  from "@/hooks/use-subjects";
+import { useProfessors }                from "@/hooks/use-professors";
 import { useModules, getModulesForDay } from '@/hooks/use-modules';
-import type { Section, Room, Module }   from "@/lib/types"
-import { usePeriods } from "@/hooks/use-periods"
 
 
 interface SectionModalProps {
@@ -50,30 +52,19 @@ export function SectionModal({
     onDelete,
     isCreating = false
 }: SectionModalProps ): React.JSX.Element {
-    const [formData, setFormData]               = useState<Section>({ ...section });
-    const [selectedDay, setSelectedDay]         = useState<number>( section.day );
-    const [professors, setProfessors]           = useState<string[]>( [] );
-    const { periods }                           = usePeriods();
-    const [availableRooms, setAvailableRooms]   = useState<Room[]>( rooms );
-    const { days }                              = useDays();
-    const { modules }                           = useModules();
-    const dayModules = getModulesForDay(modules, selectedDay);
-
-    
-    // Cargar datos desde localStorage al montar el componente
-    useEffect(() => {
-        // Usar las funciones de localStorage para cargar los datos
-        setAvailableRooms( getRoomsFromStorage() );
-        setProfessors( getProfessorsFromStorage() );
-        // setPeriods( getPeriodsFromStorage() );
-        // setAllModules( getModulesFromStorage() );
-    }, []);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const [formData, setFormData]       = useState<Section>({ ...section });
+    const [selectedDay, setSelectedDay] = useState<number>( section.day );
+    const { periods }                   = usePeriods();
+    const { days }                      = useDays();
+    const { modules }                   = useModules();
+    const { professors }                = useProfessors();
+    const {subjects}                    = useSubjects();
+    const dayModules                    = getModulesForDay( modules, selectedDay );
+    const sizes                         = Array.from(new Set(rooms.map(room => room.sizeId )));
+    const handleChange                  = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
         setFormData(( prev ) => ({ ...prev, [ name ]: value }))
     }
-
     const handleSelectChange = ( name: string, value: string | number ) => {
         if ( name === "day" ) {
             setSelectedDay( Number( value ));
@@ -92,9 +83,10 @@ export function SectionModal({
 
     const handleSubmit = ( e: React.FormEvent ) => {
         e.preventDefault();
-        const success = onSave( formData );
+        // const success = onSave( formData );
+        console.log('🚀 ~ file: section-modal.tsx:102 ~ formData:', formData)
 
-        if ( success ) onClose();
+        // if ( success ) onClose();
     }
 
     const handleDelete = () => {
@@ -112,7 +104,7 @@ export function SectionModal({
                     {!isCreating && (
                         <div className="grid grid-cols-3 gap-2">
                             <p className="text-sm">
-                                <span className="font-bold">Código:</span> {formData.id}
+                                <span className="font-bold">Código:</span> {formData.code}
                             </p>
 
                             <p className="text-sm">
@@ -129,21 +121,15 @@ export function SectionModal({
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {isCreating && (
                         <div className="grid grid-cols-2 gap-3">
-                            {/* <div className="space-y-1">
-                                <Label htmlFor="id">Sigla</Label>
-                                <Select value={formData.id} onValueChange={(value) => handleSelectChange("id", value)}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Seleccionar sigla" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {courseCodes.map((code) => (
-                                            <SelectItem key={code} value={code}>
-                                                {code}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div> */}
+                            <div className="space-y-1">
+                                <Label htmlFor="period">Número Sección</Label>
+
+                                <Input
+                                    type        = "number"
+                                    value       = { formData.code }
+                                    onChange    = { handleChange }
+                                />
+                            </div>
 
                             <div className="space-y-1">
                                 <Label htmlFor="period">Periodo</Label>
@@ -162,7 +148,7 @@ export function SectionModal({
                             </div>
                         </div>
                     )}
-                    
+
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1">
                             <Label htmlFor="roomId">Sala</Label>
@@ -173,7 +159,7 @@ export function SectionModal({
                                 </SelectTrigger>
 
                                 <SelectContent>
-                                    {availableRooms.map((room) => (
+                                    {rooms.map((room) => (
                                         <SelectItem key={room.id} value={room.id}>
                                             {room.id} ({room.type}, {room.sizeId}, {room.capacity})
                                         </SelectItem>
@@ -183,18 +169,18 @@ export function SectionModal({
                         </div>
 
                         <div className="space-y-1">
-                            <Label htmlFor="period">Tipo</Label>
+                            <Label htmlFor="roomId">Asignatura</Label>
 
-                            <Select value={formData.period} onValueChange={(value) => handleSelectChange("period", value)}>
-                                <SelectTrigger id="period">
-                                    <SelectValue placeholder="Seleccionar tipo" />
+                            <Select value={formData.subjectId} onValueChange={(value) => handleSelectChange("subjectId", value)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccionar asignatura" />
                                 </SelectTrigger>
 
                                 <SelectContent>
-                                    {periods.map((period) => (
-                                    <SelectItem key={period.id} value={period.id}>
-                                        {period.label}
-                                    </SelectItem>
+                                    {subjects.map((subject) => (
+                                        <SelectItem key={subject.id} value={subject.id}>
+                                            {subject.id} - {subject.name}
+                                        </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -238,36 +224,109 @@ export function SectionModal({
                                 </SelectContent>
                             </Select>
                         </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4">
-                        {/* <div className="space-y-1">
-                            <Label htmlFor="courseCode">Código del Curso</Label>
-
-                            <Input id="courseCode" name="courseCode" value={formData.courseCode} onChange={handleChange} required />
-                        </div> */}
 
                         <div className="space-y-1">
-                            <Label htmlFor="professor">Profesor</Label>
+                            <Label htmlFor="session">Sesión</Label>
 
-                            {professors.length > 0 ? (
-                                <Select value={formData.professor} onValueChange={(value) => handleSelectChange("professor", value)}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Seleccionar profesor" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {professors.map((professor) => (
-                                            <SelectItem key={professor} value={professor}>
-                                                {professor}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            ) : (
-                                <Input id="professor" name="professor" value={formData.professor} onChange={handleChange} required />
-                            )}
+                            <Select value={formData.session} onValueChange={(value) => handleSelectChange("session", value)}>
+                                <SelectTrigger id="session">
+                                    <SelectValue placeholder="Seleccionar sesión" />
+                                </SelectTrigger>
+
+                                <SelectContent>
+                                    {SECTION_SESSION.map((type) => (
+                                        <SelectItem key={type.value} value={type.value}>
+                                            {type.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-1">
+                            <Label htmlFor="period">Tamaño</Label>
+                            <Select value={formData.size} onValueChange={(value) => handleSelectChange("size", value)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccionar tamaño" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {sizes.map((size, index) => (
+                                        <SelectItem key={`${size}-${index}`} value={size}>
+                                            {size}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-1">
+                            <Label htmlFor="period">Registrados corregidos</Label>
+
+                            <Input
+                                type        = "number"
+                                value       = { formData.correctedRegistrants }
+                                onChange    = { handleChange }
+                            />
+                        </div>
+
+                        <div className="space-y-1">
+                            <Label htmlFor="period">Registrados reales</Label>
+
+                            <Input
+                                type        = "number"
+                                value       = { formData.realRegistrants }
+                                onChange    = { handleChange }
+                            />
+                        </div>
+
+                        <div className="space-y-1">
+                            <Label htmlFor="plannedBuilding">Edificios planeados</Label>
+
+                            <Select value={formData.plannedBuilding} onValueChange={(value) => handleSelectChange("plannedBuilding", value)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccionar edificio(s) planeado(s)" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {SECTION_BUILDING_PLANNED.map((building) => (
+                                        <SelectItem key={building.value} value={building.value}>
+                                            {building.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-1">
+                            <Label htmlFor="chairsAvailable">Sillas disponibles</Label>
+
+                            <Input
+                                type        = "number"
+                                value       = { formData.chairsAvailable?.toString() }
+                                onChange    = { handleChange }
+                            />
                         </div>
                     </div>
+
+                    <div className="space-y-1">
+                            <Label htmlFor="professor">Profesor</Label>
+
+                            <Select
+                                value={formData.professor}
+                                onValueChange={(value) => handleSelectChange("professor", value)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccionar profesor" />
+                                </SelectTrigger>
+
+                                <SelectContent>
+                                    {professors.map(( professor ) => (
+                                        <SelectItem key={professor.id} value={professor.id}>
+                                            {professor.id}-{professor.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
                     <DialogFooter className="grid sm:flex sm:justify-between gap-2 w-full">
                         {!isCreating && (
