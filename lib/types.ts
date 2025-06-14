@@ -90,7 +90,26 @@ export interface Periods {
     openingDate     : Date | null;
     closingDate     : Date | null;
     status          : 'InProgress' | 'Closed' | 'Open';
-    createdAt       : string;
-    updatedAt       : string;
+    createdAt       : Date;
+    updatedAt       : Date;
     label           : string;
+}
+
+
+export interface Subject {
+    id          : string;
+    name        : string;
+    startDate   : Date | null;
+    endDate     : Date | null;
+    createdAt   : Date;
+    updatedAt   : Date;
+}
+
+
+export interface Professor {
+    id          : string;
+    name        : string;
+    email       : string | null;
+    createdAt   : Date;
+    updatedAt   : Date;
 }
