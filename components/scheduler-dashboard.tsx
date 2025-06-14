@@ -13,7 +13,7 @@ import type {
 }                                   from '@/lib/types';
 import { useSections }              from '@/hooks/use-sections';
 import { useSpaces }                from '@/hooks/use-spaces';
-import { extractDataFromSections }  from '@/lib/localStorage';
+// import { extractDataFromSections }  from '@/lib/localStorage';
 import { SectionModal }             from '@/components/section-modal';
 import { ModuleGrid }               from '@/components/module-grid';
 
@@ -127,10 +127,10 @@ export function SchedulerDashboard() {
         setFilteredRooms(filteredRms)
     }, [filters, sections, rooms, isInitialized])
 
-    const handleFilterChange = (newFilters: Filters) => {
-        console.log("Aplicando nuevos filtros:", newFilters);
-        setFilters(newFilters);
-    }
+    // const handleFilterChange = (newFilters: Filters) => {
+    //     console.log("Aplicando nuevos filtros:", newFilters);
+    //     setFilters(newFilters);
+    // }
 
     const handleSortChange = (field: SortField, direction: SortDirection) => {
         setSortConfig({ field, direction });
@@ -158,7 +158,7 @@ export function SchedulerDashboard() {
         setSections(updatedSections)
         
         // Actualizar localStorage con los datos actualizados
-        extractDataFromSections(updatedSections)
+        // extractDataFromSections(updatedSections)
         
         return true
     }
@@ -168,7 +168,7 @@ export function SchedulerDashboard() {
         setSections(updatedSections)
         
         // Actualizar localStorage con los datos actualizados
-        extractDataFromSections(updatedSections)
+        // extractDataFromSections(updatedSections)
     }
 
     const handleSectionClick = (sectionId: string) => {
@@ -213,7 +213,7 @@ export function SchedulerDashboard() {
         setSections(updatedSections)
         
         // Actualizar localStorage con los datos actualizados
-        extractDataFromSections(updatedSections)
+        // extractDataFromSections(updatedSections)
         
         return true;
     }
