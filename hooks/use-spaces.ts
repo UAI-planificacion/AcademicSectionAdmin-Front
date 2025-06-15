@@ -29,8 +29,6 @@ export function useSpaces(): UseSpacesReturn {
         if ( cachedRooms && cachedRooms.length > 0 ) {
             setSpaces( cachedRooms );
             setLoading( false );
-            // Optionally, you might want to refetch in the background
-            // For now, we'll just use the cached data.
             return;
         }
 
