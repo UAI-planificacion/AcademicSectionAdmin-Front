@@ -87,9 +87,9 @@ export function ModuleGrid({
     const { sizes }     = useSizes();
 
     // Extraer valores únicos para los filtros
-    const uniqueRoomIds     = useMemo(() => Array.from(new Set(rooms.map(room => room.id))), [rooms]);
-    const uniqueTypes       = useMemo(() => Array.from(new Set(rooms.map(room => room.type))), [rooms]);
-    const uniqueBuildings   = useMemo(() => Array.from(new Set(rooms.map(room => room.building))), [rooms]);
+    const uniqueRoomIds     = useMemo(() => Array.from( new Set( rooms.map( room => room.id ))), [rooms]);
+    const uniqueTypes       = useMemo(() => Array.from( new Set( rooms.map( room => room.type ))), [rooms]);
+    const uniqueBuildings   = useMemo(() => Array.from( new Set( rooms.map( room => room.building ))), [rooms]);
 
     // Función para aplicar filtros localmente
     const applyFilters = useCallback((filters: Filters) => {
