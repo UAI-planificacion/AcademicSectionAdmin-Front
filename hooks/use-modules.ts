@@ -1,8 +1,11 @@
 "use client"
 
 import { useState, useEffect } from 'react';
+
 import { Module } from '@/lib/types';
 
+
+const API_URL = 'http://localhost:3030/api/v1/modules'
 export interface UseModulesResult {
     modules: Module[];
     loading: boolean;
@@ -10,29 +13,29 @@ export interface UseModulesResult {
 }
 
 export function useModules(): UseModulesResult {
-    const [modules, setModules] = useState<Module[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<Error | null>(null);
+    const [modules, setModules] = useState<Module[]>( [] );
+    const [loading, setLoading] = useState<boolean>( true );
+    const [error, setError]     = useState<Error | null>( null );
 
-    useEffect(() => {
+    useEffect( () => {
         const fetchModules = async () => {
             try {
-                setLoading(true);
-                const response = await fetch('http://localhost:3030/api/v1/modules');
-                
-                if (!response.ok) {
-                    throw new Error(`Error al obtener módulos: ${response.status}`);
+                setLoading( true );
+                const response = await fetch( API_URL );
+
+                if ( !response.ok ) {
+                    throw new Error( `Error al obtener módulos: ${response.status}` );
                 }
-                
+
                 const data = await response.json();
-                console.log('🚀 ~ file: use-modules.ts:28 ~ data:', data)
-                setModules(data);
-                setError(null);
-            } catch (err) {
-                console.error('Error al cargar los módulos:', err);
-                setError(err instanceof Error ? err : new Error(String(err)));
+
+                setModules( data );
+                setError( null );
+            } catch ( err ) {
+                console.error( 'Error al cargar los módulos:', err );
+                setError( err instanceof Error ? err : new Error( String( err )));
             } finally {
-                setLoading(false);
+                setLoading( false );
             }
         };
 
