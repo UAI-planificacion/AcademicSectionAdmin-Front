@@ -1,5 +1,6 @@
 import { Room, Section, Module, Day, Sizes, Periods, Subject, Professor } from './types';
 
+
 export const saveSectionsToStorage = (sections: Section[]): void => {
     localStorage.setItem('sections', JSON.stringify(sections));
 };
@@ -18,8 +19,8 @@ export const saveProfessorsToStorage = (professors: Professor[]): void => {
     localStorage.setItem('professors', JSON.stringify(professors));
 };
 
-export const savePeriodsToStorage = (periods: string[]): void => {
-    localStorage.setItem('periods', JSON.stringify(periods));
+export const savePeriodsToStorage = ( periods: Periods[] ): void => {
+    localStorage.setItem('periods', JSON.stringify( periods ));
 };
 
 export const saveModulesToStorage = (modules: Module[]): void => {
@@ -38,9 +39,11 @@ export const getProfessorsFromStorage = (): Professor[] => {
     return storedProfessors ? JSON.parse(storedProfessors) : [];
 };
 
-export const getPeriodsFromStorage = (): string[] => {
-    const storedPeriods = localStorage.getItem('periods');
-    return storedPeriods ? JSON.parse(storedPeriods) : ["2025-1", "2025-2", "2026-1", "2026-2"];
+// Periods
+export const getPeriodsFromStorage = (): Periods[] => {
+    const storedPeriods = localStorage.getItem( 'periods' );
+    return JSON.parse(storedPeriods || "[]" );
+
 };
 
 export const getModulesFromStorage = (): Module[] => {
@@ -77,16 +80,3 @@ export const getSubjectsFromStorage = (): Subject[] => {
     const storedSubjects = localStorage.getItem('subjects');
     return storedSubjects ? JSON.parse(storedSubjects) : [];
 };
-
-// Función para extraer datos únicos de las secciones existentes
-// export const extractDataFromSections = (sections: Section[]): void => {
-//     // Extraer profesores únicos
-//     const professors = sections.map(section => section.professor);
-//     const uniqueProfessors = Array.from(new Set(professors));
-//     saveProfessorsToStorage(uniqueProfessors);
-
-//     // Extraer periodos únicos
-//     const periods = sections.map(section => section.period);
-//     const uniquePeriods = Array.from(new Set(periods));
-//     savePeriodsToStorage(uniquePeriods);
-// };
