@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, JSX } from 'react';
 
 
 import type {
@@ -17,7 +17,7 @@ import { useSpaces }                from '@/hooks/use-spaces';
 import { SectionModal }             from '@/components/section-modal';
 import { ModuleGrid }               from '@/components/module-grid';
 
-export function SchedulerDashboard() {
+export function SchedulerDashboard(): JSX.Element {
     const { sections: initialSections, loading: sectionsLoading }   = useSections();
     const { spaces: initialRooms, loading: spacesLoading }          = useSpaces();
 
@@ -42,22 +42,24 @@ export function SchedulerDashboard() {
     });
 
     const sortedRooms = [...filteredRooms].sort((a, b) => {
-        const { field, direction } = sortConfig
+        const { field, direction } = sortConfig;
 
-        if (field === "capacity") {
-            return direction === "asc" ? a.capacity - b.capacity : b.capacity - a.capacity
+        if ( field === "capacity" ) {
+            return direction === "asc" ? a.capacity - b.capacity : b.capacity - a.capacity;
         }
-        else if (field === "size") {
+        else if ( field === "size" ) {
             return direction === "asc"
                 ? a.sizeId.localeCompare(b.sizeId)
-                : b.sizeId.localeCompare(a.sizeId)
+                : b.sizeId.localeCompare(a.sizeId);
         }
         else {
             const aValue = a[field as keyof Room];
             const bValue = b[field as keyof Room];
 
-            if (typeof aValue === "string" && typeof bValue === "string") {
-                return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue)
+            if ( typeof aValue === "string" && typeof bValue === "string" ) {
+                return direction === "asc"
+                    ? aValue.localeCompare( bValue )
+                    : bValue.localeCompare( aValue );
             }
 
             return 0;
@@ -65,14 +67,14 @@ export function SchedulerDashboard() {
     });
 
     useEffect(() => {
-        if (!sectionsLoading && !spacesLoading) {
-            setSections(initialSections);
-            setFilteredSections(initialSections);
-            setRooms(initialRooms);
-            setFilteredRooms(initialRooms);
-            setIsInitialized(true);
+        if ( !sectionsLoading && !spacesLoading ) {
+            setSections( initialSections );
+            setFilteredSections( initialSections );
+            setRooms( initialRooms );
+            setFilteredRooms( initialRooms );
+            setIsInitialized( true );
         }
-    }, [initialSections, initialRooms, sectionsLoading, spacesLoading]);
+    }, [ initialSections, initialRooms, sectionsLoading, spacesLoading ] );
 
     useEffect(() => {
         if ( !isInitialized ) return;
@@ -123,20 +125,20 @@ export function SchedulerDashboard() {
         console.log("Salas filtradas:", filteredRms.length)
 
         // Update filtered sections and rooms
-        setFilteredSections(filteredSecs)
-        setFilteredRooms(filteredRms)
-    }, [filters, sections, rooms, isInitialized])
+        setFilteredSections( filteredSecs )
+        setFilteredRooms( filteredRms )
+    }, [ filters, sections, rooms, isInitialized ])
 
     // const handleFilterChange = (newFilters: Filters) => {
     //     console.log("Aplicando nuevos filtros:", newFilters);
     //     setFilters(newFilters);
     // }
 
-    const handleSortChange = (field: SortField, direction: SortDirection) => {
+    const handleSortChange = ( field: SortField, direction: SortDirection ) => {
         setSortConfig({ field, direction });
     }
 
-    const handleUpdateSection = (updatedSection: Section) => {
+    const handleUpdateSection = ( updatedSection: Section ) => {
         const overlapping = sections.some(( section : Section ) => {
             if ( section.id         === updatedSection.id )         return false;
             if ( section.room       !== updatedSection.room )       return false;
@@ -151,27 +153,24 @@ export function SchedulerDashboard() {
             return false
         }
 
-        const updatedSections = sections.map((section) => 
-            (section.id === updatedSection.id ? updatedSection : section)
+        const updatedSections = sections.map(( section ) => 
+            ( section.id === updatedSection.id ? updatedSection : section )
         )
-        
-        setSections(updatedSections)
-        
+
+        setSections( updatedSections );
         // Actualizar localStorage con los datos actualizados
         // extractDataFromSections(updatedSections)
-        
         return true
     }
 
     const handleDeleteSection = (sectionId: string) => {
-        const updatedSections = sections.filter((section) => section.id !== sectionId)
-        setSections(updatedSections)
-        
+        const updatedSections = sections.filter(( section ) => section.id !== sectionId );
+        setSections( updatedSections );
         // Actualizar localStorage con los datos actualizados
         // extractDataFromSections(updatedSections)
     }
 
-    const handleSectionClick = (sectionId: string) => {
+    const handleSectionClick = ( sectionId: string ) => {
         const section = sections.find(( s : Section ) => s.id === sectionId );
 
         if ( !section ) return;
@@ -186,7 +185,6 @@ export function SchedulerDashboard() {
         newDay      : number,
         newModuleId : string
     ) : boolean => {
-        // Verificar si ya existe una sección en esa posición
         const targetOccupied = sections
             .some(( section : Section ) =>
                 section.id          !== sectionId   &&
@@ -198,23 +196,21 @@ export function SchedulerDashboard() {
         if ( targetOccupied ) return false;
 
         // Actualizar la sección
-        const updatedSections = sections.map((section) => {
-            if (section.id === sectionId) {
+        const updatedSections = sections.map(( section : Section ) => {
+            if ( section.id === sectionId ) {
                 return {
                     ...section,
-                    room: newRoomId,
-                    day: newDay,
-                    moduleId: newModuleId,
+                    room        : newRoomId,
+                    day         : newDay,
+                    moduleId    : newModuleId,
                 }
             }
             return section;
         })
-        
-        setSections(updatedSections)
-        
+
+        setSections( updatedSections );
         // Actualizar localStorage con los datos actualizados
         // extractDataFromSections(updatedSections)
-        
         return true;
     }
 
