@@ -1,8 +1,12 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { saveProfessorsToStorage } from '@/lib/localStorage';
+
+import { getProfessorsFromStorage, saveProfessorsToStorage } from '@/lib/localStorage';
 import { Professor } from '@/lib/types';
+
+
+const API_URL = 'http://localhost:3030/api/v1/professors';
 
 export interface UseProfessorsResult {
     professors: Professor[];
@@ -10,33 +14,41 @@ export interface UseProfessorsResult {
     error: Error | null;
 }
 
+
 export function useProfessors(): UseProfessorsResult {
-    const [professors, setProfessors] = useState<Professor[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<Error | null>(null);
+    const [professors, setProfessors]   = useState<Professor[]>( [] );
+    const [loading, setLoading]         = useState<boolean>( true );
+    const [error, setError]             = useState<Error | null>( null );
 
     useEffect(() => {
         const fetchProfessors = async () => {
+            setLoading( true );
+
+            const cachedProfessors = getProfessorsFromStorage();
+
+            if ( cachedProfessors && cachedProfessors.length > 0 ) {
+                setProfessors( cachedProfessors );
+                setLoading( false );
+                return;
+            }
+
             try {
-                setLoading(true);
-                const response = await fetch('http://localhost:3030/api/v1/professors');
-                
-                if (!response.ok) {
-                    throw new Error(`Error al obtener profesores: ${response.status}`);
+                const response = await fetch( API_URL );
+
+                if ( !response.ok ) {
+                    throw new Error( `Error al obtener profesores: ${response.status}` );
                 }
-                
+
                 const data = await response.json();
-                
-                // Save to localStorage
-                saveProfessorsToStorage(data);
-                
-                setProfessors(data);
-                setError(null);
-            } catch (err) {
-                console.error('Error al cargar los profesores:', err);
-                setError(err instanceof Error ? err : new Error(String(err)));
+
+                saveProfessorsToStorage( data );
+                setProfessors( data );
+                setError( null );
+            } catch ( err ) {
+                console.error( 'Error al cargar los profesores:', err );
+                setError( err instanceof Error ? err : new Error( String( err )));
             } finally {
-                setLoading(false);
+                setLoading( false );
             }
         };
 
