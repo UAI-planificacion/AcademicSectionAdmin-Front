@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from "react";
 
 import { Check, ChevronDown, X, Search }    from "lucide-react";
 import { FixedSizeList as List }            from "react-window";
@@ -38,23 +38,24 @@ export function isGroupOption(item: ComboboxItem): item is GroupOption {
 }
 
 
-interface MultiSelectComboboxProps {
-    isOpen?: boolean
-    options: ComboboxItem[]
-    defaultValues?: string[]
-    placeholder?: string
-    searchPlaceholder?: string
-    className?: string
-    onSelectionChange?: (selectedValues: string[]) => void
-    maxDisplayItems?: number
+interface ComboboxProps {
+    isOpen?             : boolean;
+    options             : ComboboxItem[];
+    defaultValues?      : string[] | string;
+    placeholder?        : string;
+    searchPlaceholder?  : string;
+    className?          : string;
+    onSelectionChange?  : ( selectedValues: string[] | string ) => void;
+    maxDisplayItems?    : number;
+    multiple?           : boolean;
 }
 
 interface FlattenedItem {
-    type: "option" | "group"
-    option?: Option
-    group?: GroupOption
-    groupIndex?: number
-    isGroupHeader?: boolean
+    type            : "option" | "group";
+    option?         : Option;
+    group?          : GroupOption;
+    groupIndex?     : number;
+    isGroupHeader?  : boolean;
 }
 
 const ITEM_HEIGHT = 40
@@ -69,11 +70,24 @@ export default function MultiSelectCombobox({
     className,
     onSelectionChange,
     maxDisplayItems = 1,
-}: MultiSelectComboboxProps) {
+    multiple = true,
+}: ComboboxProps) {
     const [open, setOpen] = useState(isOpen);
     const [searchValue, setSearchValue] = useState("")
-    const [selectedValues, setSelectedValues] = useState<Set<string>>(new Set(defaultValues))
+    
+    // Normalize defaultValues to always be an array
+    const normalizedDefaults = Array.isArray(defaultValues) ? defaultValues : [defaultValues].filter(Boolean);
+    const [selectedValues, setSelectedValues] = useState<Set<string>>(new Set(normalizedDefaults))
     const listRef = useRef<List>(null)
+    const scrollContainerRef = useRef<HTMLDivElement>(null)
+    const triggerRef = useRef<HTMLButtonElement>(null)
+    const [triggerWidth, setTriggerWidth] = useState<number>(0)
+
+    useLayoutEffect(() => {
+        if (triggerRef.current) {
+            setTriggerWidth(triggerRef.current.offsetWidth)
+        }
+    }, [open, triggerRef])
 
     // Flatten options for virtualization
     const flattenedItems = useMemo(() => {
@@ -159,16 +173,23 @@ export default function MultiSelectCombobox({
     // Handle option selection
     const handleOptionToggle = useCallback(
         (value: string) => {
-            const newSelected = new Set(selectedValues)
-            if (newSelected.has(value)) {
-                newSelected.delete(value)
+            if (!multiple) {
+                const newSelected = new Set([value])
+                setSelectedValues(newSelected)
+                onSelectionChange?.(value) 
+                setOpen(false) 
             } else {
-                newSelected.add(value)
+                const newSelected = new Set(selectedValues)
+                if (newSelected.has(value)) {
+                    newSelected.delete(value)
+                } else {
+                    newSelected.add(value)
+                }
+                setSelectedValues(newSelected)
+                onSelectionChange?.(Array.from(newSelected)) 
             }
-            setSelectedValues(newSelected)
-            onSelectionChange?.(Array.from(newSelected))
         },
-        [selectedValues, onSelectionChange],
+        [selectedValues, onSelectionChange, multiple],
     )
 
     // Handle group selection
@@ -189,7 +210,7 @@ export default function MultiSelectCombobox({
             }
 
             setSelectedValues(newSelected)
-            onSelectionChange?.(Array.from(newSelected))
+            onSelectionChange?.(Array.from(newSelected)) // Groups are only available in multiple mode
         },
         [selectedValues, onSelectionChange],
     )
@@ -246,30 +267,30 @@ export default function MultiSelectCombobox({
         ({ index, style }: { index: number; style: React.CSSProperties }) => {
             const item = filteredItems[index]
 
-            if (item.isGroupHeader && item.group) {
+            if (item.isGroupHeader && item.group && multiple) {
                 const isSelected = isGroupSelected(item.group)
                 const isPartial = isGroupPartiallySelected(item.group)
 
                 return (
-                    <div style={style} className="px-2">
+                    <div style={style} className="px-1">
                         <div
                         className={cn(
-                            "flex items-center px-2 py-2 text-sm font-medium cursor-pointer rounded-md hover:bg-accent",
+                            "flex items-center px-3 py-2 text-sm font-medium cursor-pointer rounded-md hover:bg-accent transition-colors",
                             isSelected && "bg-accent",
                         )}
                         onClick={() => handleGroupToggle(item.group!)}
                         >
                         <div
                             className={cn(
-                            "flex items-center justify-center w-4 h-4 mr-2 border rounded-sm",
+                            "flex items-center justify-center w-4 h-4 mr-3 border rounded-sm flex-shrink-0",
                             isSelected ? "bg-primary border-primary" : "border-input",
                             isPartial && "bg-primary/50 border-primary",
                             )}
                         >
                             {(isSelected || isPartial) && <Check className="w-3 h-3 text-primary-foreground" />}
                         </div>
-                        <span className="text-muted-foreground">{item.group.name}</span>
-                        <span className="ml-auto text-xs text-muted-foreground">
+                        <span className="text-muted-foreground flex-1 truncate pr-2 leading-5" title={item.group.name}>{item.group.name}</span>
+                        <span className="text-xs text-muted-foreground flex-shrink-0">
                             ({item.group.options.filter((opt : Option) => selectedValues.has(opt.value)).length}/{item.group.options.length})
                         </span>
                         </div>
@@ -277,28 +298,39 @@ export default function MultiSelectCombobox({
                 )
             }
 
+            // Skip group headers in single selection mode
+            if (item.isGroupHeader && !multiple) {
+                return null
+            }
+
             if (item.option) {
                 const isSelected = selectedValues.has(item.option.value)
 
                 return (
-                    <div style={style} className="px-2">
-                        <div
-                        className={cn(
-                            "flex items-center px-2 py-2 text-sm cursor-pointer rounded-md hover:bg-accent",
-                            isSelected && "bg-accent",
-                            item.group && "ml-4",
-                        )}
-                        onClick={() => handleOptionToggle(item.option!.value)}
-                        >
+                    <div style={style} className="px-1">
                         <div
                             className={cn(
-                            "flex items-center justify-center w-4 h-4 mr-2 border rounded-sm",
-                            isSelected ? "bg-primary border-primary" : "border-input",
+                                "flex items-center px-3 py-2 text-sm cursor-pointer rounded-md hover:bg-accent transition-colors",
+                                isSelected && "bg-accent",
+                                item.group && multiple && "ml-4", // Only indent if multiple and has group
                             )}
+                            onClick={() => handleOptionToggle(item.option!.value)}
                         >
-                            {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
-                        </div>
-                        <span>{item.option.label}</span>
+                            {multiple && (
+                                <div
+                                    className={cn(
+                                    "flex items-center justify-center w-4 h-4 mr-3 border rounded-sm flex-shrink-0",
+                                    isSelected ? "bg-primary border-primary" : "border-input",
+                                    )}
+                                >
+                                    {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                                </div>
+                            )}
+                            <span className="flex-1 truncate pr-2 leading-5" title={item.option.label}>{item.option.label}</span>
+
+                            {!multiple && isSelected && (
+                                <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                            )}
                         </div>
                     </div>
                 )
@@ -306,22 +338,41 @@ export default function MultiSelectCombobox({
 
             return null
         },
-        [filteredItems, selectedValues, isGroupSelected, isGroupPartiallySelected, handleGroupToggle, handleOptionToggle],
+        [filteredItems, selectedValues, isGroupSelected, isGroupPartiallySelected, handleGroupToggle, handleOptionToggle, multiple],
     )
 
+    useEffect(() => {
+        const handleScroll = (event: Event) => event.stopPropagation();
+
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.addEventListener('scroll', handleScroll);
+        }
+
+        return () => {
+            if (scrollContainerRef.current) {
+                scrollContainerRef.current.removeEventListener('scroll', handleScroll);
+            }
+        };
+    }, [scrollContainerRef]);
+
     return (
-        <Popover open={ isOpen ?? open} onOpenChange={setOpen}>
+        <Popover open={ isOpen ? true : open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
                 <Button
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
                     className={cn("w-full justify-between min-h-10", className)}
+                    ref={triggerRef}
                 >
-                    <div className="flex flex-wrap gap-1 flex-1 mr-2">
+                    <div className="flex flex-wrap gap-1 flex-grow-0 min-w-0 mr-2">
                         {selectedOptions.length === 0 ? (
-                            <span className="text-muted-foreground">{placeholder}</span>
+                            <span className="truncate">{placeholder}</span>
+                        ) : !multiple ? (
+                            // Modo selección única: mostrar solo el texto de la opción seleccionada
+                            <span className="truncate flex-1 min-w-0">{selectedOptions[0]?.label}</span>
                         ) : selectedOptions.length <= maxDisplayItems ? (
+                            // Modo múltiple: mostrar badges con X para eliminar
                             selectedOptions.map((option) => (
                                 <Badge key={option.value} variant="secondary" className="text-xs">
                                     {option.label}
@@ -345,28 +396,44 @@ export default function MultiSelectCombobox({
                 </Button>
             </PopoverTrigger>
 
-            <PopoverContent className="w-full p-0 -mr-1.5" align="start">
-                <div className="flex items-center border-b px-3">
+            <PopoverContent 
+                className           = "w-full p-0 -mr-1.5 z-[9999]" 
+                style               = {{ width: triggerWidth }}
+                align               = "start"
+                side                = "bottom"
+                sideOffset          = { 4 }
+                avoidCollisions     = { true }
+                onOpenAutoFocus     = {( e ) => e.preventDefault() }
+                onCloseAutoFocus    = {( e ) => e.preventDefault() }
+                onWheel             = {( e ) => e.stopPropagation() }
+                onPointerDownOutside= {( e ) => e.stopPropagation() }
+            >
+                <div className="flex items-center border-b px-3 py-2 w-full">
                     <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
 
                     <Input
-                        placeholder={searchPlaceholder}
-                        value={searchValue}
-                        onChange={(e) => setSearchValue(e.target.value)}
-                        className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                        placeholder = { searchPlaceholder }
+                        value       = { searchValue }
+                        onChange    = {( e ) => setSearchValue( e.target.value )}
+                        className   = "border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-8"
+                        onWheel     = {( e ) => e.stopPropagation() }
                     />
                 </div>
 
-                <div className="max-h-[300px]">
+                <div 
+                    ref         = { scrollContainerRef }
+                    className   = "max-h-[300px] overflow-x-hidden overflow-y-auto"
+                    onWheel     = {( e ) => e.stopPropagation() }
+                >
                     {filteredItems.length === 0 ? (
                         <div className="py-6 text-center text-sm text-muted-foreground">No se encontraron opciones.</div>
                     ) : (
                         <List
-                            ref={listRef}
-                            height={Math.min(filteredItems.length * ITEM_HEIGHT, MAX_HEIGHT)}
-                            itemCount={filteredItems.length}
-                            itemSize={ITEM_HEIGHT}
-                            width="100%"
+                            ref         = { listRef }
+                            height      = { Math.min( filteredItems.length * ITEM_HEIGHT, MAX_HEIGHT )}
+                            itemCount   = { filteredItems.length }
+                            itemSize    = { ITEM_HEIGHT }
+                            width       = "100%"
                         >
                             {renderItem}
                         </List>
@@ -376,3 +443,5 @@ export default function MultiSelectCombobox({
         </Popover>
     )
 }
+
+export type { ComboboxProps }
