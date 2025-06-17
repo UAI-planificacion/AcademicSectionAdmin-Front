@@ -281,7 +281,7 @@ export function ModuleGrid({
                                                     <MultiSelectCombobox
                                                         options={uniqueRoomIds.map((id) => ({ value: id, label: id }))}
                                                         placeholder="Filtrar por sala"
-                                                        onSelectionChange={(values) => handleFilterChange('rooms', values)}
+                                                        onSelectionChange={(values) => handleFilterChange('rooms', values as string[])}
                                                         defaultValues={localFilters.rooms || []}
                                                     />
                                                 </div>
@@ -289,7 +289,7 @@ export function ModuleGrid({
                                                     <MultiSelectCombobox
                                                         options={periods.map((period) => ({ value: period.id, label: period.label }))}
                                                         placeholder="Filtrar por periodo"
-                                                        onSelectionChange={(values) => handleFilterChange('periods', values)}
+                                                        onSelectionChange={(values) => handleFilterChange('periods', values as string[])}
                                                         defaultValues={localFilters.periods}
                                                     />
                                                 </div>
@@ -333,7 +333,7 @@ export function ModuleGrid({
                                                             label: typeName(type) 
                                                         }))}
                                                         placeholder="Filtrar por tipo"
-                                                        onSelectionChange={(values) => handleFilterChange('types', values)}
+                                                        onSelectionChange={(values) => handleFilterChange('types', values as string[])}
                                                         defaultValues={localFilters.types || []}
                                                         isOpen={true}   
                                                     />
@@ -378,7 +378,7 @@ export function ModuleGrid({
                                                             label: building 
                                                         }))}
                                                         placeholder="Filtrar por edificio"
-                                                        onSelectionChange={(values) => handleFilterChange('buildings', values)}
+                                                        onSelectionChange={(values) => handleFilterChange('buildings', values as string[])}
                                                         defaultValues={localFilters.buildings}
                                                         isOpen={true}
                                                     />
@@ -423,7 +423,7 @@ export function ModuleGrid({
                                                             label: size.label 
                                                         }))}
                                                         placeholder="Filtrar por talla"
-                                                        onSelectionChange={(values) => handleFilterChange('sizes', values)}
+                                                        onSelectionChange={(values) => handleFilterChange('sizes', values as string[])}
                                                         defaultValues={localFilters.sizes}
                                                         isOpen={true}
                                                     />
@@ -469,7 +469,7 @@ export function ModuleGrid({
                                                                 label: capacity.toString()
                                                             }))}
                                                         placeholder="Filtrar por capacidad"
-                                                        onSelectionChange={(values) => handleFilterChange('capacities', values)}
+                                                        onSelectionChange={(values) => handleFilterChange('capacities', values as string[])}
                                                         defaultValues={localFilters.capacities || []}
                                                         isOpen={true}
                                                     />
