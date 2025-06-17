@@ -16,11 +16,12 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue
-}                   from "@/components/ui/select"
-import { Button }   from "@/components/ui/button"
-import { Input }    from "@/components/ui/input"
-import { Label }    from "@/components/ui/label"
-import { useDays }  from '@/hooks/use-days';
+}                           from "@/components/ui/select"
+import { Button }           from "@/components/ui/button"
+import { Input }            from "@/components/ui/input"
+import { Label }            from "@/components/ui/label"
+import MultiSelectCombobox  from "@/components/inputs/Combobox";
+
 
 import {
     SECTION_BUILDING_PLANNED,
@@ -32,6 +33,7 @@ import { usePeriods }                   from "@/hooks/use-periods"
 import { useSubjects }                  from "@/hooks/use-subjects";
 import { useProfessors }                from "@/hooks/use-professors";
 import { useModules, getModulesForDay } from '@/hooks/use-modules';
+import { useDays }                      from '@/hooks/use-days';
 
 
 interface SectionModalProps {
@@ -125,6 +127,7 @@ export function SectionModal({
                                 <Label htmlFor="period">Número Sección</Label>
 
                                 <Input
+                                    name        = "code"
                                     type        = "number"
                                     value       = { formData.code }
                                     onChange    = { handleChange }
@@ -153,37 +156,33 @@ export function SectionModal({
                         <div className="space-y-1">
                             <Label htmlFor="roomId">Sala</Label>
 
-                            <Select value={formData.room} onValueChange={(value) => handleSelectChange("roomId", value)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Seleccionar sala" />
-                                </SelectTrigger>
-
-                                <SelectContent>
-                                    {rooms.map((room) => (
-                                        <SelectItem key={room.id} value={room.id}>
-                                            {room.id} ({room.type}, {room.sizeId}, {room.capacity})
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <MultiSelectCombobox
+                                placeholder         = "Seleccionar sala"
+                                onSelectionChange   = {( value ) => handleSelectChange( "room", value as string )}
+                                defaultValues       = { formData.room ? [formData.room] : [] }
+                                isOpen              = { false }
+                                multiple            = { false }
+                                options             = { rooms.map(( room ) => ({
+                                    label: `${room.id} (${room.type}, ${room.sizeId}, ${room.capacity})`,
+                                    value: room.id
+                                }))}
+                            />
                         </div>
 
                         <div className="space-y-1">
                             <Label htmlFor="roomId">Asignatura</Label>
-
-                            <Select value={formData.subjectId} onValueChange={(value) => handleSelectChange("subjectId", value)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Seleccionar asignatura" />
-                                </SelectTrigger>
-
-                                <SelectContent>
-                                    {subjects.map((subject) => (
-                                        <SelectItem key={subject.id} value={subject.id}>
-                                            {subject.id} - {subject.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            
+                            <MultiSelectCombobox
+                                placeholder         = "Seleccionar asignatura"
+                                onSelectionChange   = {( value ) => handleSelectChange( "subjectId", value as string )}
+                                defaultValues       = { formData.subjectId ? [formData.subjectId] : [] }
+                                isOpen              = { false }
+                                multiple            = { false }
+                                options             = { subjects.map(( subject ) => ({
+                                    label: `${subject.id} - ${subject.name}`,
+                                    value: subject.id
+                                }))}
+                            />
                         </div>
 
                         <div className="space-y-1">
@@ -263,6 +262,7 @@ export function SectionModal({
                             <Label htmlFor="period">Registrados corregidos</Label>
 
                             <Input
+                                name        = "correctedRegistrants"
                                 type        = "number"
                                 value       = { formData.correctedRegistrants }
                                 onChange    = { handleChange }
@@ -273,6 +273,7 @@ export function SectionModal({
                             <Label htmlFor="period">Registrados reales</Label>
 
                             <Input
+                                name        = "realRegistrants"
                                 type        = "number"
                                 value       = { formData.realRegistrants }
                                 onChange    = { handleChange }
@@ -300,6 +301,7 @@ export function SectionModal({
                             <Label htmlFor="chairsAvailable">Sillas disponibles</Label>
 
                             <Input
+                                name        = "chairsAvailable"
                                 type        = "number"
                                 value       = { formData.chairsAvailable?.toString() }
                                 onChange    = { handleChange }
@@ -310,22 +312,17 @@ export function SectionModal({
                     <div className="space-y-1">
                             <Label htmlFor="professor">Profesor</Label>
 
-                            <Select
-                                value={formData.professor}
-                                onValueChange={(value) => handleSelectChange("professor", value)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Seleccionar profesor" />
-                                </SelectTrigger>
-
-                                <SelectContent>
-                                    {professors.map(( professor ) => (
-                                        <SelectItem key={professor.id} value={professor.id}>
-                                            {professor.id}-{professor.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <MultiSelectCombobox
+                                placeholder         = "Seleccionar profesor"
+                                onSelectionChange   = {( value ) => handleSelectChange( "professor", value as string )}
+                                defaultValues       = { formData.professor ? [formData.professor] : [] }
+                                isOpen              = { false }
+                                multiple            = { false }
+                                options             = { professors.map(( professor ) => ({
+                                    label: `${professor.id}-${professor.name}`,
+                                    value: professor.id
+                                }))}
+                            />
                         </div>
 
                     <DialogFooter className="grid sm:flex sm:justify-between gap-2 w-full">
