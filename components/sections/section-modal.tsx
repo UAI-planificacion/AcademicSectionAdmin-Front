@@ -21,13 +21,14 @@ import { Button }           from "@/components/ui/button"
 import { Input }            from "@/components/ui/input"
 import { Label }            from "@/components/ui/label"
 import MultiSelectCombobox  from "@/components/inputs/Combobox";
-
+import { Badge }            from "@/components/ui/badge";
 
 import {
     SECTION_BUILDING_PLANNED,
     SECTION_SESSION
-}                               from "@/lib/section"
-import type { Section, Room }   from "@/lib/types"
+}                       from "@/lib/section";
+import type { Room }    from "@/lib/types";
+import { cn }           from "@/lib/utils";
 
 import { usePeriods }                   from "@/hooks/use-periods"
 import { useSubjects }                  from "@/hooks/use-subjects";
@@ -35,14 +36,24 @@ import { useProfessors }                from "@/hooks/use-professors";
 import { useModules, getModulesForDay } from '@/hooks/use-modules';
 import { useDays }                      from '@/hooks/use-days';
 
+import type {
+    CreateSection,
+    UpdateSection,
+    Section
+} from '@/models/section.model';
+
+import LoaderMini from "@/icons/LoaderMini";
+
+import { DeleteConfirmDialog } from "@/components/dialogs/DeleteConfirmDialog";
+
 
 interface SectionModalProps {
-    section : Section
-    rooms   : Room[]
-    onClose : () => void
-    onSave  : (section: Section) => boolean
-    onDelete: (sectionId: string) => void
-    isCreating?: boolean
+    section     : Section;
+    rooms       : Room[];
+    onClose     : () => void;
+    onSave      : ( section: Section ) => boolean;
+    onDelete    : ( sectionId: string ) => void;
+    isCreating? : boolean;
 }
 
 
@@ -56,18 +67,25 @@ export function SectionModal({
 }: SectionModalProps ): React.JSX.Element {
     const [formData, setFormData]       = useState<Section>({ ...section });
     const [selectedDay, setSelectedDay] = useState<number>( section.day );
+    const [isLoading, setIsLoading]     = useState<boolean>( false );
+    const [isDelete, setDeleteModule]   = useState<boolean>( false );
     const { periods }                   = usePeriods();
     const { days }                      = useDays();
     const { modules }                   = useModules();
     const { professors }                = useProfessors();
-    const {subjects}                    = useSubjects();
+    const { subjects }                  = useSubjects();
     const dayModules                    = getModulesForDay( modules, selectedDay );
-    const sizes                         = Array.from(new Set(rooms.map(room => room.sizeId )));
-    const handleChange                  = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target
-        setFormData(( prev ) => ({ ...prev, [ name ]: value }))
+    const sizes                         = Array.from( new Set( rooms.map( room => room.sizeId )));
+
+
+    function handleChange ( e: React.ChangeEvent<HTMLInputElement> ) {
+        const { name, value } = e.target;
+
+        setFormData(( prev ) => ({ ...prev, [ name ]: value }));
     }
-    const handleSelectChange = ( name: string, value: string | number ) => {
+
+
+    function handleSelectChange ( name: string, value: string | number ): void {
         if ( name === "day" ) {
             setSelectedDay( Number( value ));
             // Reset moduleId when day changes to avoid invalid combinations
@@ -83,20 +101,95 @@ export function SectionModal({
         }
     }
 
-    const handleSubmit = ( e: React.FormEvent ) => {
+
+    function getDayModuleId(): number {
+        return dayModules.find( dayM =>
+            dayM.id === formData.moduleId &&
+            dayM.dayId === formData.day
+        )?.dayModuleId!;
+    }
+
+
+    async function onCreateSection(): Promise<void> {
+        const saveSection: CreateSection = {
+            code                    : formData.code,
+            session                 : formData.session,
+            size                    : formData.size,
+            correctedRegistrants    : formData.correctedRegistrants,
+            realRegistrants         : formData.realRegistrants,
+            plannedBuilding         : formData.plannedBuilding,
+            chairsAvailable         : formData.chairsAvailable,
+            professorId             : formData.professorName,
+            roomId                  : formData.room,
+            periodId                : formData.period,
+            subjectId               : formData.subjectId,
+            dayModuleId             : getDayModuleId()
+        }
+
+        console.log('🚀 ~ file: section-modal.tsx:102 ~ formData:', saveSection)
+
+        const data = await fetch( 'http://localhost:3030/api/v1/sections', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify( saveSection )
+        })
+
+        const response = await data.json();
+
+        console.log('🚀 ~ file: section-modal.tsx:123 ~ response:', response)
+    }
+
+
+    async function onUpdateSection(): Promise<void> {
+        const saveSection: UpdateSection = {
+            code                    : formData.code,
+            session                 : formData.session,
+            size                    : formData.size,
+            correctedRegistrants    : formData.correctedRegistrants,
+            realRegistrants         : formData.realRegistrants,
+            plannedBuilding         : formData.plannedBuilding,
+            chairsAvailable         : formData.chairsAvailable,
+            professorId             : formData.professorId,
+            roomId                  : formData.room,
+            dayModuleId             : getDayModuleId()
+        }
+
+        console.log('🚀 ~ file: section-modal.tsx:102 ~ formData:', saveSection)
+
+        const data = await fetch( `http://localhost:3030/api/v1/sections/${formData.id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify( saveSection )
+        })
+
+        const response = await data.json();
+
+        console.log('🚀 ~ file: section-modal.tsx:123 ~ response:', response)
+    }
+
+
+    async function handleSubmit ( e: React.FormEvent ): Promise<void> {
         e.preventDefault();
         // const success = onSave( formData );
-        console.log('🚀 ~ file: section-modal.tsx:102 ~ formData:', formData)
+        setIsLoading( true );
+        if ( isCreating ) await onCreateSection();
+        else await onUpdateSection();
 
+        setIsLoading( false );
         // if ( success ) onClose();
     }
 
-    const handleDelete = () => {
-        if ( window.confirm( "¿Estás seguro de que deseas eliminar esta sección?" )) {
-            onDelete( section.id );
-            onClose();
-        }
+
+    function handleDelete(): void {
+        setDeleteModule( false );
+        onDelete( section.id );
+        onClose();
     }
+
 
     return (
         <Dialog open={true} onOpenChange={onClose}>
@@ -104,18 +197,24 @@ export function SectionModal({
                 <DialogHeader className="space-y-5">
                     <DialogTitle>{isCreating ? 'Crear Nueva Sección' : 'Detalles de la Sección'}</DialogTitle>
                     {!isCreating && (
-                        <div className="grid grid-cols-3 gap-2">
-                            <p className="text-sm">
-                                <span className="font-bold">Código:</span> {formData.code}
-                            </p>
+                        <div className="rounded-lg border border-border bg-background text-foreground">
+                            <div className="flex justify-between py-3 px-4 border-b border-border bg-zinc-100 dark:bg-zinc-900/50">
+                                <Badge variant="secondary">Código</Badge>
 
-                            <p className="text-sm">
-                                <span className="font-bold">Asignatura:</span> {formData.subjectId} - {formData.subjectName}
-                            </p>
+                                <div className="text-sm">{formData.code}</div>
+                            </div>
 
-                            <p className="text-sm">
-                                <span className="font-bold">Periodo:</span> {formData.period}
-                            </p>
+                            <div className="flex justify-between py-3 px-4 border-b border-border">
+                                <Badge variant="secondary">Periodo</Badge>
+
+                                <div className="text-sm">{formData.period}</div>
+                            </div>
+
+                            <div className="flex justify-between py-3 px-4 last:border-b-0 bg-zinc-100 dark:bg-zinc-900/50">
+                                <Badge variant="secondary">Asignatura</Badge>
+
+                                <div className="text-sm">{formData.subjectName}</div>
+                            </div>
                         </div>
                     )}
                 </DialogHeader>
@@ -152,8 +251,11 @@ export function SectionModal({
                         </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
+                    <div className="grid gap-3 grid-cols-2">
+                        <div className={cn(
+                            "space-y-1 col-span-2",
+                            isCreating ? "col-span-1" : "col-span-2"
+                        )}>
                             <Label htmlFor="roomId">Sala</Label>
 
                             <MultiSelectCombobox
@@ -169,21 +271,23 @@ export function SectionModal({
                             />
                         </div>
 
-                        <div className="space-y-1">
-                            <Label htmlFor="roomId">Asignatura</Label>
-                            
-                            <MultiSelectCombobox
-                                placeholder         = "Seleccionar asignatura"
-                                onSelectionChange   = {( value ) => handleSelectChange( "subjectId", value as string )}
-                                defaultValues       = { formData.subjectId ? [formData.subjectId] : [] }
-                                isOpen              = { false }
-                                multiple            = { false }
-                                options             = { subjects.map(( subject ) => ({
-                                    label: `${subject.id} - ${subject.name}`,
-                                    value: subject.id
-                                }))}
-                            />
-                        </div>
+                        {isCreating && (
+                            <div className="space-y-1">
+                                <Label htmlFor="roomId">Asignatura</Label>
+
+                                <MultiSelectCombobox
+                                    placeholder         = "Seleccionar asignatura"
+                                    onSelectionChange   = {( value ) => handleSelectChange( "subjectId", value as string )}
+                                    defaultValues       = { formData.subjectId ? [formData.subjectId] : [] }
+                                    isOpen              = { false }
+                                    multiple            = { false }
+                                    options             = { subjects.map(( subject ) => ({
+                                        label: `${subject.id} - ${subject.name}`,
+                                        value: subject.id
+                                    }))}
+                                />
+                            </div>
+                        )}
 
                         <div className="space-y-1">
                             <Label htmlFor="day">Día</Label>
@@ -216,8 +320,8 @@ export function SectionModal({
 
                                 <SelectContent>
                                     {dayModules.map((module) => (
-                                        <SelectItem key={module.id} value={module.id}>
-                                            {module.name} ({module.startTime} - {module.endTime})
+                                        <SelectItem key={module.id} value={module.id.toString()}>
+                                            {module.name} ({module.startHour}:{module.endHour})
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -310,29 +414,34 @@ export function SectionModal({
                     </div>
 
                     <div className="space-y-1">
-                            <Label htmlFor="professor">Profesor</Label>
+                        <Label htmlFor="professor">Profesor</Label>
 
-                            <MultiSelectCombobox
-                                placeholder         = "Seleccionar profesor"
-                                onSelectionChange   = {( value ) => handleSelectChange( "professor", value as string )}
-                                defaultValues       = { formData.professor ? [formData.professor] : [] }
-                                isOpen              = { false }
-                                multiple            = { false }
-                                options             = { professors.map(( professor ) => ({
-                                    label: `${professor.id}-${professor.name}`,
-                                    value: professor.id
-                                }))}
-                            />
-                        </div>
+                        <MultiSelectCombobox
+                            placeholder         = "Seleccionar profesor"
+                            onSelectionChange   = {( value ) => handleSelectChange( "professor", value as string )}
+                            defaultValues       = { formData.professorId ? [formData.professorId] : [] }
+                            isOpen              = { false }
+                            multiple            = { false }
+                            options             = { professors.map(( professor ) => ({
+                                label: `${professor.id}-${professor.name}`,
+                                value: professor.id
+                            }))}
+                        />
+                    </div>
 
-                    <DialogFooter className="grid sm:flex sm:justify-between gap-2 w-full">
+                    <DialogFooter className={cn(
+                        "grid sm:flex gap-2 w-full",
+                        isCreating ? "sm:justify-end" : "sm:justify-between"
+                    )}>
                         {!isCreating && (
                             <Button
-                                type="button"
-                                variant="destructive"
-                                onClick={handleDelete}
-                                className="w-full sm:w-auto"
+                                type        = "button"
+                                variant     = "destructive"
+                                onClick     = { () => setDeleteModule( true )}
+                                className   = "w-full sm:w-auto"
+                                disabled    = { isLoading }
                             >
+                                { isLoading ?? <LoaderMini /> }
                                 Eliminar
                             </Button>
                         )}
@@ -343,19 +452,31 @@ export function SectionModal({
                                 variant     = "outline"
                                 onClick     = { onClose }
                                 className   = "w-full sm:w-auto"
+                                disabled    = { isLoading }
                             >
+                                { isLoading ?? <LoaderMini /> }
                                 Cancelar
                             </Button>
 
                             <Button
                                 type        = "submit"
                                 className   = "w-full sm:w-auto"
+                                disabled    = { isLoading }
                             >
+                                { isLoading ?? <LoaderMini /> }
                                 Guardar
                             </Button>
                         </div>
                     </DialogFooter>
                 </form>
+
+                <DeleteConfirmDialog
+                    isOpen      = { isDelete }
+                    onClose     = { () => { setDeleteModule( false )}}
+                    onConfirm   = { handleDelete }
+                    name        = { 'Sección' }
+                    type        = "la Sección"
+                />
             </DialogContent>
         </Dialog>
     )
