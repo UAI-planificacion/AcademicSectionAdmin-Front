@@ -46,8 +46,9 @@ export function useModules(): UseModulesResult {
 }
 
 // Función para obtener los módulos de un día específico
-export function getModulesForDay(modules: Module[], dayId: number): Module[] {
-    return modules
-        .filter((module: Module) => module.dayId === dayId)
-        .sort((a: Module, b: Module) => a.order - b.order);
-}
+export const getModulesForDay = (
+    modules : Module[],
+    dayId   : number
+): Module[] => modules
+    .filter(( module: Module ) => module.dayId === dayId )
+    .sort(( a: Module, b: Module ) => a.order - b.order );
