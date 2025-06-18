@@ -9,11 +9,16 @@ import {
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
-}                               from '@/components/ui/tooltip';
-import { SectionModal }         from '@/components/section-modal';
-import { Section }              from '@/lib/types';
+}                       from '@/components/ui/tooltip';
+import { SectionModal } from '@/components/sections/section-modal';
+
 import { cn }                   from '@/lib/utils';
 import { getRoomsFromStorage }  from '@/lib/localStorage';
+
+import { Section } from '@/models/section.model';
+
+const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
 
 interface SectionCardProps {
     section                 : Section | null;
@@ -135,7 +140,8 @@ export const SectionCard = memo(function SectionCard({
                         realRegistrants         : 0,
                         plannedBuilding         : "",
                         chairsAvailable         : 0,
-                        professor               : "",
+                        professorName           : "",
+                        professorId             : "",
                         room                    : roomId,
                         day                     : dayId,
                         moduleId                : moduleId,
@@ -161,7 +167,7 @@ export const SectionCard = memo(function SectionCard({
                                 title="Doble clic para editar, arrastrar para mover"
                             >
                                 <span className="truncate">
-                                    {section.code}
+                                    {section.subjectId}-{section.code}
                                 </span>
 
                                 <span className="truncate">
@@ -169,7 +175,7 @@ export const SectionCard = memo(function SectionCard({
                                 </span>
 
                                 <span className="text-xs truncate">
-                                    {section.professor}
+                                    {section.professorName}
                                 </span>
                             </div>
                         </TooltipTrigger>
@@ -177,15 +183,47 @@ export const SectionCard = memo(function SectionCard({
                         {!isMoving && <TooltipContent>
                             <div className="grid">
                                 <span className="truncate">
-                                    {section.code}
+                                    SSEC: {section.subjectId}-{section.code}
                                 </span>
 
                                 <span className="truncate">
-                                    {section.period}
+                                    Periodo: {section.period}
+                                </span>
+
+                                <span className="truncate">
+                                    Salón: {section.room}
+                                </span>
+
+                                <span className="truncate">
+                                    Día: {dayNames[section.day - 1]} | Módulo: {section.moduleId}
+                                </span>
+
+                                <span className="truncate">
+                                    Tamaño: { section.size }
+                                </span>
+
+                                <span className="truncate">
+                                    Evento: { section.session }
+                                </span>
+
+                                <span className="truncate">
+                                    Registrados: { section.realRegistrants } | Corregidos: { section.correctedRegistrants }
+                                </span>
+
+                                <span className="truncate">
+                                    Edificio Planeado: { section.plannedBuilding }
+                                </span>
+
+                                <span className="truncate">
+                                    Asientos disponibles: { section.chairsAvailable }
                                 </span>
 
                                 <span className="text-xs truncate">
-                                    {section.professor}
+                                    {
+                                        section.professorName !== 'Sin profesor'
+                                        ? section.professorId + '-' + section.professorName
+                                        : 'Sin profesor'
+                                    }
                                 </span>
                             </div>
                         </TooltipContent>}
