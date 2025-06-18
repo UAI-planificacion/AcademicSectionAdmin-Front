@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ModuleModal } from '@/components/modules/ModuleModal';
-import { DeleteConfirmDialog } from '@/components/modules/DeleteConfirmDialog';
+import { DeleteConfirmDialog } from '@/components/dialogs/DeleteConfirmDialog';
 
 
 export interface Module {
@@ -248,48 +248,51 @@ export default function ModulesPage() {
 
     return (
         <div className="min-h-screen bg-background p-6">
-        <div className="max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-            <div className="space-y-2">
-                <h1 className="text-4xl font-bold tracking-tight">
-                Gestión de Módulos
-                </h1>
-                <p className="text-muted-foreground text-lg">
-                Administra los módulos de horarios organizados por día de la semana
-                </p>
-            </div>
-            <Button 
-                onClick={handleAddModule} 
-                className="flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-3"
-            >
-                <Plus className="h-5 w-5" />
-                Agregar Módulo
-            </Button>
-            </div>
+            <div className="max-w-7xl mx-auto">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-8">
+                    <div className="space-y-2">
+                        <h1 className="text-4xl font-bold tracking-tight">
+                            Gestión de Módulos
+                        </h1>
 
-            {/* Module tables grid */}
-            <div className="grid grid-cols-3 grid-rows-2 gap-6 h-[calc(100vh-220px)]">
-            {DAYS.map((day) => (
-                <ModuleTable key={day} day={day} />
-            ))}
+                        <p className="text-muted-foreground text-lg">
+                            Administra los módulos de horarios organizados por día de la semana
+                        </p>
+                    </div>
+
+                    <Button 
+                        onClick={handleAddModule} 
+                        className="flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-3"
+                    >
+                        <Plus className="h-5 w-5" />
+                        Agregar Módulo
+                    </Button>
+                </div>
+
+                {/* Module tables grid */}
+                <div className="grid grid-cols-3 grid-rows-2 gap-6 h-[calc(100vh-220px)]">
+                    {DAYS.map((day) => (
+                        <ModuleTable key={day} day={day} />
+                    ))}
+                </div>
+
+                {/* Modals */}
+                <ModuleModal
+                    isOpen  = { isModalOpen }
+                    onClose = { () => setIsModalOpen( false )}
+                    onSave  = { handleSaveModule }
+                    module  = { editingModule }
+                />
+
+                <DeleteConfirmDialog
+                    isOpen      = { !!deleteModule }
+                    onClose     = { () => setDeleteModule( null )}
+                    onConfirm   = { confirmDelete }
+                    name        = { deleteModule?.name || '' }
+                    type        = "el Módulo"
+                />
             </div>
-
-            {/* Modals */}
-            <ModuleModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            onSave={handleSaveModule}
-            module={editingModule}
-            />
-
-            <DeleteConfirmDialog
-            isOpen={!!deleteModule}
-            onClose={() => setDeleteModule(null)}
-            onConfirm={confirmDelete}
-            moduleName={deleteModule?.name || ''}
-            />
-        </div>
         </div>
     );
 }
