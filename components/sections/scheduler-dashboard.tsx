@@ -4,7 +4,6 @@ import { useState, useEffect, JSX } from 'react';
 
 
 import type {
-    Section,
     Room,
     SortDirection,
     SortField,
@@ -14,8 +13,9 @@ import type {
 import { useSections }              from '@/hooks/use-sections';
 import { useSpaces }                from '@/hooks/use-spaces';
 // import { extractDataFromSections }  from '@/lib/localStorage';
-import { SectionModal }             from '@/components/section-modal';
-import { ModuleGrid }               from '@/components/module-grid';
+import { SectionModal }             from '@/components/sections/section-modal';
+import { ModuleGrid }               from '@/components/sections/module-grid';
+import { Section } from '@/models/section.model';
 
 export function SchedulerDashboard(): JSX.Element {
     const { sections: initialSections, loading: sectionsLoading }   = useSections();
