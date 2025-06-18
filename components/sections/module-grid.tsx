@@ -17,7 +17,6 @@ import {
 }  from "lucide-react"
 
 import type {
-    Section,
     Room,
     SortConfig,
     SortField,
@@ -31,14 +30,16 @@ import {
     PopoverContent,
     PopoverTrigger
 }                           from "@/components/ui/popover";
-import { SectionCard }      from "@/components/SectionCard";
+import { SectionCard }      from "@/components/sections/SectionCard";
 import MultiSelectCombobox  from "@/components/inputs/Combobox";
+import { Button }           from "@/components/ui/button";
 
 import { useDays }                      from "@/hooks/use-days";
 import { useModules, getModulesForDay } from "@/hooks/use-modules";
 import { usePeriods }                   from "@/hooks/use-periods";
 import { useSizes }                     from "@/hooks/use-sizes";
-import { Button }                       from "@/components/ui/button";
+
+import { Section } from "@/models/section.model";
 
 
 interface ModuleGridProps {
@@ -498,27 +499,27 @@ export function ModuleGrid({
                             {filteredRooms.map((room) => (
                                 <tr key={`fixed-${room.id}`} className="border-b h-16">
                                     {/* Sala */}
-                                    <td className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm", fixedColumnsConfig.name.widthClass)}>
+                                    <td title={'Sala: ' + room.id} className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm", fixedColumnsConfig.name.widthClass)}>
                                         {room.id}
                                     </td>
 
                                     {/* Tipo */}
-                                    <td className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm", fixedColumnsConfig.type.widthClass)}>
+                                    <td title={'Tipo: ' + typeName(room.type)} className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm", fixedColumnsConfig.type.widthClass)}>
                                         {typeName(room.type)}
                                     </td>
 
                                     {/* Edificio */}
-                                    <td className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm", fixedColumnsConfig.building.widthClass)}>
+                                    <td title={'Edificio: ' + room.building} className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm", fixedColumnsConfig.building.widthClass)}>
                                         {room.building}
                                     </td>
 
                                     {/* Talla */}
-                                    <td className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm", fixedColumnsConfig.size.widthClass)}>
+                                    <td title={'Talla: ' + room.sizeId} className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm", fixedColumnsConfig.size.widthClass)}>
                                         {room.sizeId}
                                     </td>
 
                                     {/* Capacidad */}
-                                    <td className={cn("border-x border-r-zinc-400 dark:border-r-zinc-600 p-2 bg-white dark:bg-zinc-900 transition-colors relative text-sm", fixedColumnsConfig.capacity.widthClass)}>
+                                    <td title={'Capacidad: ' + room.capacity.toString()} className={cn("border-x border-r-zinc-400 dark:border-r-zinc-600 p-2 bg-white dark:bg-zinc-900 transition-colors relative text-sm", fixedColumnsConfig.capacity.widthClass)}>
                                         {room.capacity}
                                         <div className="absolute top-0 bottom-0 right-0 w-[6px] shadow-[2px_0px_4px_rgba(0,0,0,0.15)] pointer-events-none"></div>
                                     </td>
