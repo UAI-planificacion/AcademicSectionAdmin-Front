@@ -1,22 +1,3 @@
-export interface Section {
-    id                      : string;
-    code                    : number;
-    session                 : string;
-    size                    : string;
-    correctedRegistrants    : number;
-    realRegistrants         : number;
-    plannedBuilding         : string;
-    chairsAvailable         : number | null;
-    room                    : string;
-    professor               : string;
-    day                     : number;
-    moduleId                : string;
-    subjectName             : string;
-    subjectId               : string;
-    period                  : string;
-}
-
-
 export type Type = 'ROOM' | 'AUDITORIO' | 'DIS' | 'LAB' | 'LABPC' | 'GARAGE' | 'CORE' | 'COMMUNIC';
 export type Size = 'XS' | 'XE' | 'S' | 'SE' | 'MS' | 'M' | 'L' | 'XL' | 'XXL';
 
@@ -36,10 +17,11 @@ export interface Module {
     id          : string;
     name        : string;
     difference? : string;
-    startTime   : string;
-    endTime     : string;
+    startHour   : string;
+    endHour     : string;
     dayId       : number;
     order       : number;
+    dayModuleId : number;
 }
 
 
