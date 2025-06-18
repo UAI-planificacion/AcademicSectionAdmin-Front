@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic"
 
 const SchedulerDashboard = dynamic(
-    () => import( '@/components/scheduler-dashboard' ).then(( mod ) => mod.SchedulerDashboard ),
+    () => import( '@/components/sections/scheduler-dashboard' ).then(( mod ) => mod.SchedulerDashboard ),
     {
         ssr: false,
         loading: () => (
