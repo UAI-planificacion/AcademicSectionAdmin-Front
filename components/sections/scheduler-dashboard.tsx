@@ -2,6 +2,7 @@
 
 import { useState, useEffect, JSX } from 'react';
 
+import { toast } from 'sonner';
 
 import type {
     Room,
@@ -9,17 +10,24 @@ import type {
     SortField,
     Filters,
     SortConfig
-}                                   from '@/lib/types';
-import { useSections }              from '@/hooks/use-sections';
-import { useSpaces }                from '@/hooks/use-spaces';
-// import { extractDataFromSections }  from '@/lib/localStorage';
-import { SectionModal }             from '@/components/sections/section-modal';
-import { ModuleGrid }               from '@/components/sections/module-grid';
-import { Section } from '@/models/section.model';
+} from '@/lib/types';
+
+import { useSections }  from '@/hooks/use-sections';
+import { useSpaces }    from '@/hooks/use-spaces';
+import { useModules }   from '@/hooks/use-modules';
+
+import { SectionModal } from '@/components/sections/section-modal';
+import { ModuleGrid }   from '@/components/sections/module-grid';
+
+import { Section, UpdateSection } from '@/models/section.model';
+
+import { errorToast, successToast } from '@/config/toast/toast.config';
+
 
 export function SchedulerDashboard(): JSX.Element {
     const { sections: initialSections, loading: sectionsLoading }   = useSections();
     const { spaces: initialRooms, loading: spacesLoading }          = useSpaces();
+    const { modules } = useModules();
 
     const [sections, setSections]                   = useState<Section[]>([]);
     const [filteredSections, setFilteredSections]   = useState<Section[]>([]);
@@ -101,17 +109,17 @@ export function SchedulerDashboard(): JSX.Element {
         if (filters.sizes && filters.sizes.length > 0) {
             filteredRms = filteredRms.filter((room) => filters.sizes.includes(room.sizeId))
         }
-        
+
         // Filter by room IDs (multiple selection)
         if (filters.rooms && filters.rooms.length > 0) {
             filteredRms = filteredRms.filter((room) => filters.rooms!.includes(room.id))
         }
-        
+
         // Filter by room types (multiple selection)
         if (filters.types && filters.types.length > 0) {
             filteredRms = filteredRms.filter((room) => filters.types!.includes(room.type))
         }
-        
+
         // Filter by capacities (multiple selection)
         if (filters.capacities && filters.capacities.length > 0) {
             filteredRms = filteredRms.filter((room) => filters.capacities!.includes(room.capacity.toString()))
@@ -129,13 +137,50 @@ export function SchedulerDashboard(): JSX.Element {
         setFilteredRooms( filteredRms )
     }, [ filters, sections, rooms, isInitialized ])
 
-    // const handleFilterChange = (newFilters: Filters) => {
-    //     console.log("Aplicando nuevos filtros:", newFilters);
-    //     setFilters(newFilters);
-    // }
 
     const handleSortChange = ( field: SortField, direction: SortDirection ) => {
         setSortConfig({ field, direction });
+    }
+
+    const handleSaveSection = ( section: Section ): boolean => {
+        // Verificar si es una sección existente (tiene ID) o nueva
+        const existingSection = sections.find(s => s.id === section.id);
+        
+        if (existingSection) {
+            // Es una actualización
+            const result = handleUpdateSection(section);
+            if (result) {
+                // Actualizar filteredSections inmediatamente
+                setFilteredSections(prevFiltered => 
+                    prevFiltered.map(s => s.id === section.id ? section : s)
+                );
+            }
+            return result;
+        } else {
+            // Es una nueva sección
+            const overlapping = sections.some(( existingSection : Section ) => {
+                if ( existingSection.room       !== section.room )       return false;
+                if ( existingSection.day        !== section.day )        return false;
+                if ( existingSection.moduleId   !== section.moduleId )   return false;
+                return true;
+            });
+
+            if ( overlapping ) {
+                alert("No se puede crear la sección porque ya existe una en ese módulo y sala.")
+                return false;
+            }
+
+            // Agregar la nueva sección
+            setSections(prevSections => [...prevSections, section]);
+
+            // Verificar si la nueva sección debe aparecer en filteredSections
+            const filteredRoomIds = new Set(filteredRooms.map(room => room.id));
+            if (filteredRoomIds.has(section.room)) {
+                setFilteredSections(prevFiltered => [...prevFiltered, section]);
+            }
+            
+            return true;
+        }
     }
 
     const handleUpdateSection = ( updatedSection: Section ) => {
@@ -158,16 +203,17 @@ export function SchedulerDashboard(): JSX.Element {
         )
 
         setSections( updatedSections );
-        // Actualizar localStorage con los datos actualizados
-        // extractDataFromSections(updatedSections)
+
+        setFilteredSections(prevFiltered => 
+            prevFiltered.map(s => s.id === updatedSection.id ? updatedSection : s)
+        );
+
         return true
     }
 
-    const handleDeleteSection = (sectionId: string) => {
+    const handleDeleteSection = ( sectionId: string ) => {
         const updatedSections = sections.filter(( section ) => section.id !== sectionId );
         setSections( updatedSections );
-        // Actualizar localStorage con los datos actualizados
-        // extractDataFromSections(updatedSections)
     }
 
     const handleSectionClick = ( sectionId: string ) => {
@@ -179,12 +225,12 @@ export function SchedulerDashboard(): JSX.Element {
         setIsModalOpen( true );
     }
 
-    const handleSectionMove = (
+    function handleSectionMove(
         sectionId   : string,
         newRoomId   : string,
         newDay      : number,
         newModuleId : string
-    ) : boolean => {
+    ) : boolean {
         const targetOccupied = sections
             .some(( section : Section ) =>
                 section.id          !== sectionId   &&
@@ -195,24 +241,70 @@ export function SchedulerDashboard(): JSX.Element {
 
         if ( targetOccupied ) return false;
 
-        // Actualizar la sección
-        const updatedSections = sections.map(( section : Section ) => {
-            if ( section.id === sectionId ) {
-                return {
-                    ...section,
-                    room        : newRoomId,
-                    day         : newDay,
-                    moduleId    : newModuleId,
-                }
-            }
-            return section;
-        })
+        // Encontrar la sección a actualizar
+        const sectionToMove = sections.find(section => section.id === sectionId);
+        if (!sectionToMove) return false;
 
-        setSections( updatedSections );
-        // Actualizar localStorage con los datos actualizados
-        // extractDataFromSections(updatedSections)
+        // Crear la sección actualizada con los nuevos datos
+        const updatedSection: Section = {
+            ...sectionToMove,
+            room        : newRoomId,
+            day         : newDay,
+            moduleId    : newModuleId,
+        };
+
+        // Actualizar solo la sección específica en el estado
+        setSections(prevSections => 
+            prevSections.map(section => 
+                section.id === sectionId ? updatedSection : section
+            )
+        );
+
+        // Actualizar también en filteredSections
+        setFilteredSections(prevFiltered => 
+            prevFiltered.map(section => 
+                section.id === sectionId ? updatedSection : section
+            )
+        );
+
+        onUpdateSection( updatedSection );
+
         return true;
     }
+
+    async function onUpdateSection( updatedSection: Section ) {
+        const saveSection: UpdateSection = {
+            roomId      : updatedSection.room,
+            dayModuleId : getDayModuleId( updatedSection )
+        }
+
+        console.log('🚀 ~ file: scheduler-dashboard.tsx:272 ~ saveSection:', saveSection)
+
+        try {
+            const data = await fetch( `http://localhost:3030/api/v1/sections/${updatedSection.id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify( saveSection )
+            });
+
+            await data.json();
+
+            toast( 'Sección actualizada correctamente', successToast );
+        } catch (error) {
+            toast( 'No se pudo actualizar la sección', errorToast );
+        }
+    }
+
+
+    function getDayModuleId( section: Section ): number {
+        return modules.find( dayM =>
+            dayM.id === section.moduleId &&
+            dayM.dayId === section.day
+        )?.dayModuleId!;
+    }
+
 
     return (
         <>
@@ -221,6 +313,7 @@ export function SchedulerDashboard(): JSX.Element {
                 rooms           = { sortedRooms }
                 onSectionClick  = { handleSectionClick }
                 onSectionMove   = { handleSectionMove }
+                onSectionSave   = { handleSaveSection }
                 onSortChange    = { handleSortChange }
                 sortConfig      = { sortConfig }
             />
