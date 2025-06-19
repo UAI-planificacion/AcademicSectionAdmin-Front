@@ -3,25 +3,28 @@
 import type React   from "react";
 import { useState } from "react";
 
+import { toast } from "sonner"
+
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
     DialogFooter
-}                   from "@/components/ui/dialog"
+}                               from "@/components/ui/dialog"
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue
-}                           from "@/components/ui/select"
-import { Button }           from "@/components/ui/button"
-import { Input }            from "@/components/ui/input"
-import { Label }            from "@/components/ui/label"
-import MultiSelectCombobox  from "@/components/inputs/Combobox";
-import { Badge }            from "@/components/ui/badge";
+}                               from "@/components/ui/select"
+import { Button }               from "@/components/ui/button"
+import { Input }                from "@/components/ui/input"
+import { Label }                from "@/components/ui/label"
+import MultiSelectCombobox      from "@/components/inputs/Combobox";
+import { Badge }                from "@/components/ui/badge";
+import { DeleteConfirmDialog }  from "@/components/dialogs/DeleteConfirmDialog";
 
 import {
     SECTION_BUILDING_PLANNED,
@@ -43,8 +46,8 @@ import type {
 } from '@/models/section.model';
 
 import LoaderMini from "@/icons/LoaderMini";
-
-import { DeleteConfirmDialog } from "@/components/dialogs/DeleteConfirmDialog";
+import { errorToast, successToast } from "@/config/toast/toast.config";
+import { getSpaceTypeName } from "@/lib/space";
 
 
 interface SectionModalProps {
@@ -110,7 +113,7 @@ export function SectionModal({
     }
 
 
-    async function onCreateSection(): Promise<void> {
+    async function onCreateSection(): Promise<Section | null> {
         const saveSection: CreateSection = {
             code                    : formData.code,
             session                 : formData.session,
@@ -119,7 +122,7 @@ export function SectionModal({
             realRegistrants         : formData.realRegistrants,
             plannedBuilding         : formData.plannedBuilding,
             chairsAvailable         : formData.chairsAvailable,
-            professorId             : formData.professorName,
+            professorId             : formData.professorId,
             roomId                  : formData.room,
             periodId                : formData.period,
             subjectId               : formData.subjectId,
@@ -128,21 +131,37 @@ export function SectionModal({
 
         console.log('🚀 ~ file: section-modal.tsx:102 ~ formData:', saveSection)
 
-        const data = await fetch( 'http://localhost:3030/api/v1/sections', {
+        try {
+            const data = await fetch( 'http://localhost:3030/api/v1/sections', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify( saveSection )
-        })
+        });
+
+        if ( !data.ok ) {
+            toast( 'No se pudo crear la sección', errorToast );
+            return null;
+        }
 
         const response = await data.json();
 
+        toast( 'Sección creada correctamente', successToast );
+
         console.log('🚀 ~ file: section-modal.tsx:123 ~ response:', response)
+
+        return response;
+        } catch ( error ) {
+            toast( 'No se pudo crear la sección', errorToast );
+            return null;
+        } finally {
+            setIsLoading( false );
+        }
     }
 
 
-    async function onUpdateSection(): Promise<void> {
+    async function onUpdateSection(): Promise<Section | null> {
         const saveSection: UpdateSection = {
             code                    : formData.code,
             session                 : formData.session,
@@ -158,36 +177,84 @@ export function SectionModal({
 
         console.log('🚀 ~ file: section-modal.tsx:102 ~ formData:', saveSection)
 
-        const data = await fetch( `http://localhost:3030/api/v1/sections/${formData.id}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify( saveSection )
-        })
-
-        const response = await data.json();
-
-        console.log('🚀 ~ file: section-modal.tsx:123 ~ response:', response)
+        try {
+            const data = await fetch( `http://localhost:3030/api/v1/sections/${formData.id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify( saveSection )
+            });
+    
+            if ( !data.ok ) {
+                toast( 'No se pudo actualizar la sección', errorToast );
+    
+                return null;
+            }
+    
+            const response = await data.json();
+    
+            toast( 'Sección actualizada correctamente', successToast );
+    
+            return response;
+        } catch (error) {
+            toast( 'No se pudo actualizar la sección', errorToast );
+            return null;
+        }
+        finally {
+            setIsLoading( false );
+        }
     }
 
 
     async function handleSubmit ( e: React.FormEvent ): Promise<void> {
         e.preventDefault();
-        // const success = onSave( formData );
-        setIsLoading( true );
-        if ( isCreating ) await onCreateSection();
-        else await onUpdateSection();
 
+        setIsLoading( true );
+
+        const onSaveSection = isCreating
+            ? await onCreateSection()
+            : await onUpdateSection();
+
+        if ( !onSaveSection ) return;
+
+        onSave( onSaveSection );
         setIsLoading( false );
-        // if ( success ) onClose();
+        onClose();
     }
 
 
-    function handleDelete(): void {
-        setDeleteModule( false );
-        onDelete( section.id );
-        onClose();
+    async function handleDelete(): Promise<void> {
+        setIsLoading( true );
+
+        try {
+            const data = await fetch( `http://localhost:3030/api/v1/sections/${section.id}`, {
+                method: 'DELETE'
+            })
+
+            console.log('🚀 ~ file: section-modal.tsx:195 ~ data:', data)
+
+            if ( !data.ok ) {
+                toast("No se pudo eliminar la sección", errorToast);
+
+                return;
+            }
+
+            const response = await data.json();
+
+            console.log('🚀 ~ file: section-modal.tsx:123 ~ response:', response)
+
+            toast("Sección eliminada correctamente", successToast);
+
+            setDeleteModule( false );
+            onDelete( section.id );
+            onClose();
+        } catch ( error ) {
+            toast( 'No se pudo eliminar la sección', errorToast );
+        }
+        finally {
+            setIsLoading( false );
+        }
     }
 
 
@@ -265,7 +332,7 @@ export function SectionModal({
                                 isOpen              = { false }
                                 multiple            = { false }
                                 options             = { rooms.map(( room ) => ({
-                                    label: `${room.id} (${room.type}, ${room.sizeId}, ${room.capacity})`,
+                                    label: `${room.id} (${getSpaceTypeName(room.type)}, ${room.sizeId}, ${room.capacity})`,
                                     value: room.id
                                 }))}
                             />
@@ -418,7 +485,7 @@ export function SectionModal({
 
                         <MultiSelectCombobox
                             placeholder         = "Seleccionar profesor"
-                            onSelectionChange   = {( value ) => handleSelectChange( "professor", value as string )}
+                            onSelectionChange   = {( value ) => handleSelectChange( "professorId", value as string )}
                             defaultValues       = { formData.professorId ? [formData.professorId] : [] }
                             isOpen              = { false }
                             multiple            = { false }
@@ -441,7 +508,7 @@ export function SectionModal({
                                 className   = "w-full sm:w-auto"
                                 disabled    = { isLoading }
                             >
-                                { isLoading ?? <LoaderMini /> }
+                                { isLoading && <LoaderMini /> }
                                 Eliminar
                             </Button>
                         )}
@@ -454,7 +521,8 @@ export function SectionModal({
                                 className   = "w-full sm:w-auto"
                                 disabled    = { isLoading }
                             >
-                                { isLoading ?? <LoaderMini /> }
+                                { isLoading && <LoaderMini /> }
+
                                 Cancelar
                             </Button>
 
@@ -463,7 +531,8 @@ export function SectionModal({
                                 className   = "w-full sm:w-auto"
                                 disabled    = { isLoading }
                             >
-                                { isLoading ?? <LoaderMini /> }
+                                { isLoading && <LoaderMini /> }
+
                                 Guardar
                             </Button>
                         </div>
