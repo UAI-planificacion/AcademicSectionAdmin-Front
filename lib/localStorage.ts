@@ -1,14 +1,7 @@
-import { Room, Section, Module, Day, Sizes, Periods, Subject, Professor } from './types';
+import { Room, Module, Day, Sizes, Periods, Subject, Professor } from './types';
 
 
-export const saveSectionsToStorage = (sections: Section[]): void => {
-    localStorage.setItem('sections', JSON.stringify(sections));
-};
 
-export const getSectionsFromStorage = (): Section[] | null => {
-    const storedSections = localStorage.getItem('sections');
-    return storedSections ? JSON.parse(storedSections) : null;
-};
 
 // Funciones para guardar datos en localStorage
 export const saveRoomsToStorage = (rooms: Room[]): void => {
