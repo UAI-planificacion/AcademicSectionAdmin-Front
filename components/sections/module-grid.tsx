@@ -22,8 +22,9 @@ import type {
     SortField,
     SortDirection,
     Filters
-}               from "@/lib/types";
-import { cn }   from "@/lib/utils";
+}                           from "@/lib/types";
+import { cn }               from "@/lib/utils";
+import { getSpaceTypeName } from "@/lib/space";
 
 import {
     Popover,
@@ -47,6 +48,7 @@ interface ModuleGridProps {
     rooms           : Room[];
     onSectionClick  : ( sectionId: string ) => void;
     onSectionMove   : ( sectionId: string, newRoomId: string, newDay: number, newModuleId: string ) => boolean;
+    onSectionSave   : ( section: Section ) => boolean;
     onSortChange    : ( field: SortField, direction: SortDirection ) => void;
     sortConfig      : SortConfig;
     onFilterChange? : ( filters: Filters ) => void;
@@ -57,13 +59,13 @@ export function ModuleGrid({
     rooms,
     onSectionClick,
     onSectionMove,
+    onSectionSave,
     onSortChange,
     sortConfig,
     onFilterChange,
 }: ModuleGridProps ): React.JSX.Element{
     // Filtrar las salas localmente
     const [filteredRooms, setFilteredRooms]     = useState<Room[]>(rooms);
-    // const [_, setHoveredCell]                   = useState<string | null>( null );
     const [draggedSection, setDraggedSection]   = useState<string | null>( null );
     const [dragOverCell, setDragOverCell]       = useState<string | null>( null );
     const [errorMessage, setErrorMessage]       = useState<string | null>( null );
@@ -163,7 +165,7 @@ export function ModuleGrid({
     // Función para obtener las secciones para una sala, día y módulo específicos - memoizada
     const sectionsByCellMemo = useMemo(() => {
         const map = new Map<string, Section[]>();
-        
+
         sections.forEach(section => {
             const key = `${section.room}-${section.day}-${section.moduleId}`;
             if (!map.has(key)) {
@@ -174,7 +176,7 @@ export function ModuleGrid({
         
         return map;
     }, [sections]);
-    
+
     const getSectionsForCell = useCallback(( roomId: string, day: number, moduleId: string ) => {
         const key = `${roomId}-${day}-${moduleId}`;
         return sectionsByCellMemo.get(key) || [];
@@ -236,17 +238,6 @@ export function ModuleGrid({
         size        : { widthClass: "w-[80px] max-w-[80px] truncate text-center" },
         capacity    : { widthClass: "w-[80px] max-w-[80px] truncate text-center" },
     };
-
-    const typeName = ( type: Room["type"] ) => ({
-        'ROOM'      : 'Sala',
-        'AUDITORIO' : 'Auditorio',
-        'DIS'       : 'Diseño',
-        'LAB'       : 'Laboratorio',
-        'LABPC'     : 'Lab. PC',
-        'GARAGE'    : 'Garaje',
-        'CORE'      : 'Core',
-        'COMMUNIC'  : 'Comunicaciones',
-    }[type]);
 
     return (
         <div className="flex max-h-screen border rounded-lg">
@@ -331,7 +322,7 @@ export function ModuleGrid({
                                                     <MultiSelectCombobox
                                                         options={uniqueTypes.map((type) => ({ 
                                                             value: type, 
-                                                            label: typeName(type) 
+                                                            label: getSpaceTypeName(type) 
                                                         }))}
                                                         placeholder="Filtrar por tipo"
                                                         onSelectionChange={(values) => handleFilterChange('types', values as string[])}
@@ -504,8 +495,8 @@ export function ModuleGrid({
                                     </td>
 
                                     {/* Tipo */}
-                                    <td title={'Tipo: ' + typeName(room.type)} className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm", fixedColumnsConfig.type.widthClass)}>
-                                        {typeName(room.type)}
+                                    <td title={'Tipo: ' + getSpaceTypeName(room.type)} className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm", fixedColumnsConfig.type.widthClass)}>
+                                        {getSpaceTypeName(room.type)}
                                     </td>
 
                                     {/* Edificio */}
@@ -552,7 +543,7 @@ export function ModuleGrid({
 
                                 return dayModules.map(( module, moduleIndex ) => {
                                     return (
-                                        <th key={`module-header-${day.id}-${module.id}`} className={cn(
+                                        <th key={`module-header-${day.id}-${module.id}`} title={`${module.startHour} - ${module.endHour}`} className={cn(
                                                 "border-x border-l-zinc-700 text-xs min-w-[80px]",
                                                 moduleIndex === dayModules.length - 1 ? "border-r-zinc-400 dark:border-r-zinc-600" : "border-r-zinc-700"
                                             )}
@@ -605,6 +596,7 @@ export function ModuleGrid({
                                                     onDragOver      = { handleDragOver }
                                                     onDragLeave     = { handleDragLeave }
                                                     onDrop          = { handleDrop }
+                                                    onSaveSectionFromCard = { onSectionSave }
                                                 />
                                             )
                                         })
