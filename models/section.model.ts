@@ -25,13 +25,12 @@ export interface Section extends BasicSection {
 export interface CreateSection extends BasicSection {
     periodId    : string;
     subjectId   : string;
-    dayModuleId             : number;
-    roomId                  : string;
-
+    dayModuleId : number;
+    roomId      : string;
 }
 
 
-export interface UpdateSection extends BasicSection {
-    dayModuleId             : number;
-    roomId                  : string;
+export interface UpdateSection extends Partial<BasicSection> {
+    dayModuleId?    : number;
+    roomId?         : string;
 }
