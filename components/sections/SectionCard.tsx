@@ -66,12 +66,12 @@ export const SectionCard = memo(function SectionCard({
         setShowCreateModal(false);
     }, []);
 
-    const handleSaveSection = useCallback((newSection: Section): boolean => {
-        if (onSaveSectionFromCard) {
-            return onSaveSectionFromCard(newSection);
+    const handleSaveSection = useCallback(( newSection: Section ): boolean => {
+        if ( onSaveSectionFromCard ) {
+            return onSaveSectionFromCard( newSection );
         }
         return false;
-    }, [onSaveSectionFromCard]);
+    }, [ onSaveSectionFromCard ] );
 
     const handleDeleteSection = useCallback(() => {
         setShowCreateModal(false);
@@ -233,10 +233,42 @@ export const SectionCard = memo(function SectionCard({
         </td>
     );
 }, ( prevProps, nextProps ) => {
+    // Comparar propiedades básicas
+    if (
+        prevProps.isDragOver        !== nextProps.isDragOver    ||
+        prevProps.hasSection        !== nextProps.hasSection    ||
+        prevProps.draggedSection    !== nextProps.draggedSection
+    ) {
+        return false;
+    }
+
+    // Comparar secciones
+    const prevSection = prevProps.section;
+    const nextSection = nextProps.section;
+
+    // Si una es null y la otra no, son diferentes
+    if (!prevSection && nextSection) return false;
+    if (prevSection && !nextSection) return false;
+    if (!prevSection && !nextSection) return true;
+
+    // En este punto, ambas secciones existen (no son null)
+    // Comparar propiedades importantes de la sección
     return (
-        prevProps.section?.id       === nextProps.section?.id   &&
-        prevProps.isDragOver        === nextProps.isDragOver    &&
-        prevProps.hasSection        === nextProps.hasSection    &&
-        prevProps.draggedSection    === nextProps.draggedSection
+        prevSection!.id                      === nextSection!.id                      &&
+        prevSection!.code                    === nextSection!.code                    &&
+        prevSection!.subjectId               === nextSection!.subjectId               &&
+        prevSection!.subjectName             === nextSection!.subjectName             &&
+        prevSection!.period                  === nextSection!.period                  &&
+        prevSection!.professorName           === nextSection!.professorName           &&
+        prevSection!.professorId             === nextSection!.professorId             &&
+        prevSection!.room                    === nextSection!.room                    &&
+        prevSection!.day                     === nextSection!.day                     &&
+        prevSection!.moduleId                === nextSection!.moduleId                &&
+        prevSection!.session                 === nextSection!.session                 &&
+        prevSection!.size                    === nextSection!.size                    &&
+        prevSection!.correctedRegistrants    === nextSection!.correctedRegistrants    &&
+        prevSection!.realRegistrants         === nextSection!.realRegistrants         &&
+        prevSection!.plannedBuilding         === nextSection!.plannedBuilding         &&
+        prevSection!.chairsAvailable         === nextSection!.chairsAvailable
     );
 });
