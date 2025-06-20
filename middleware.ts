@@ -10,7 +10,17 @@ const POSSIBLE_SESSION_COOKIES = [
     'ba-st'
 ]
 
-const protectedRoutes = ['/section']
+
+const protectedRoutes = [
+    '/sections',
+    '/modules',
+    '/days',
+    '/periods',
+    '/subjects',
+    '/spaces',
+    '/professors'
+];
+
 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
@@ -43,8 +53,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: [
-        '/section',
-        '/section/:path*',
-    ],
+    matcher: protectedRoutes
 }
