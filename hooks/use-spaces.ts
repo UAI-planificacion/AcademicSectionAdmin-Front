@@ -4,19 +4,19 @@ import {
     saveRoomsToStorage,
     getRoomsFromStorage
 }               from '@/lib/localStorage';
-import { Room } from '@/lib/types';
+import { Space } from '@/lib/types';
 
 const API_URL = 'http://localhost:3030/api/v1/spaces';
 
 interface UseSpacesReturn {
-    spaces          : Room[];
+    spaces          : Space[];
     loading         : boolean;
     error           : Error | null;
     refetchSpaces   : () => Promise<void>;
 }
 
 export function useSpaces(): UseSpacesReturn {
-    const [spaces, setSpaces]   = useState<Room[]>([]);
+    const [spaces, setSpaces]   = useState<Space[]>([]);
     const [loading, setLoading] = useState<boolean>( true );
     const [error, setError]     = useState<Error | null>( null );
 
@@ -39,7 +39,7 @@ export function useSpaces(): UseSpacesReturn {
                 throw new Error( `HTTP error! status: ${ response.status }` );
             }
 
-            const data: Room[] = await response.json();
+            const data: Space[] = await response.json();
 
             setSpaces( data );
             saveRoomsToStorage( data );

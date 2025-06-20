@@ -6,11 +6,11 @@ import {
     getPeriodsFromStorage,
     savePeriodsToStorage
 }                   from '@/lib/localStorage';
-import { Periods }  from '@/lib/types';
+import { Period }  from '@/lib/types';
 
 
 export interface UsePeriodsResult {
-    periods : Periods[];
+    periods : Period[];
     loading : boolean;
     error   : Error | null;
 }
@@ -20,7 +20,7 @@ const API_URL = 'http://localhost:3030/api/v1/periods';
 
 
 export function usePeriods(): UsePeriodsResult {
-    const [periods, setPeriods] = useState<Periods[]>( [] );
+    const [periods, setPeriods] = useState<Period[]>( [] );
     const [loading, setLoading] = useState<boolean>( true );
     const [error, setError]     = useState<Error | null>( null );
 
@@ -46,7 +46,7 @@ export function usePeriods(): UsePeriodsResult {
                 const data = await response.json();
 
                 // Transform data to add label property
-                const transformedData = data.map(( period: Omit<Periods, 'label'> ) => ({
+                const transformedData = data.map(( period: Omit<Period, 'label'> ) => ({
                     ...period,
                     label: `${period.id}-${period.name}`
                 }));
