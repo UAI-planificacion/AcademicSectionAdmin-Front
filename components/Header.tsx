@@ -1,7 +1,20 @@
 'use client'
 
-import { Moon, Sun }    from "lucide-react";
-import { useTheme }     from "next-themes";
+import { useEffect, useState }  from "react";
+import { useTheme }             from "next-themes";
+import { useRouter }            from "next/navigation";
+
+import {
+    Book,
+    Calendar,
+    CalendarClock,
+    Clock,
+    Cuboid,
+    GraduationCap,
+    Moon,
+    Sun,
+    User
+} from "lucide-react";
 
 import {
     DropdownMenu,
@@ -9,13 +22,20 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger
 }                   from "@/components/ui/dropdown-menu";
+import {
+    Menubar,
+    MenubarMenu,
+    MenubarTrigger,
+}                   from "@/components/ui/menubar"
+import SignIn       from "@/components/auth/SignIn";
 import { Button }   from "@/components/ui/button";
-import SignIn   from "@/components/auth/SignIn";
+
 import { signOut, getSession } from "@/config/better-auth/auth-client";
-import { useEffect, useState } from "react";
+
 
 export default  function Header() {
     const { setTheme } = useTheme();
+    const router = useRouter();
 
     // Estado local para almacenar la información de la sesión
     const [sessionData, setSessionData] = useState<any>(null);
@@ -25,19 +45,19 @@ export default  function Header() {
     // Cargar la sesión al montar el componente
     useEffect(() => {
         let isMounted = true;
-        
+
         const fetchSession = async () => {
             try {
                 const session = await getSession();
                 console.log('🚀 ~ file: Header.tsx:22 ~ session:', session);
-                
+
                 // Solo actualizar el estado si el componente sigue montado
                 if (isMounted) {
                     setSessionData(session);
                 }
             } catch (err) {
                 console.error('Error al obtener la sesión:', err);
-                
+
                 // Solo actualizar el estado si el componente sigue montado
                 if (isMounted) {
                     setError(err);
@@ -51,7 +71,7 @@ export default  function Header() {
         };
 
         fetchSession();
-        
+
         // Limpieza al desmontar el componente
         return () => {
             isMounted = false;
@@ -74,25 +94,97 @@ export default  function Header() {
 
     return (
         <header className=" py-4 border-b border-gray-200 dark:border-gray-800 transition-colors">
-            <div className="flex justify-between items-center container mx-auto ">
-                <h1 className="text-2xl font-bold">Administrador de Secciones Académicas</h1>
+            <div className="flex justify-between items-center container mx-auto">
+                <h1 className="text-2xl font-bold">Secciones Académicas</h1>
+
+                <Menubar>
+                    <MenubarMenu>
+                        <MenubarTrigger
+                            onClick={() => router.push('/sections')}
+                            id="sections"
+                        >
+                            <GraduationCap className="mr-2 h-6 w-6" />
+                            Secciones
+                        </MenubarTrigger>
+                    </MenubarMenu>
+
+                    <MenubarMenu>
+                        <MenubarTrigger
+                            onClick={() => router.push('/modules')}
+                            id="modules"
+                        >
+                            <Clock className="mr-2 h-5 w-5" />
+                            Módulos
+                        </MenubarTrigger>
+                    </MenubarMenu>
+
+                    <MenubarMenu>
+                        <MenubarTrigger
+                            onClick={() => router.push('/days')}
+                            id="days"
+                        >
+                            <Calendar className="mr-2 h-5 w-5" />
+                            Días
+                        </MenubarTrigger>
+                    </MenubarMenu>
+
+                    <MenubarMenu>
+                        <MenubarTrigger
+                            onClick={() => router.push('/periods')}
+                            id="periods"
+                        >
+                            <CalendarClock className="mr-2 h-5 w-5" />
+                            Periodos
+                        </MenubarTrigger>
+                    </MenubarMenu>
+
+                    <MenubarMenu>
+                        <MenubarTrigger
+                            onClick={() => router.push('/subjects')}
+                            id="subjects"
+                        >
+                            <Book className="mr-2 h-5 w-5" />
+                            Asignaturas
+                        </MenubarTrigger>
+                    </MenubarMenu>
+
+                    <MenubarMenu>
+                        <MenubarTrigger
+                            onClick={() => router.push('/spaces')}
+                            id="spaces"
+                        >
+                            <Cuboid className="mr-2 h-5 w-5" />
+                            Espacios
+                        </MenubarTrigger>
+                    </MenubarMenu>
+
+                    <MenubarMenu>
+                        <MenubarTrigger
+                            onClick={() => router.push('/professors')}
+                            id="professors"
+                        >
+                            <User className="mr-2 h-5 w-5" />
+                            Profesores
+                        </MenubarTrigger>
+                    </MenubarMenu>
+                </Menubar>
 
                 <div className="flex items-center gap-2">
-                {loading ? (
-                    <Button variant="outline" disabled>Cargando...</Button>
-                ) : sessionData?.data?.user ? (
-                    <Button 
-                        variant="outline" 
-                        onClick={async () => {
-                            await signOut();
-                            refreshSession();
-                        }}
-                    >
-                        Cerrar sesión
-                    </Button>
-                ) : (
-                    <SignIn />
-                )}
+                    {loading ? (
+                        <Button variant="outline" disabled>Cargando...</Button>
+                    ) : sessionData?.data?.user ? (
+                        <Button 
+                            variant="outline" 
+                            onClick={async () => {
+                                await signOut();
+                                refreshSession();
+                            }}
+                        >
+                            Cerrar sesión
+                        </Button>
+                    ) : (
+                        <SignIn />
+                    )}
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
