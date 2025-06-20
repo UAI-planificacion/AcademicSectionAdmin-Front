@@ -5,7 +5,7 @@ import { useState, useEffect, JSX } from 'react';
 import { toast } from 'sonner';
 
 import type {
-    Room,
+    Space,
     SortDirection,
     SortField,
     Filters,
@@ -31,8 +31,8 @@ export function SchedulerDashboard(): JSX.Element {
 
     const [sections, setSections]                   = useState<Section[]>([]);
     const [filteredSections, setFilteredSections]   = useState<Section[]>([]);
-    const [rooms, setRooms]                         = useState<Room[]>([]);
-    const [filteredRooms, setFilteredRooms]         = useState<Room[]>([]);
+    const [rooms, setRooms]                         = useState<Space[]>([]);
+    const [filteredRooms, setFilteredRooms]         = useState<Space[]>([]);
     const [selectedSection, setSelectedSection]     = useState<Section | null>(null);
     const [isModalOpen, setIsModalOpen]             = useState(false);
     const [isInitialized, setIsInitialized]         = useState(false);
@@ -61,8 +61,8 @@ export function SchedulerDashboard(): JSX.Element {
                 : b.sizeId.localeCompare(a.sizeId);
         }
         else {
-            const aValue = a[field as keyof Room];
-            const bValue = b[field as keyof Room];
+            const aValue = a[field as keyof Space];
+            const bValue = b[field as keyof Space];
 
             if ( typeof aValue === "string" && typeof bValue === "string" ) {
                 return direction === "asc"
