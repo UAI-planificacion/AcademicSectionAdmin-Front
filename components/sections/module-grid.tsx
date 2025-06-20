@@ -17,7 +17,7 @@ import {
 }  from "lucide-react"
 
 import type {
-    Room,
+    Space,
     SortConfig,
     SortField,
     SortDirection,
@@ -45,7 +45,7 @@ import { Section } from "@/models/section.model";
 
 interface ModuleGridProps {
     sections        : Section[];
-    rooms           : Room[];
+    rooms           : Space[];
     onSectionClick  : ( sectionId: string ) => void;
     onSectionMove   : ( sectionId: string, newRoomId: string, newDay: number, newModuleId: string ) => boolean;
     onSectionSave   : ( section: Section ) => boolean;
@@ -65,7 +65,7 @@ export function ModuleGrid({
     onFilterChange,
 }: ModuleGridProps ): React.JSX.Element{
     // Filtrar las salas localmente
-    const [filteredRooms, setFilteredRooms]     = useState<Room[]>(rooms);
+    const [filteredRooms, setFilteredRooms]     = useState<Space[]>(rooms);
     const [draggedSection, setDraggedSection]   = useState<string | null>( null );
     const [dragOverCell, setDragOverCell]       = useState<string | null>( null );
     const [errorMessage, setErrorMessage]       = useState<string | null>( null );
@@ -254,7 +254,7 @@ export function ModuleGrid({
                     <table className="border-collapse w-full hide-vertical-scrollbar">
                         <thead className="sticky top-0 z-50 bg-black hide-vertical-scrollbar">
                             <tr className="h-20">
-                                <th className={
+                                <th title="Sala" className={
                                     cn( "cursor-pointer px-2 bg-black border-r border-zinc-700 w-[120px] max-w-[120px]", fixedColumnsConfig.name.widthClass )
                                 }>
                                     <div className="flex items-center justify-between">
@@ -303,7 +303,7 @@ export function ModuleGrid({
                                     </div>
                                 </th>
 
-                                <th className={
+                                <th title="Tipo" className={
                                     cn( "cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.type.widthClass )
                                 }>
                                     <div className="flex items-center justify-between">
@@ -348,7 +348,7 @@ export function ModuleGrid({
                                     </div>
                                 </th>
 
-                                <th className={
+                                <th title="Edificio" className={
                                     cn( "cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.building.widthClass )
                                 }>
                                     <div className="flex items-center justify-between">
@@ -393,7 +393,7 @@ export function ModuleGrid({
                                     </div>
                                 </th>
 
-                                <th className={
+                                <th title="Talla" className={
                                     cn( "cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.size.widthClass )
                                 }>
                                     <div className="flex items-center justify-between">
@@ -438,9 +438,7 @@ export function ModuleGrid({
                                     </div>
                                 </th>
 
-                                <th
-                                    className={cn("cursor-pointer border-r border-r-zinc-700 px-2 bg-black", fixedColumnsConfig.capacity.widthClass)}
-                                >
+                                <th title="Capacidad" className={cn("cursor-pointer border-r border-r-zinc-700 px-2 bg-black", fixedColumnsConfig.capacity.widthClass)}>
                                     <div className="flex items-center justify-between">
                                         {/* <span className="text-white text-sm">Capacidad</span> */}
                                         <Ruler className="text-white w-5 h-5 ml-0.5 mr-1.5" />
