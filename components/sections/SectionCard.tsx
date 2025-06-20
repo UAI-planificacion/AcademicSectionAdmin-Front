@@ -219,7 +219,7 @@ export const SectionCard = memo(function SectionCard({
                                 </span>
 
                                 <span className="text-xs truncate">
-                                    {
+                                    Profesor: {
                                         section.professorName !== 'Sin profesor'
                                         ? section.professorId + '-' + section.professorName
                                         : 'Sin profesor'
@@ -247,9 +247,9 @@ export const SectionCard = memo(function SectionCard({
     const nextSection = nextProps.section;
 
     // Si una es null y la otra no, son diferentes
-    if (!prevSection && nextSection) return false;
-    if (prevSection && !nextSection) return false;
-    if (!prevSection && !nextSection) return true;
+    if ( !prevSection && nextSection )  return false;
+    if ( prevSection && !nextSection )  return false;
+    if ( !prevSection && !nextSection ) return true;
 
     // En este punto, ambas secciones existen (no son null)
     // Comparar propiedades importantes de la sección
