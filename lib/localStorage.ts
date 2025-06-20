@@ -1,10 +1,10 @@
-import { Room, Module, Day, Sizes, Periods, Subject, Professor } from './types';
+import { Space, Module, Day, Sizes, Period, Subject, Professor } from './types';
 
 
 
 
 // Funciones para guardar datos en localStorage
-export const saveRoomsToStorage = (rooms: Room[]): void => {
+export const saveRoomsToStorage = (rooms: Space[]): void => {
     localStorage.setItem('rooms', JSON.stringify(rooms));
 };
 
@@ -12,7 +12,7 @@ export const saveProfessorsToStorage = (professors: Professor[]): void => {
     localStorage.setItem('professors', JSON.stringify(professors));
 };
 
-export const savePeriodsToStorage = ( periods: Periods[] ): void => {
+export const savePeriodsToStorage = ( periods: Period[] ): void => {
     localStorage.setItem('periods', JSON.stringify( periods ));
 };
 
@@ -21,7 +21,7 @@ export const saveModulesToStorage = (modules: Module[]): void => {
 };
 
 // Funciones para obtener datos desde localStorage
-export const getRoomsFromStorage = (): Room[] => {
+export const getRoomsFromStorage = (): Space[] => {
     const storedRooms = localStorage.getItem('rooms');
     return storedRooms ? JSON.parse(storedRooms) : [];
 };
@@ -33,7 +33,7 @@ export const getProfessorsFromStorage = (): Professor[] => {
 };
 
 // Periods
-export const getPeriodsFromStorage = (): Periods[] => {
+export const getPeriodsFromStorage = (): Period[] => {
     const storedPeriods = localStorage.getItem( 'periods' );
     return JSON.parse(storedPeriods || "[]" );
 
