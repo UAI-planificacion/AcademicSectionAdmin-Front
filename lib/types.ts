@@ -2,19 +2,21 @@ export type Type = 'ROOM' | 'AUDITORIO' | 'DIS' | 'LAB' | 'LABPC' | 'GARAGE' | '
 export type Size = 'XS' | 'XE' | 'S' | 'SE' | 'MS' | 'M' | 'L' | 'XL' | 'XXL';
 
 
-export interface Room {
+export interface Space {
     id          : string;
     building    : string;
     capacity    : number;
     type        : Type;
     sizeId      : Size;
-    createdAt?  : string;
-    updatedAt?  : string;
+    createdAt  : string;
+    updatedAt  : string;
 }
 
 
 export interface Module {
     id          : string;
+    code        : string;
+    isActive    : boolean;
     name        : string;
     difference? : string;
     startHour   : string;
@@ -26,10 +28,10 @@ export interface Module {
 
 
 export interface Day {
-    id      : number;
-    name    : string;
-    shortName : string;
-    mediumName : string;
+    id          : number;
+    name        : string;
+    shortName   : string;
+    mediumName  : string;
 }
 
 
@@ -63,15 +65,15 @@ export interface Sizes {
     label : string;
 }
 
-
-export interface Periods {
+export type Status = 'InProgress' | 'Closed' | 'Open';
+export interface Period {
     id              : string;
     name            : string;
     startDate       : Date | null;
     endDate         : Date | null;
     openingDate     : Date | null;
     closingDate     : Date | null;
-    status          : 'InProgress' | 'Closed' | 'Open';
+    status          : Status;
     createdAt       : Date;
     updatedAt       : Date;
     label           : string;
