@@ -29,9 +29,10 @@ import { DeleteConfirmDialog }  from "@/components/dialogs/DeleteConfirmDialog";
 import {
     SECTION_BUILDING_PLANNED,
     SECTION_SESSION
-}                       from "@/lib/section";
-import type { Room }    from "@/lib/types";
-import { cn }           from "@/lib/utils";
+}                           from "@/lib/section";
+import type { Space }       from "@/lib/types";
+import { cn }               from "@/lib/utils";
+import { getSpaceTypeName } from "@/lib/space";
 
 import { usePeriods }                   from "@/hooks/use-periods"
 import { useSubjects }                  from "@/hooks/use-subjects";
@@ -46,13 +47,13 @@ import type {
 } from '@/models/section.model';
 
 import LoaderMini from "@/icons/LoaderMini";
+
 import { errorToast, successToast } from "@/config/toast/toast.config";
-import { getSpaceTypeName } from "@/lib/space";
 
 
 interface SectionModalProps {
     section     : Section;
-    rooms       : Room[];
+    rooms       : Space[];
     onClose     : () => void;
     onSave      : ( section: Section ) => boolean;
     onDelete    : ( sectionId: string ) => void;
