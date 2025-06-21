@@ -1,54 +1,92 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react";
 
-import { Building, Plus, Pencil, Trash2 } from "lucide-react"
-import type { ColumnDef } from "@tanstack/react-table"
+import {
+    Building,
+    Plus,
+    Pencil,
+    Trash2
+}                           from "lucide-react";
+import type { ColumnDef }   from "@tanstack/react-table";
+import { toast }            from "sonner";
 
-import { Button } from "@/components/ui/button"
-import { DataTable } from "@/components/data-table/data-table"
+import { SpaceModal } from "@/app/spaces/space-modal";
 
-// import { type Space, spaces as initialSpaces } from "@/lib/data"
-import { formatDate } from "@/lib/utils"
+import { Button }               from "@/components/ui/button";
+import { DataTable }            from "@/components/data-table/data-table";
+import { DeleteConfirmDialog }  from "@/components/dialogs/DeleteConfirmDialog";
 
-import { SpaceModal } from "./space-modal"
-import { Space } from "@/lib/types"
-import { useSpaces } from "@/hooks/use-spaces"
-import { DeleteConfirmDialog } from "@/components/dialogs/DeleteConfirmDialog"
+import {
+    errorToast,
+    successToast
+}               from "@/config/toast/toast.config";
+import { ENV }  from "@/config/envs/env";
+
+import { useSpaces }            from "@/hooks/use-spaces";
+import { Space }                from "@/lib/types";
+import { fetchApi }             from "@/services/fetch";
+import { deleteSpaceStorage }   from "@/stores/local-storage-spaces";
+
 
 export default function SpacesPage() {
-    const { spaces } = useSpaces()
-    // const [spaces, setSpaces]           = useState<Space[]>(initialSpaces)
-    const [isModalOpen, setIsModalOpen] = useState(false)
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-    const [currentSpace, setCurrentSpace] = useState<Space | null>(null)
+    const { spaces }                                    = useSpaces();
+    const [spacesData, setSpacesData]                   = useState<Space[]>( spaces );
+    const [isModalOpen, setIsModalOpen]                 = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState(false);
+    const [currentSpace, setCurrentSpace]               = useState<Space | null>(null);
 
-    const handleAddSpace = (space: Space) => {
-        // setSpaces([...spaces, space])
+
+    useEffect(() => {
+        if ( spaces && spaces.length > 0 )
+            setSpacesData( spaces );
+    }, [ spaces ]);
+
+
+    function handleAddSpace( space: Space ): void {
+        setSpacesData([...spacesData, space])
     }
 
-    const handleUpdateSpace = (updatedSpace: Space) => {
-        // setSpaces( spaces.map(( space ) => ( space.id === updatedSpace.id ? updatedSpace : space )))
+
+    function handleUpdateSpace( updatedSpace: Space ): void {
+        setSpacesData( spacesData.map(( space ) => ( space.id === updatedSpace.id ? updatedSpace : space )))
     }
 
-    const handleDeleteSpace = ( id: string ) => {
-        // setSpaces( spaces.filter(( space ) => space.id !== id ))
+
+    async function handleDeleteSpace( id: string ): Promise<Space | null> {
+        const url       = `${ENV.REQUEST_BACK_URL}spaces/${id}`;
+        const spaceSave = await fetchApi<Space | null>( url, "DELETE" );
+
+        if ( !spaceSave ) {
+            toast( 'No se pudo eliminar el espacio', errorToast );
+            return null;
+        }
+
+        setSpacesData( spacesData.filter(( space ) => space.id !== id ))
+        deleteSpaceStorage( spaceSave.id );
+        toast( 'Espacio eliminado correctamente', successToast );
+
+        return spaceSave;
     }
 
-    const openAddModal = () => {
+
+    function openAddModal(): void {
         setCurrentSpace( null );
         setIsModalOpen( true );
     }
 
-    const openEditModal = ( space: Space ): void => {
+
+    function openEditModal( space: Space ): void {
         setCurrentSpace( space );
         setIsModalOpen( true );
     }
 
-    const openDeleteDialog = ( space: Space ) => {
+
+    function openDeleteDialog( space: Space ): void {
         setCurrentSpace( space );
         setIsDeleteDialogOpen( true );
     }
+
 
     const columns: ColumnDef<Space>[] = [
         {
@@ -80,12 +118,12 @@ export default function SpacesPage() {
         {
             accessorKey: "createdAt",
             header: "Fecha de Creación",
-            cell: ({ row }) => formatDate(new Date (row.original.createdAt)),
+            cell: ({ row }) => new Date (row.original.createdAt || '').toLocaleDateString(),
         },
         {
             accessorKey: "updatedAt",
             header: "Última Actualización",
-            cell: ({ row }) => formatDate(new Date (row.original.updatedAt)),
+            cell: ({ row }) => new Date (row.original.updatedAt || '').toLocaleDateString(),
         },
         {
             id: "actions",
@@ -117,23 +155,23 @@ export default function SpacesPage() {
 
             <DataTable
                 columns             = { columns }
-                data                = { spaces }
+                data                = { spacesData }
                 searchKey           = "id"
-                searchPlaceholder   = "Buscar por ID..."
+                searchPlaceholder   = "Buscar por Nombre..."
             />
 
             <SpaceModal
-                isOpen      ={ isModalOpen }
-                onClose     ={ () => setIsModalOpen( false )}
-                space       ={ currentSpace }
-                onAdd       ={ handleAddSpace }
-                onUpdate    ={ handleUpdateSpace }
+                isOpen      = { isModalOpen }
+                onClose     = { () => setIsModalOpen( false )}
+                space       = { currentSpace }
+                onAdd       = { handleAddSpace }
+                onUpdate    = { handleUpdateSpace }
             />
 
             <DeleteConfirmDialog
                 isOpen      = { isDeleteDialogOpen }
                 onClose     = { () => setIsDeleteDialogOpen(false) }
-                onConfirm   = { () => { handleDeleteSpace(currentSpace?.id || '') } }
+                onConfirm   = { () => { handleDeleteSpace( currentSpace?.id || '' )}}
                 name        = { currentSpace?.id || '' }
                 type        = "el Espacio"
             />
