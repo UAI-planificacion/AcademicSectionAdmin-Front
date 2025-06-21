@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 
 import {
-    saveRoomsToStorage,
-    getRoomsFromStorage
-}               from '@/lib/localStorage';
+    saveSpacesStorage,
+    getSpacesStorage
+}               from '@/stores/local-storage-spaces';
 import { Space } from '@/lib/types';
 
 const API_URL = 'http://localhost:3030/api/v1/spaces';
@@ -24,7 +24,7 @@ export function useSpaces(): UseSpacesReturn {
         setLoading( true );
         setError( null );
 
-        const cachedRooms = getRoomsFromStorage();
+        const cachedRooms = getSpacesStorage();
 
         if ( cachedRooms && cachedRooms.length > 0 ) {
             setSpaces( cachedRooms );
@@ -42,7 +42,7 @@ export function useSpaces(): UseSpacesReturn {
             const data: Space[] = await response.json();
 
             setSpaces( data );
-            saveRoomsToStorage( data );
+            saveSpacesStorage( data );
         } catch ( e ) {
             if ( e instanceof Error ) {
                 setError( e );
