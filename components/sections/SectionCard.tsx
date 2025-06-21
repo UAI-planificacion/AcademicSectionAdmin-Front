@@ -218,7 +218,7 @@ export const SectionCard = memo(function SectionCard({
                                     Asientos disponibles: { section.chairsAvailable }
                                 </span>
 
-                                <span className="text-xs truncate">
+                                <span className="truncate">
                                     Profesor: {
                                         section.professorName !== 'Sin profesor'
                                         ? section.professorId + '-' + section.professorName
