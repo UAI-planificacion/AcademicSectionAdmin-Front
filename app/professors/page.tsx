@@ -1,55 +1,74 @@
 "use client"
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Plus, Pencil, Trash2, Mail }   from "lucide-react";
 import type { ColumnDef }               from "@tanstack/react-table";
 
-import { Button }       from "@/components/ui/button";
-import { DataTable }    from "@/components/data-table/data-table";
+import { ProfessorModal } from "@/app/professors/professor-modal";
+
+import { Button }               from "@/components/ui/button";
+import { DataTable }            from "@/components/data-table/data-table";
+import { DeleteConfirmDialog }  from "@/components/dialogs/DeleteConfirmDialog";
 
 import { formatDate }   from "@/lib/utils";
 import { Professor }    from "@/lib/types";
 
-import { ProfessorModal } from "./professor-modal";
-
 import { useProfessors } from "@/hooks/use-professors";
-import { DeleteConfirmDialog } from "@/components/dialogs/DeleteConfirmDialog";
 
 
 export default function ProfessorsPage() {
-    // const [professors, setProfessors] = useState<Professor[]>(initialProfessors)
-    const { professors } = useProfessors();
-    const [isModalOpen, setIsModalOpen] = useState(false)
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-    const [currentProfessor, setCurrentProfessor] = useState<Professor | null>(null)
+    const { professors }                                = useProfessors();
+    const [professorsData, setProfessorsData]           = useState<Professor[]>( professors );
+    const [isModalOpen, setIsModalOpen]                 = useState( false );
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState( false );
+    const [currentProfessor, setCurrentProfessor]       = useState<Professor | null>( null );
 
-    const handleAddProfessor = (professor: Professor) => {
-        // setProfessors([...professors, professor])
+
+    useEffect(() => {
+        if ( professors && professors.length > 0 )
+            setProfessorsData( professors );
+    }, [ professors ]);
+
+
+    function handleAddProfessor(professor: Professor): void {
+        setProfessorsData([ ...professorsData, professor ]);
     }
 
-    const handleUpdateProfessor = (updatedProfessor: Professor) => {
-        // setProfessors(professors.map((professor) => (professor.id === updatedProfessor.id ? updatedProfessor : professor)))
+
+    function handleUpdateProfessor( updatedProfessor: Professor ): void {
+        setProfessorsData(
+            professorsData.map(( professor ) => (
+                professor.id === updatedProfessor.id
+                    ? updatedProfessor
+                    : professor
+            ))
+        );
     }
 
-    const handleDeleteProfessor = (id: string) => {
-        // setProfessors(professors.filter((professor) => professor.id !== id))
+
+    function handleDeleteProfessor( id: string ): void {
+        setProfessorsData( professorsData.filter(( professor ) => professor.id !== id ));
     }
 
-    const openAddModal = () => {
-        setCurrentProfessor(null)
-        setIsModalOpen(true)
+
+    function openAddModal(): void {
+        setCurrentProfessor( null );
+        setIsModalOpen( true );
     }
 
-    const openEditModal = (professor: Professor) => {
-        setCurrentProfessor(professor)
-        setIsModalOpen(true)
+
+    function openEditModal( professor: Professor ): void {
+        setCurrentProfessor( professor );
+        setIsModalOpen( true );
     }
 
-    const openDeleteDialog = (professor: Professor) => {
-        setCurrentProfessor(professor)
-        setIsDeleteDialogOpen(true)
+
+    function openDeleteDialog( professor: Professor ): void {
+        setCurrentProfessor( professor );
+        setIsDeleteDialogOpen( true );
     }
+
 
     const columns: ColumnDef<Professor>[] = [
         {
@@ -114,7 +133,7 @@ export default function ProfessorsPage() {
 
             <DataTable
                 columns             = { columns }
-                data                = { professors }
+                data                = { professorsData }
                 searchKey           = "name"
                 searchPlaceholder   = "Buscar por nombre..."
             />
