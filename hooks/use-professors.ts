@@ -2,16 +2,19 @@
 
 import { useState, useEffect } from 'react';
 
-import { getProfessorsFromStorage, saveProfessorsToStorage } from '@/lib/localStorage';
-import { Professor } from '@/lib/types';
+import {
+    getProfessorsFromStorage,
+    saveProfessorsToStorage
+}                       from '@/lib/localStorage';
+import { Professor }    from '@/lib/types';
 
 
 const API_URL = 'http://localhost:3030/api/v1/professors';
 
 export interface UseProfessorsResult {
-    professors: Professor[];
-    loading: boolean;
-    error: Error | null;
+    professors  : Professor[];
+    loading     : boolean;
+    error       : Error | null;
 }
 
 
