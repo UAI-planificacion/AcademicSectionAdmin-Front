@@ -8,8 +8,8 @@ export interface Space {
     capacity    : number;
     type        : Type;
     sizeId      : Size;
-    createdAt  : string;
-    updatedAt  : string;
+    createdAt?  : string;
+    updatedAt?  : string;
 }
 
 
