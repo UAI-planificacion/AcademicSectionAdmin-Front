@@ -264,7 +264,7 @@ export function ModuleGrid({
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <Button variant="ghost" className="px-2">
-                                                    <Filter className="w-4 h-4 cursor-pointer" />
+                                                    <Filter className="text-white w-4 h-4 cursor-pointer" />
                                                 </Button>
                                             </PopoverTrigger>
 
@@ -313,7 +313,7 @@ export function ModuleGrid({
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <Button variant="ghost" className="px-2">
-                                                    <Filter className="w-4 h-4 cursor-pointer" />
+                                                    <Filter className="text-white w-4 h-4 cursor-pointer" />
                                                 </Button>
                                             </PopoverTrigger>
 
@@ -358,7 +358,7 @@ export function ModuleGrid({
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <Button variant="ghost" className="px-2">
-                                                    <Filter className="w-4 h-4 cursor-pointer" />
+                                                    <Filter className="text-white w-4 h-4 cursor-pointer" />
                                                 </Button>
                                             </PopoverTrigger>
 
@@ -403,7 +403,7 @@ export function ModuleGrid({
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <Button variant="ghost" className="px-2">
-                                                    <Filter className="w-4 h-4 cursor-pointer" />
+                                                    <Filter className="text-white w-4 h-4 cursor-pointer" />
                                                 </Button>
                                             </PopoverTrigger>
 
@@ -446,7 +446,7 @@ export function ModuleGrid({
                                         <Popover>
                                             <PopoverTrigger asChild>
                                             <Button variant="ghost" className="px-2">
-                                                    <Filter className="w-4 h-4 cursor-pointer" />
+                                                    <Filter className="text-white w-4 h-4 cursor-pointer" />
                                                 </Button>
                                             </PopoverTrigger>
                                             <PopoverContent className="w-64 h-[25.5rem] p-0" align="center">
