@@ -49,7 +49,12 @@ export default function SpacesPage() {
 
 
     function handleUpdateSpace( updatedSpace: Space ): void {
-        setSpacesData( spacesData.map(( space ) => ( space.id === updatedSpace.id ? updatedSpace : space )))
+        setSpacesData(
+            spacesData.map(( space ) => ( space.id === updatedSpace.id
+                ? updatedSpace
+                : space
+            ))
+        );
     }
 
 
@@ -170,7 +175,7 @@ export default function SpacesPage() {
 
             <DeleteConfirmDialog
                 isOpen      = { isDeleteDialogOpen }
-                onClose     = { () => setIsDeleteDialogOpen(false) }
+                onClose     = { () => setIsDeleteDialogOpen( false )}
                 onConfirm   = { () => { handleDeleteSpace( currentSpace?.id || '' )}}
                 name        = { currentSpace?.id || '' }
                 type        = "el Espacio"
