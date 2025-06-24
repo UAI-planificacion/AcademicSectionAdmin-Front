@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 
 import {
-    getPeriodsFromStorage,
-    savePeriodsToStorage
-}                   from '@/lib/localStorage';
+    getPeriodsStorage,
+    savePeriodsStorage
+} from '@/stores/local-storage-periods';
+
 import { Period }  from '@/lib/types';
 
 
@@ -29,7 +30,7 @@ export function usePeriods(): UsePeriodsResult {
             try {
                 setLoading( true );
 
-                const cachedPeriods = getPeriodsFromStorage();
+                const cachedPeriods = getPeriodsStorage();
 
                 if ( cachedPeriods && cachedPeriods.length > 0 ) {
                     setPeriods( cachedPeriods );
@@ -52,7 +53,7 @@ export function usePeriods(): UsePeriodsResult {
                 }));
 
                 // Save to localStorage
-                savePeriodsToStorage( transformedData );
+                savePeriodsStorage( transformedData );
                 setPeriods( transformedData );
                 setError( null );
             } catch (err) {
