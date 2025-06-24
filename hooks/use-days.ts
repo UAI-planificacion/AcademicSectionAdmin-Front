@@ -1,15 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Day } from '@/lib/types';
-import { saveDaysToStorage, getDaysFromStorage } from '@/lib/localStorage';
+
+import {
+    getDaysStorage,
+    saveDaysStorage
+}               from '@/stores/local-storage-days';
+import { Day }  from '@/lib/types';
+
 
 const API_URL = 'http://localhost:3030/api/v1/days';
 
 interface UseDaysReturn {
-    days: Day[];
-    loading: boolean;
-    error: Error | null;
-    refetchDays: () => Promise<void>;
+    days        : Day[];
+    loading     : boolean;
+    error       : Error | null;
+    refetchDays : () => Promise<void>;
 }
+
 
 export function useDays(): UseDaysReturn {
     const [days, setDays]       = useState<Day[]>( [] );
@@ -20,7 +26,7 @@ export function useDays(): UseDaysReturn {
         setLoading( true );
         setError( null );
 
-        const cachedDays = getDaysFromStorage();
+        const cachedDays = getDaysStorage();
 
         if ( cachedDays && cachedDays.length > 0 ) {
             setDays( cachedDays );
@@ -38,7 +44,7 @@ export function useDays(): UseDaysReturn {
             const data: Day[] = await response.json();
 
             setDays( data );
-            saveDaysToStorage( data );
+            saveDaysStorage( data );
             setError( null );
         } catch ( e ) {
             if ( e instanceof Error ) {
