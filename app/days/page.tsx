@@ -1,37 +1,72 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
-import { Plus, Pencil, Trash2 } from "lucide-react"
+import { 
+    Calendar,
+    Plus,
+    Pencil,
+    Trash2 
+}                           from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/data-table/data-table"
+import { DeleteConfirmDialog } from "@/components/dialogs/DeleteConfirmDialog"
 
 import { DayModal } from "./day-modal"
 
+import { ENV } from "@/config/envs/env"
 import { Day } from "@/lib/types"
 import { useDays } from "@/hooks/use-days"
-import { DeleteConfirmDialog } from "@/components/dialogs/DeleteConfirmDialog"
+import { deleteDayStorage } from "@/stores/local-storage-days"
+import { errorToast, successToast } from "@/config/toast/toast.config"
 
 
 export default function DaysPage() {
-//   const [days, setDays] = useState<Day[]>(initialDays)
     const { days } = useDays();
-    const [isModalOpen, setIsModalOpen] = useState(false)
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-    const [currentDay, setCurrentDay] = useState<Day | null>(null)
+    const [daysData, setDaysData] = useState<Day[]>(days);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [currentDay, setCurrentDay] = useState<Day | null>(null);
+
+
+    useEffect(() => {
+        setDaysData( days );
+    }, [days]);
+
 
     const handleAddDay = (day: Day) => {
-        // setDays([...days, day])
+        setDaysData([...daysData, day])
     }
 
     const handleUpdateDay = (updatedDay: Day) => {
-        // setDays(days.map((day) => (day.id === updatedDay.id ? updatedDay : day)))
+        setDaysData(
+            daysData.map(( day ) => (
+                day.id === updatedDay.id
+                    ? updatedDay
+                    : day
+            ))
+        );
     }
 
-    const handleDeleteDay = (id: number) => {
-        // setDays(days.filter((day) => day.id !== id))
+    const handleDeleteDay = async (id: string | number) => {
+        try {
+            const url = `${ENV.REQUEST_BACK_URL}days/${id}`;
+            const response = await fetch(url, { method: 'DELETE' });
+
+            if ( !response.ok ) {
+                toast( 'No se pudo eliminar el día', errorToast );
+                return;
+            }
+
+            setDaysData( daysData.filter(( day ) => String( day.id ) === String( id )));
+            deleteDayStorage(String( id ));
+            toast( 'Día eliminado correctamente', successToast );
+        } catch (error) {
+            toast( 'Error al eliminar el día', errorToast );
+        }
     }
 
     const openAddModal = () => {
@@ -94,7 +129,7 @@ export default function DaysPage() {
 
             <DataTable
                 columns             = { columns }
-                data                = { days }
+                data                = { daysData }
                 searchKey           = "name"
                 searchPlaceholder   = "Buscar por nombre..."
             />
