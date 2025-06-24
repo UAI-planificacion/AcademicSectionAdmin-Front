@@ -55,15 +55,6 @@ export interface SortConfig {
 }
 
 
-export interface Sizes {
-    id              : string;
-    detail          : string;
-    min?            : number;
-    max?            : number;
-    lessThan?       : number;
-    greaterThan?    : number;
-    label : string;
-}
 
 export type Status = 'InProgress' | 'Closed' | 'Open';
 export interface Period {
