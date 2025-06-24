@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react';
 
 import {
-    getSizesFromStorage,
-    saveSizesToStorage
-}                   from '@/lib/localStorage';
-import { Sizes }    from '@/lib/types';
+    getSizesStorage,
+    saveSizesStorage
+}                   from '@/stores/local-storage-sizes';
+import { Size, Sizes }    from '@/models/size.model';
+import { ENV }      from '@/config/envs/env';
 
 
-const API_URL = 'http://localhost:3030/api/v1/sizes';
+const API_URL = `${ENV.REQUEST_BACK_URL}sizes`;
 
 
 export interface UseSizesResult {
@@ -26,7 +27,10 @@ export function useSizes(): UseSizesResult {
     useEffect(() => {
         const fetchSizes = async () => {
             setLoading( true );
-            const cachedSizes   = getSizesFromStorage();
+            setError( null );
+
+            const cachedSizes = getSizesStorage();
+            console.log('🚀 ~ file: use-sizes.ts:34 ~ cachedSizes:', cachedSizes)
 
             if ( cachedSizes && cachedSizes.length > 0 ) {
                 setSizes( cachedSizes );
@@ -38,23 +42,20 @@ export function useSizes(): UseSizesResult {
                 const response = await fetch( API_URL );
 
                 if ( !response.ok ) {
-                    throw new Error( `Error al obtener tallas: ${response.status}` );
+                    throw new Error('Error al obtener tallas');
                 }
 
-                const data = await response.json();
+                const data: Size[] = await response.json();
 
-                // Transform data to add label property
-                const transformedData = data.map((size: Omit<Sizes, 'label'>) => ({
+                const transformedData = data.map((size: Size) => ({
                     ...size,
                     label: `${size.id} (${size.detail})`
                 }));
 
-                // Save to localStorage
-                saveSizesToStorage( transformedData );
+                saveSizesStorage( transformedData );
                 setSizes( transformedData );
                 setError( null );
             } catch ( err ) {
-                console.error( 'Error al cargar las tallas:', err );
                 setError( err instanceof Error ? err : new Error( String( err ) ) );
             } finally {
                 setLoading( false );
