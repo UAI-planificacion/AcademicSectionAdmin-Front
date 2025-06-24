@@ -90,7 +90,7 @@ export default function ProfessorsPage() {
                         {email}
                     </div>
                 ) : (
-                    "N/A"
+                    "-"
                 )
             },
         },
