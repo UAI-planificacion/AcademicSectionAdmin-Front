@@ -12,6 +12,7 @@ import {
     Cuboid,
     GraduationCap,
     Moon,
+    Ruler,
     Sun,
     User
 } from "lucide-react";
@@ -93,7 +94,7 @@ export default  function Header() {
     };
 
     return (
-        <header className=" py-4 border-b border-gray-200 dark:border-gray-800 transition-colors">
+        <header className="bg-black py-4 border-b border-gray-200 dark:border-gray-800 transition-colors">
             <div className="flex justify-between items-center container mx-auto">
                 <h1 className="text-2xl font-bold">Secciones Académicas</h1>
 
@@ -140,21 +141,31 @@ export default  function Header() {
 
                     <MenubarMenu>
                         <MenubarTrigger
-                            onClick={() => router.push('/subjects')}
-                            id="subjects"
-                        >
-                            <Book className="mr-2 h-5 w-5" />
-                            Asignaturas
-                        </MenubarTrigger>
-                    </MenubarMenu>
-
-                    <MenubarMenu>
-                        <MenubarTrigger
                             onClick={() => router.push('/spaces')}
                             id="spaces"
                         >
                             <Cuboid className="mr-2 h-5 w-5" />
                             Espacios
+                        </MenubarTrigger>
+                    </MenubarMenu>
+
+                    <MenubarMenu>
+                        <MenubarTrigger
+                            onClick={() => router.push('/sizes')}
+                            id="sizes"
+                        >
+                            <Ruler className="mr-2 h-5 w-5" />
+                            Tamaños
+                        </MenubarTrigger>
+                    </MenubarMenu>
+
+                    <MenubarMenu>
+                        <MenubarTrigger
+                            onClick={() => router.push('/subjects')}
+                            id="subjects"
+                        >
+                            <Book className="mr-2 h-5 w-5" />
+                            Asignaturas
                         </MenubarTrigger>
                     </MenubarMenu>
 
