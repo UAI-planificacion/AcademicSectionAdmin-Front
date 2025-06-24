@@ -161,6 +161,7 @@ export function SpaceModal({ isOpen, onClose, space, onAdd, onUpdate }: SpaceMod
         }
 
         onUpdate( spaceSave );
+        saveSpaceStorage( spaceSave );
         return spaceSave;
     }
 
