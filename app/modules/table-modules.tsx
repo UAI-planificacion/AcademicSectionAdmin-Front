@@ -122,7 +122,7 @@ export default function TableModules() {
         {
             accessorKey: "difference",
             header: "Diferencia",
-            cell: ({ row }) => row.original.difference || "N/A",
+            cell: ({ row }) => row.original.difference || "-",
         },
         {
             id: "actions",
