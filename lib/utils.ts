@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatDate(date?: Date): string {
-    if (!date) return "N/A"
+    if (!date) return "-"
     return new Intl.DateTimeFormat("es-ES", {
         day: "2-digit",
         month: "2-digit",
