@@ -1,7 +1,9 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, JSX } from "react"
+
+import { toast } from "sonner";
 
 import {
     Dialog,
@@ -26,12 +28,18 @@ import { Button }   from "@/components/ui/button";
 import { Input }    from "@/components/ui/input";
 import { Label }    from "@/components/ui/label";
 
-import type { Size, SizeId, Sizes } from "@/models/size.model";
-import { saveSizeStorage } from "@/stores/local-storage-sizes";
-import { toast } from "sonner";
 import { errorToast, successToast } from "@/config/toast/toast.config";
-import { fetchApi } from "@/services/fetch";
 import { ENV } from "@/config/envs/env";
+
+import type {
+    Size,
+    SizeId,
+    SizeSave,
+    Sizes
+}                           from "@/models/size.model";
+import { saveSizeStorage }  from "@/stores/local-storage-sizes";
+import { fetchApi }         from "@/services/fetch";
+import LoaderMini           from "@/icons/LoaderMini";
 
 
 interface SizeModalProps {
@@ -52,83 +60,70 @@ function getAvailableSizeIds( existingSizes: Size[] ): SizeId[] {
 }
 
 
-function generateSizeDetail( size: Partial<Size> ): string {
-    if ( size.min !== undefined && size.max !== undefined ) {
-        return `Entre ${size.min} y ${size.max}`;
-    }
-
-    if ( size.greaterThan !== undefined ) {
-        return `Mayor que ${size.greaterThan}`;
-    }
-
-    if ( size.lessThan !== undefined ) {
-        return `Menor que ${size.lessThan}`;
-    }
-
-    return "";
-}
-
-
 type RangeType = "minMax" | "greaterThan" | "lessThan";
 
 
-export function SizeModal({ isOpen, onClose, size, onAdd, onUpdate, existingSizes }: SizeModalProps) {
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [formData, setFormData] = useState<Partial<Size>>({
-        id: undefined,
-        detail: "",
-        min: undefined,
-        max: undefined,
-        greaterThan: undefined,
-        lessThan: undefined,
-    })
+const sizeEmpty = {
+    id          : undefined,
+    detail      : "",
+    min         : undefined,
+    max         : undefined,
+    greaterThan : undefined,
+    lessThan    : undefined,
+}
 
-    const [rangeType, setRangeType] = useState<RangeType>("minMax")
-    const [errors, setErrors] = useState<Record<string, string>>({})
+
+const generateSizeDetail = (
+    rangeType: RangeType,
+    size: Partial<Size>
+): string => ({
+    'minMax'       : `${size.min ?? 0} - ${size.max ?? 0}`,
+    'greaterThan'  : `> ${size.greaterThan ?? 0}`,
+    'lessThan'     : `< ${size.lessThan ?? 0}`,
+})[rangeType] || '';
+
+
+export function SizeModal({
+    isOpen,
+    onClose,
+    size,
+    onAdd,
+    onUpdate,
+    existingSizes
+}: SizeModalProps ): JSX.Element {
+    const [isLoading, setIsLoading] = useState<boolean>( false );
+    const [formData, setFormData]   = useState<Partial<Size>>( sizeEmpty );
+    const [rangeType, setRangeType] = useState<RangeType>( "minMax" );
+    const [errors, setErrors]       = useState<Record<string, string>>( {} );
+    const [detail, setDetail]       = useState<string>( '' );
+
+    useEffect(() => {
+        setDetail(generateSizeDetail(rangeType, formData));
+    }, [formData, rangeType]);
+
 
     useEffect(() => {
         if (size) {
-            setFormData({
-                id: size.id,
-                detail: size.detail,
-                min: size.min,
-                max: size.max,
-                greaterThan: size.greaterThan,
-                lessThan: size.lessThan,
-            })
+            setFormData({ ...size });
 
-            // Determinar el tipo de rango
-            if (size.min !== undefined && size.max !== undefined) {
-                setRangeType("minMax")
-            }
-            else if (size.greaterThan !== undefined) {
-                setRangeType("greaterThan")
-            }
-            else if (size.lessThan !== undefined) {
-                setRangeType("lessThan")
-            }
+            const newRangeType = size.greaterThan && !size.lessThan && !size.min && !size.max
+                ? "greaterThan"
+                : size.lessThan && !size.greaterThan && !size.min && !size.max
+                    ? "lessThan"
+                    : size.min && size.max && !size.greaterThan && !size.lessThan
+                        ? "minMax"
+                        : "minMax";
+
+            setRangeType( newRangeType );
+            setDetail( generateSizeDetail( newRangeType, size ));
         } else {
-            setFormData({
-                id: undefined,
-                detail: "",
-                min: undefined,
-                max: undefined,
-                greaterThan: undefined,
-                lessThan: undefined,
-            })
-            setRangeType("minMax")
+            setFormData( sizeEmpty );
+            setRangeType( "minMax" );
+            setDetail( '' );
         }
-        setErrors({})
-    }, [size, isOpen, formData.lessThan, formData.greaterThan, formData.max, formData.min])
 
-    useEffect(() => {
-        const newDetail = generateSizeDetail(formData);
-
-        setFormData((prev) => ({
-            ...prev,
-            detail: newDetail,
-        }));
-    }, [formData.min, formData.max, formData.greaterThan, formData.lessThan]);
+        setErrors({});
+    }, [size, isOpen]);
 
 
     function validateForm(): boolean {
@@ -165,90 +160,91 @@ export function SizeModal({ isOpen, onClose, size, onAdd, onUpdate, existingSize
     }
 
 
-    async function onCreateSize(): Promise<void> {
+    async function onCreateSize( sizeSave: SizeSave ): Promise<void> {
         try {
-            setIsLoading(true);
             const url = `${ENV.REQUEST_BACK_URL}sizes`;
-            const sizeSave = await fetchApi<Sizes>(url, "POST", formData);
+            const sizeData = await fetchApi<Sizes>( url, "POST", sizeSave );
 
-            if (!sizeSave) {
-                toast("Error al crear la talla", errorToast);
+            if ( !sizeData ) {
+                toast( "Error al crear la talla", errorToast );
                 return;
             }
 
-            saveSizeStorage(sizeSave);
-            onAdd(sizeSave);
-            toast("Talla creada correctamente", successToast);
-        } catch (error) {
-            toast("Error al crear la talla", errorToast);
+            saveSizeStorage( sizeData );
+            onAdd( sizeData );
+            toast( "Talla creada correctamente", successToast );
+        } catch ( error ) {
+            toast( "Error al crear la talla", errorToast );
         } finally {
-            setIsLoading(false);
-            onClose();
+            setIsLoading( false );
         }
     }
 
-    async function onUpdateSize(): Promise<void> {
+
+    async function onUpdateSize( sizeSave: SizeSave ): Promise<void> {
         try {
-            const url = `${ENV.REQUEST_BACK_URL}sizes/${formData.id}`;
-            const sizeSave = await fetchApi<Sizes>(url, "PUT", formData);
+            const url = `${ENV.REQUEST_BACK_URL}sizes/${sizeSave.id}`;
+            const sizeData = await fetchApi<Sizes>( url, "PATCH", sizeSave );
 
-            if (!sizeSave) {
-                toast("Error al actualizar la talla", errorToast);
+            if ( !sizeData ) {
+                toast( "Error al actualizar la talla", errorToast );
                 return;
             }
 
-            saveSizeStorage(sizeSave);
-            onUpdate(sizeSave);
-            toast("Talla actualizada correctamente", successToast);
-        } catch (error) {
-            toast("Error al actualizar la talla", errorToast);
+            saveSizeStorage( sizeData );
+            onUpdate( sizeData );
+            toast( "Talla actualizada correctamente", successToast );
+        } catch ( error ) {
+            toast( "Error al actualizar la talla", errorToast );
         } finally {
-            setIsLoading(false);
-            onClose();
+            setIsLoading( false );
         }
     }
 
-    async function handleSubmit(e: React.FormEvent<HTMLFormElement>): Promise<void> {
+
+    async function handleSubmit( e: React.FormEvent<HTMLFormElement> ): Promise<void> {
         e.preventDefault();
 
-        if (!validateForm()) return;
+        if ( !validateForm() ) return;
 
-        setIsLoading(true);
+        setIsLoading( true );
 
-        const cleanedData: Size = {
-            id: formData.id as SizeId,
-            detail: formData.detail || "",
-        }
+        const cleanedData: SizeSave = { id: formData.id as SizeId };
 
         if ( rangeType === "minMax" ) {
-            cleanedData.min = formData.min;
-            cleanedData.max = formData.max;
+            cleanedData.min         = formData.min;
+            cleanedData.max         = formData.max;
+            cleanedData.greaterThan = undefined;
+            cleanedData.lessThan    = undefined;
         } else if ( rangeType === "greaterThan" ) {
             cleanedData.greaterThan = formData.greaterThan;
+            cleanedData.min         = undefined;
+            cleanedData.max         = undefined;
+            cleanedData.lessThan    = undefined;
         } else if ( rangeType === "lessThan" ) {
-            cleanedData.lessThan = formData.lessThan;
+            cleanedData.lessThan    = formData.lessThan;
+            cleanedData.min         = undefined;
+            cleanedData.max         = undefined;
+            cleanedData.greaterThan = undefined;
         }
 
-        if (size) {
-            await onUpdateSize();
-        } else {
-            await onCreateSize();
-        }
+        if ( size ) await onUpdateSize( cleanedData );
+        else await onCreateSize( cleanedData );
 
-        onClose()
+        onClose();
     }
 
 
     function handleChange( field: keyof Size, value: any ) {
-        setFormData((prev) => ({
+        setFormData(( prev ) => ({
             ...prev,
-            [field]: value,
-        }))
+            [field]: value
+        }));
 
         if ( errors[field] ) {
-            setErrors((prev) => ({
+            setErrors(( prev ) => ({
                 ...prev,
-                [field]: "",
+                [field]: ""
             }))
         }
     }
@@ -256,16 +252,7 @@ export function SizeModal({ isOpen, onClose, size, onAdd, onUpdate, existingSize
 
     function handleRangeTypeChange( newRangeType: RangeType ) {
         setRangeType( newRangeType );
-
-        setFormData((prev) => ({
-            ...prev,
-            min: undefined,
-            max: undefined,
-            greaterThan: undefined,
-            lessThan: undefined,
-        }));
-
-        setErrors({});
+        setErrors( {} );
     }
 
 
@@ -284,35 +271,43 @@ export function SizeModal({ isOpen, onClose, size, onAdd, onUpdate, existingSize
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4 py-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="id">ID</Label>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="id">ID</Label>
 
-                        {size ? (
-                            <Input id="id" value={formData.id || ""} disabled />
-                        ) : (
-                            <Select value={formData.id} onValueChange={(value) => handleChange("id", value as SizeId)}>
-                                <SelectTrigger id="id">
-                                    <SelectValue placeholder="Seleccionar ID" />
-                                </SelectTrigger>
+                            {size ? (
+                                <Input id="id" value={formData.id || ""} disabled />
+                            ) : (
+                                <Select value={formData.id} onValueChange={(value) => handleChange("id", value as SizeId)}>
+                                    <SelectTrigger id="id">
+                                        <SelectValue placeholder="Seleccionar ID" />
+                                    </SelectTrigger>
 
-                                <SelectContent>
-                                    {availableSizeIds.map((sizeId) => (
-                                        <SelectItem key={sizeId} value={sizeId}>
-                                            {sizeId}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        )}
+                                    <SelectContent>
+                                        {availableSizeIds.map(( sizeId ) => (
+                                            <SelectItem key={sizeId} value={sizeId}>
+                                                {sizeId}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            )}
 
-                        {errors.id && <p className="text-sm text-destructive">{errors.id}</p>}
+                            {errors.id && <p className="text-sm text-destructive">{errors.id}</p>}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="detail">Detalle</Label>
+
+                            <Input id="detail" value={detail} disabled />
+                        </div>
                     </div>
-
 
                     <div className="space-y-2">
                         <Label>Tipo de Rango</Label>
 
-                        <Tabs defaultValue="minMax"
+                        <Tabs
+                            defaultValue    = "minMax"
                             className       = "w-full"
                             value           = { rangeType }
                             onValueChange   = {( value ) => handleRangeTypeChange( value as RangeType )}
@@ -391,18 +386,26 @@ export function SizeModal({ isOpen, onClose, size, onAdd, onUpdate, existingSize
                         </Tabs>
                     </div> 
 
-                    <div className="space-y-2">
-                        <Label htmlFor="detail">Detalle (Generado automáticamente)</Label>
-
-                        <Input id="detail" value={formData.detail || ""} disabled className="bg-muted" />
-                    </div>
-
                     <div className="flex justify-end gap-2 pt-4">
-                        <Button type="button" variant="outline" onClick={onClose}>
+                        <Button
+                            type        = "button"
+                            variant     = "outline"
+                            onClick     = { onClose }
+                            disabled    = { isLoading }
+                        >
+                            {isLoading && <LoaderMini />}
+
                             Cancelar
                         </Button>
 
-                        <Button type="submit">{size ? "Actualizar" : "Añadir"}</Button>
+                        <Button
+                            type        = "submit"
+                            disabled    = { isLoading }
+                        >
+                            {isLoading && <LoaderMini />}
+
+                            {size ? "Actualizar" : "Añadir"}
+                        </Button>
                     </div>
                 </form>
             </DialogContent>
