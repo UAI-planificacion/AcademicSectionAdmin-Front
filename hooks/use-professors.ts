@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 
-import {
-    getProfessorsFromStorage,
-    saveProfessorsToStorage
-}                       from '@/lib/localStorage';
+// import {
+//     getProfessorsFromStorage,
+//     saveProfessorsToStorage
+// }                       from '@/lib/localStorage';
 import { Professor }    from '@/lib/types';
 
 
@@ -27,13 +27,13 @@ export function useProfessors(): UseProfessorsResult {
         const fetchProfessors = async () => {
             setLoading( true );
 
-            const cachedProfessors = getProfessorsFromStorage();
+            // const cachedProfessors = getProfessorsFromStorage();
 
-            if ( cachedProfessors && cachedProfessors.length > 0 ) {
-                setProfessors( cachedProfessors );
-                setLoading( false );
-                return;
-            }
+            // if ( cachedProfessors && cachedProfessors.length > 0 ) {
+            //     setProfessors( cachedProfessors );
+            //     setLoading( false );
+            //     return;
+            // }
 
             try {
                 const response = await fetch( API_URL );
@@ -44,7 +44,7 @@ export function useProfessors(): UseProfessorsResult {
 
                 const data = await response.json();
 
-                saveProfessorsToStorage( data );
+                // saveProfessorsToStorage( data );
                 setProfessors( data );
                 setError( null );
             } catch ( err ) {
