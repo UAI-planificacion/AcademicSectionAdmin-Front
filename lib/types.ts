@@ -13,20 +13,6 @@ export interface Space {
 }
 
 
-export interface Module {
-    id          : string;
-    code        : string;
-    isActive    : boolean;
-    name        : string;
-    difference? : string;
-    startHour   : string;
-    endHour     : string;
-    dayId       : number;
-    order       : number;
-    dayModuleId : number;
-}
-
-
 export interface Day {
     id          : number;
     name        : string;
