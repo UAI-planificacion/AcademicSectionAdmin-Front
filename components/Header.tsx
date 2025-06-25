@@ -95,17 +95,17 @@ export default  function Header() {
 
     return (
         <header className="bg-black py-4 border-b border-gray-200 dark:border-gray-800 transition-colors">
-            <div className="flex justify-between items-center container mx-auto">
-                <h1 className="text-2xl font-bold">Secciones Académicas</h1>
+            <div className="flex justify-between items-center container mx-auto gap-2">
+                <h1 className="text-xl xl:text-2xl font-bold">Secciones Académicas</h1>
 
-                <Menubar>
+                <Menubar className="hidden md:flex">
                     <MenubarMenu>
                         <MenubarTrigger
                             onClick={() => router.push('/sections')}
                             id="sections"
                         >
                             <GraduationCap className="mr-2 h-6 w-6" />
-                            Secciones
+                            <span className="hidden xl:block">Secciones</span>
                         </MenubarTrigger>
                     </MenubarMenu>
 
@@ -115,7 +115,7 @@ export default  function Header() {
                             id="modules"
                         >
                             <Clock className="mr-2 h-5 w-5" />
-                            Módulos
+                            <span className="hidden xl:block">Módulos</span>
                         </MenubarTrigger>
                     </MenubarMenu>
 
@@ -125,7 +125,7 @@ export default  function Header() {
                             id="days"
                         >
                             <Calendar className="mr-2 h-5 w-5" />
-                            Días
+                            <span className="hidden xl:block">Días</span>
                         </MenubarTrigger>
                     </MenubarMenu>
 
@@ -135,7 +135,7 @@ export default  function Header() {
                             id="periods"
                         >
                             <CalendarClock className="mr-2 h-5 w-5" />
-                            Periodos
+                            <span className="hidden xl:block">Periodos</span>
                         </MenubarTrigger>
                     </MenubarMenu>
 
@@ -145,7 +145,7 @@ export default  function Header() {
                             id="spaces"
                         >
                             <Cuboid className="mr-2 h-5 w-5" />
-                            Espacios
+                            <span className="hidden xl:block">Espacios</span>
                         </MenubarTrigger>
                     </MenubarMenu>
 
@@ -155,7 +155,7 @@ export default  function Header() {
                             id="sizes"
                         >
                             <Ruler className="mr-2 h-5 w-5" />
-                            Tamaños
+                            <span className="hidden xl:block">Tamaños</span>
                         </MenubarTrigger>
                     </MenubarMenu>
 
@@ -165,7 +165,7 @@ export default  function Header() {
                             id="subjects"
                         >
                             <Book className="mr-2 h-5 w-5" />
-                            Asignaturas
+                            <span className="hidden xl:block">Asignaturas</span>
                         </MenubarTrigger>
                     </MenubarMenu>
 
@@ -175,7 +175,7 @@ export default  function Header() {
                             id="professors"
                         >
                             <User className="mr-2 h-5 w-5" />
-                            Profesores
+                            <span className="hidden xl:block">Profesores</span>
                         </MenubarTrigger>
                     </MenubarMenu>
                 </Menubar>
