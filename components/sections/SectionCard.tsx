@@ -12,10 +12,10 @@ import {
 }                       from '@/components/ui/tooltip';
 import { SectionModal } from '@/components/sections/section-modal';
 
-import { cn }                   from '@/lib/utils';
-import { getRoomsFromStorage }  from '@/lib/localStorage';
+import { cn } from '@/lib/utils';
 
 import { Section } from '@/models/section.model';
+import { getSpacesStorage } from '@/stores/local-storage-spaces';
 
 const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
@@ -126,7 +126,7 @@ export const SectionCard = memo(function SectionCard({
 
             {showCreateModal && (
                 <SectionModal
-                    rooms       = { getRoomsFromStorage() }
+                    rooms       = { getSpacesStorage() }
                     onClose     = { handleCloseModal }
                     onSave      = { handleSaveSection }
                     onDelete    = { handleDeleteSection }
