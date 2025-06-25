@@ -9,28 +9,31 @@ import { Button }       from "@/components/ui/button"
 import { DataTable }    from "@/components/data-table/data-table"
 import { Badge }        from "@/components/ui/badge"
 
-import { Module } from "@/lib/types"
+import { ModuleOriginal } from "@/models/module.model"
 
-import { useModules }   from "@/hooks/use-modules"
+// import { useModules }   from "@/hooks/use-modules"
 import { useDays }      from "@/hooks/use-days"
 
 import { ModuleModal } from "./module-modal"
 import { DeleteConfirmDialog } from "@/components/dialogs/DeleteConfirmDialog"
+import { useModulesOriginal } from "@/hooks/use-modules-original"
 
 
 export default function TableModules() {
     //   const [modules, setModules] = useState<Module[]>(initialModules)
-    const { modules } = useModules();
+    // const { modules } = useModules();
+    const { modules } = useModulesOriginal();
+
     const { days } = useDays();
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-    const [currentModule, setCurrentModule] = useState<Module | null>(null)
+    const [currentModule, setCurrentModule] = useState<ModuleOriginal | null>(null)
 
-    const handleAddModule = (module: Module) => {
+    const handleAddModule = (module: ModuleOriginal) => {
         // setModules([...modules, module])
     }
 
-    const handleUpdateModule = (updatedModule: Module) => {
+    const handleUpdateModule = (updatedModule: ModuleOriginal) => {
         // setModules(modules.map((module) => (module.id === updatedModule.id ? updatedModule : module)))
     }
 
@@ -43,22 +46,22 @@ export default function TableModules() {
         setIsModalOpen(true)
     }
 
-    const openEditModal = (module: Module) => {
+    const openEditModal = (module: ModuleOriginal) => {
         setCurrentModule(module)
         setIsModalOpen(true)
     }
 
-    const openDeleteDialog = (module: Module) => {
+    const openDeleteDialog = (module: ModuleOriginal) => {
         setCurrentModule(module)
         setIsDeleteDialogOpen(true)
     }
 
-    const getDayName = (dayId: number) => {
-        const day = days.find((d) => d.id === dayId)
-        return day ? day.name : `Día ${dayId}`
-    }
+    // const getDayName = (dayId: number) => {
+    //     const day = days.find((d) => d.id === dayId)
+    //     return day ? day.name : `Día ${dayId}`
+    // }
 
-    const columns: ColumnDef<Module>[] = [
+    const columns: ColumnDef<ModuleOriginal>[] = [
         {
             accessorKey: "id",
             header: "ID",
@@ -109,15 +112,6 @@ export default function TableModules() {
                 {row.original.endHour}
                 </div>
             ),
-        },
-        {
-            accessorKey: "dayId",
-            header: "Día",
-            cell: ({ row }) => getDayName(row.original.dayId),
-        },
-        {
-            accessorKey: "order",
-            header: "Orden",
         },
         {
             accessorKey: "difference",
