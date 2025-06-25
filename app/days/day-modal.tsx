@@ -1,7 +1,7 @@
 "use client"
 
-import type React from "react";
-import { useState, useEffect } from "react";
+import type React               from "react";
+import { useState, useEffect }  from "react";
 
 import { toast } from "sonner";
 
@@ -15,37 +15,37 @@ import { Button }   from "@/components/ui/button";
 import { Input }    from "@/components/ui/input";
 import { Label }    from "@/components/ui/label";
 
-import { errorToast, successToast } from "@/config/toast/toast.config";
-import { ENV } from "@/config/envs/env"
+import {
+    errorToast,
+    successToast
+}               from "@/config/toast/toast.config";
+import { ENV }  from "@/config/envs/env";
 
-import { saveDayStorage } from "@/stores/local-storage-days";
-import { fetchApi } from "@/services/fetch";
-import type { Day } from "@/lib/types";
-import LoaderMini from "@/icons/LoaderMini";
+import LoaderMini           from "@/icons/LoaderMini";
+import type { Day }         from "@/lib/types";
+import { saveDayStorage }   from "@/stores/local-storage-days";
+import { fetchApi }         from "@/services/fetch";
 
 
 interface DayModalProps {
-    isOpen: boolean
-    onClose: () => void
-    day: Day | null
-    onAdd: (day: Day) => void
-    onUpdate: (day: Day) => void
+    isOpen      : boolean;
+    onClose     : () => void;
+    day         : Day | null;
+    onAdd       : (day: Day) => void;
+    onUpdate    : (day: Day) => void;
 }
 
 const dayEmpty: Day = {
     id          : 0,
-    name        : "",
-    shortName   : "",
-    mediumName  : "",
+    name        : "Domingo",
+    shortName   : "D",
+    mediumName  : "Do",
 }
 
 export function DayModal({ isOpen, onClose, day, onAdd, onUpdate }: DayModalProps) {
-
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-
-    const [formData, setFormData] = useState<Day>( dayEmpty );
-
-    const [errors, setErrors] = useState<Record<string, string>>({})
+    const [isLoading, setIsLoading] = useState<boolean>( false );
+    const [formData, setFormData]   = useState<Day>( dayEmpty );
+    const [errors, setErrors]       = useState<Record<string, string>>( {} );
 
     useEffect(() => {
         const data = day
@@ -55,6 +55,7 @@ export function DayModal({ isOpen, onClose, day, onAdd, onUpdate }: DayModalProp
         setFormData( data );
         setErrors( {} );
     }, [day, isOpen]);
+
 
     function validateForm(): boolean {
         const newErrors: Record<string, string> = {}
@@ -151,6 +152,7 @@ export function DayModal({ isOpen, onClose, day, onAdd, onUpdate }: DayModalProp
             }));
         }
     }
+
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
