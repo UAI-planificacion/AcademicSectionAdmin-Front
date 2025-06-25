@@ -31,9 +31,9 @@ import {
 import { ENV }  from "@/config/envs/env";
 
 import LoaderMini from "@/icons/LoaderMini";
-
 import { fetchApi } from "@/services/fetch";
 import { saveSpaceStorage } from "@/stores/local-storage-spaces";
+import { getSpaceTypeName } from "@/lib/space";
 
 
 interface SpaceModalProps {
@@ -47,67 +47,60 @@ interface SpaceModalProps {
 const typeOptions: Type[] = ["ROOM", "AUDITORIO", "DIS", "LAB", "LABPC", "GARAGE", "CORE", "COMMUNIC"]
 const sizeOptions: Size[] = ["XS", "XE", "S", "SE", "MS", "M", "L", "XL", "XXL"]
 
+const spaceEmpty: Space = {
+    id          : "",
+    capacity    : 0,
+    type        : "ROOM",
+    sizeId      : "M",
+    building    : "A",
+}
+
 export function SpaceModal({ isOpen, onClose, space, onAdd, onUpdate }: SpaceModalProps) {
     const oldId = space?.id;
 
+
     const [ isLoading, setIsLoading ] = useState<boolean>( false );
 
-    const [formData, setFormData] = useState<Space>({
-        id: "",
-        capacity: 0,
-        type: "ROOM",
-        sizeId: "M",
-        building: "A",
-    })
+    const [formData, setFormData] = useState<Space>( spaceEmpty )
 
     const [errors, setErrors] = useState<Record<string, string>>({})
 
     useEffect(() => {
-        if (space) {
-            setFormData({
-                id: space.id,
-                capacity: space.capacity,
-                type: space.type,
-                sizeId: space.sizeId,
-                building: space.building,
-                createdAt: space.createdAt,
-                updatedAt: space.updatedAt,
-            });
-        } else {
-            setFormData({
-                id: "",
-                capacity: 0,
-                type: "ROOM",
-                sizeId: "M",
-                building: "A",
-            });
-        }
-        setErrors({})
-    }, [space, isOpen])
+        const data = space
+            ? { ...space }
+            : spaceEmpty;
+
+        setFormData( data );
+        setErrors( {} );
+    }, [space, isOpen]);
 
 
     function validateForm(): boolean {
-        const newErrors: Record<string, string> = {}
+        const newErrors: Record<string, string> = {};
 
-        if (!formData.id || formData.id.trim() === "") {
+        if ( !formData.id || formData.id.trim() === "" )
             newErrors.id = "El nombre es requerido";
+        else if ( !formData.id.trim().includes( "-" ))
+            newErrors.id = "El nombre debe contener un guion (-) para el edificio";
+        else if ( formData.id.trim().includes( '-' )) {
+            const building  = formData.id.trim().split( '-' )[1];
+            const buildings = [ 'A', 'B', 'C', 'D', 'E', 'F' ];
+
+            if ( !buildings.includes( building )) {
+                newErrors.id = `El nombre debe contener el edificio ${buildings.join( ", " )}`;
+            }
         }
 
-        if (!formData.capacity || formData.capacity <= 0) {
+        if ( !formData.capacity || formData.capacity <= 0 )
             newErrors.capacity = "La capacidad debe ser mayor que 0";
-        }
 
-        if (!formData.type) {
-            newErrors.type = "El tipo es requerido";
-        }
+        if ( !formData.type ) newErrors.type = "El tipo es requerido";
 
-        if (!formData.sizeId) {
-            newErrors.sizeId = "El tamaño es requerido";
-        }
+        if ( !formData.sizeId ) newErrors.sizeId = "El tamaño es requerido";
 
-        setErrors(newErrors);
+        setErrors( newErrors );
 
-        return Object.keys(newErrors).length === 0;
+        return Object.keys( newErrors ).length === 0;
     }
 
 
@@ -211,9 +204,9 @@ export function SpaceModal({ isOpen, onClose, space, onAdd, onUpdate }: SpaceMod
                                 </SelectTrigger>
 
                                 <SelectContent>
-                                    {typeOptions.map((type) => (
-                                        <SelectItem key={type} value={type}>
-                                        {type}
+                                    {typeOptions.map(( type ) => (
+                                        <SelectItem key={ type } value={ type }>
+                                            {getSpaceTypeName( type )}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -258,10 +251,10 @@ export function SpaceModal({ isOpen, onClose, space, onAdd, onUpdate }: SpaceMod
 
                     <div className="flex justify-end gap-2 pt-4">
                         <Button
-                            type="button"
-                            variant="outline"
-                            onClick={onClose}
-                            disabled={isLoading}
+                            type        = "button"
+                            variant     = "outline"
+                            onClick     = { onClose }
+                            disabled    = { isLoading }
                         >
                             { isLoading && <LoaderMini /> }
 
@@ -269,8 +262,8 @@ export function SpaceModal({ isOpen, onClose, space, onAdd, onUpdate }: SpaceMod
                         </Button>
 
                         <Button
-                            type="submit"
-                            disabled={isLoading}
+                            type        = "submit"
+                            disabled    = { isLoading }
                         >
                             { isLoading && <LoaderMini /> }
 
@@ -280,5 +273,5 @@ export function SpaceModal({ isOpen, onClose, space, onAdd, onUpdate }: SpaceMod
                 </form>
             </DialogContent>
         </Dialog>
-    )
+    );
 }
