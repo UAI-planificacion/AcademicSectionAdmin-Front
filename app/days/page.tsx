@@ -2,34 +2,22 @@
 
 import { useEffect, useState } from "react"
 
-import { 
-    Calendar,
-    Plus,
-    Pencil,
-    Trash2 
-}                           from "lucide-react"
-import type { ColumnDef } from "@tanstack/react-table"
-import { toast } from "sonner"
+import { Plus, Pencil }     from "lucide-react";
+import type { ColumnDef }   from "@tanstack/react-table";
 
-import { Button } from "@/components/ui/button"
-import { DataTable } from "@/components/data-table/data-table"
-import { DeleteConfirmDialog } from "@/components/dialogs/DeleteConfirmDialog"
+import { Button }       from "@/components/ui/button";
+import { DataTable }    from "@/components/data-table/data-table";
 
-import { DayModal } from "./day-modal"
-
-import { ENV } from "@/config/envs/env"
-import { Day } from "@/lib/types"
-import { useDays } from "@/hooks/use-days"
-import { deleteDayStorage } from "@/stores/local-storage-days"
-import { errorToast, successToast } from "@/config/toast/toast.config"
+import { DayModal } from "@/app/days/day-modal";
+import { Day }      from "@/lib/types";
+import { useDays }  from "@/hooks/use-days";
 
 
 export default function DaysPage() {
-    const { days } = useDays();
-    const [daysData, setDaysData] = useState<Day[]>(days);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-    const [currentDay, setCurrentDay] = useState<Day | null>(null);
+    const { days }                      = useDays();
+    const [daysData, setDaysData]       = useState<Day[]>( days );
+    const [isModalOpen, setIsModalOpen] = useState( false );
+    const [currentDay, setCurrentDay]   = useState<Day | null>( null );
 
 
     useEffect(() => {
@@ -51,38 +39,18 @@ export default function DaysPage() {
         );
     }
 
-    const handleDeleteDay = async (id: string | number) => {
-        try {
-            const url = `${ENV.REQUEST_BACK_URL}days/${id}`;
-            const response = await fetch(url, { method: 'DELETE' });
 
-            if ( !response.ok ) {
-                toast( 'No se pudo eliminar el día', errorToast );
-                return;
-            }
-
-            setDaysData( daysData.filter(( day ) => String( day.id ) === String( id )));
-            deleteDayStorage(String( id ));
-            toast( 'Día eliminado correctamente', successToast );
-        } catch (error) {
-            toast( 'Error al eliminar el día', errorToast );
-        }
-    }
-
-    const openAddModal = () => {
+    function openAddModal(): void {
         setCurrentDay(null)
         setIsModalOpen(true)
     }
 
-    const openEditModal = (day: Day) => {
+
+    function openEditModal(day: Day): void {
         setCurrentDay(day)
         setIsModalOpen(true)
     }
 
-    const openDeleteDialog = (day: Day) => {
-        setCurrentDay(day)
-        setIsDeleteDialogOpen(true)
-    }
 
     const columns: ColumnDef<Day>[] = [
         {
@@ -104,14 +72,9 @@ export default function DaysPage() {
         {
             id: "actions",
             cell: ({ row }) => (
-                <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" onClick={() => openEditModal(row.original)}>
                     <Pencil className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => openDeleteDialog(row.original)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-                </div>
             ),
         },
     ]
@@ -121,7 +84,10 @@ export default function DaysPage() {
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-3xl font-bold">Días</h1>
 
-                <Button onClick={openAddModal}>
+                <Button
+                    onClick={openAddModal}
+                    disabled={daysData.length >= 7}
+                >
                     <Plus className="mr-2 h-4 w-4" />
                     Añadir Día
                 </Button>
@@ -140,14 +106,6 @@ export default function DaysPage() {
                 day         = { currentDay }
                 onAdd       = { handleAddDay }
                 onUpdate    = { handleUpdateDay }
-            />
-
-            <DeleteConfirmDialog
-                isOpen      = { isDeleteDialogOpen }
-                onClose     = { () => setIsDeleteDialogOpen( false )}
-                onConfirm   = { () => handleDeleteDay( currentDay?.id || 0 )}
-                type        = "día"
-                name        = { 'Día' }
             />
         </div>
     );
