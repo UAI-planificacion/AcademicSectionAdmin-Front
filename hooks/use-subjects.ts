@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 
-import {
-    getSubjectsFromStorage,
-    saveSubjectsToStorage
-}                   from '@/lib/localStorage';
+// import {
+//     getSubjectsFromStorage,
+//     saveSubjectsToStorage
+// }                   from '@/lib/localStorage';
 import { Subject }  from '@/lib/types';
 
 
@@ -26,13 +26,13 @@ export function useSubjects(): UseSubjectsResult {
         const fetchSubjects = async () => {
             setLoading( true );
 
-            const cachedSubjects  = getSubjectsFromStorage();
+            // const cachedSubjects  = getSubjectsFromStorage();
 
-            if ( cachedSubjects && cachedSubjects.length > 0 ) {
-                setSubjects( cachedSubjects );
-                setLoading( false );
-                return;
-            }
+            // if ( cachedSubjects && cachedSubjects.length > 0 ) {
+            //     setSubjects( cachedSubjects );
+            //     setLoading( false );
+            //     return;
+            // }
 
             try {
                 const response = await fetch( API_URL );
@@ -43,7 +43,7 @@ export function useSubjects(): UseSubjectsResult {
 
                 const data = await response.json();
 
-                saveSubjectsToStorage( data );
+                // saveSubjectsToStorage( data );
                 setSubjects( data );
                 setError( null );
             } catch ( err ) {
