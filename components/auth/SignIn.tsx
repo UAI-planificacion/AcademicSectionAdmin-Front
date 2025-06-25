@@ -15,7 +15,7 @@ export default function SignIn(): JSX.Element {
             onClick = { async () => await signIn()}
         >
             <MicrosoftIcon/>
-            Iniciar sesión
+            <span className="hidden xl:block">Iniciar sesión</span>
         </Button>
     );
 }
