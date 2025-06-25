@@ -17,9 +17,9 @@ import { DeleteConfirmDialog }  from '@/components/dialogs/DeleteConfirmDialog';
 import ModuleCard               from '@/components/modules/ModuleCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-import { useModules } from '@/hooks/use-modules';
-import { Module } from '@/lib/types';
-import TableModules from './table-modules';
+import { useModules }   from '@/hooks/use-modules';
+import { Module }       from '@/models/module.model';
+import TableModules     from './table-modules';
 
 
 const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
