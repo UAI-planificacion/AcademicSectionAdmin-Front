@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-import { Module } from '@/lib/types';
+import { Module } from '@/models/module.model';
 
 
 const API_URL = 'http://localhost:3030/api/v1/modules'
