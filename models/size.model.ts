@@ -20,3 +20,12 @@ export interface Size {
     lessThan?       : number;
     greaterThan?    : number;
 }
+
+
+export interface SizeSave {
+    id              : SizeId;
+    min?            : number;
+    max?            : number;
+    lessThan?       : number;
+    greaterThan?    : number;
+}
