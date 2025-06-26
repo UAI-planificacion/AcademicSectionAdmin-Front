@@ -1,58 +1,72 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-import { Plus, Calendar } from 'lucide-react';
+import { Plus } from 'lucide-react';
+
+import TableModules from '@/app/modules/table-modules';
+import ModuleDay    from '@/app/modules/module-day';
 
 import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle
-}                               from '@/components/ui/card';
-import { Button }               from '@/components/ui/button';
-import { Badge }                from '@/components/ui/badge';
-import { ModuleModal }          from '@/components/modules/ModuleModal';
-import { DeleteConfirmDialog }  from '@/components/dialogs/DeleteConfirmDialog';
-import ModuleCard               from '@/components/modules/ModuleCard';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger
+}                       from "@/components/ui/tabs";
+import { Button }       from '@/components/ui/button';
+import { ModuleModal }  from '@/components/modules/ModuleModal';
 
-import { useModules }   from '@/hooks/use-modules';
-import { Module }       from '@/models/module.model';
-import TableModules     from './table-modules';
+import { useModulesOriginal }   from '@/hooks/use-modules-original';
+import { useModules }           from '@/hooks/use-modules';
+
+import { ModuleOriginal } from '@/models/module.model';
+import type { Module } from '@/models/module.model';
 
 
-const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
 
 export default function ModulesPage() {
+    const { modules: modulesOriginal }      = useModulesOriginal();
+    const [modulesData, setModulesData]     = useState<ModuleOriginal[]>( [] );
     const { modules }                       = useModules();
     const [isModalOpen, setIsModalOpen]     = useState( false );
-    const [editingModule, setEditingModule] = useState<Module | null>( null );
-    const [deleteModule, setDeleteModule]   = useState<Module | null>( null );
+    const [editingModule, setEditingModule] = useState<ModuleOriginal | null>( null );
 
     const handleAddModule = () => {
-        setEditingModule( null );
-        setIsModalOpen( true );
+        setEditingModule(null);
+        setIsModalOpen(true);
     };
 
-    const handleEditModule = ( module: Module ) => {
-        setEditingModule( module );
-        setIsModalOpen( true );
+    const openEditModal = (module: ModuleOriginal) => {
+        setEditingModule(module);
+        setIsModalOpen(true);
     };
 
-    const handleDeleteModule = ( module: Module ) => {
-        setDeleteModule( module );
+    const openDeleteDialog = (module: ModuleOriginal) => {
+        // Handle delete dialog logic here
     };
 
-    const confirmDelete = () => {
-        if ( deleteModule ) {
-            // setModules( modules.filter( m => m.id !== deleteModule.id ) );
-            setDeleteModule(null);
-        }
-    };
 
-    const handleSaveModule = (moduleData: Omit<Module, 'id'>) => {
+    useEffect(() => {
+        if ( modulesOriginal && modulesOriginal.length > 0 )
+            setModulesData( modulesOriginal );
+    }, [ modulesOriginal ]);
+
+
+    // const handleAddModule = (module: ModuleOriginal) => {
+    //     setModulesData([...modulesData, module])
+    // }
+
+
+    const handleUpdateModule = (updatedModule: ModuleOriginal) => {
+        setModulesData(modulesData.map((module) => (module.id === updatedModule.id ? updatedModule : module)))
+    }
+
+
+    // const handleSaveModule = (moduleData: Omit<Module, 'id'>) => {
+    // const handleSaveModule = (moduleData: ModuleOriginal) => {
+    const handleSaveModule = () => {
         if (editingModule) {
         // Edit existing module
         // setModules(modules.map(m => 
@@ -71,106 +85,55 @@ export default function ModulesPage() {
         setIsModalOpen(false);
     };
 
-    const getModulesForDay = (dayId: number) => {
-        return modules
-        .filter(module => module.dayId === dayId)
-        .sort((a, b) => a.order - b.order);
-    };
-
-    const ModuleTable = ({ day }: { day: number }) => {
-        const dayModules = getModulesForDay( day );
-
-        return (
-            <Card className="h-full shadow-lg hover:shadow-xl transition-all duration-300">
-                <CardHeader className="pb-4">
-                    <CardTitle className="text-lg font-bold text-center flex items-center justify-center gap-2">
-                        {DAYS[day - 1]}
-
-                        <Badge variant="outline" className="ml-2">
-                            {dayModules.length} módulos
-                        </Badge>
-                    </CardTitle>
-                </CardHeader>
-
-                <CardContent className="p-2 h-[31rem] overflow-y-auto">
-                    {dayModules.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-[280px] text-muted-foreground">
-                            <Calendar className="h-12 w-12 mb-3 opacity-50" />
-
-                            <p className="text-sm font-medium">No hay módulos</p>
-
-                            <p className="text-xs opacity-70">programados para este día</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {dayModules.map( module => (
-                                <ModuleCard
-                                    key                 = { module.id }
-                                    module              = { module }
-                                    handleEditModule    = { handleEditModule }
-                                    handleDeleteModule  = { handleDeleteModule }
-                                />
-                            ))}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-        );
-    };
 
     return (
-        <div className="min-h-screen bg-background p-6">
-            <div className="max-w-7xl mx-auto grid">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="space-y-2">
-                        <h1 className="text-4xl font-bold tracking-tight">
-                            Gestión de Módulos
-                        </h1>
+        <main className="container mx-auto py-10">
+            <header className="flex items-center justify-between mb-4">
+                <h1 className="text-4xl font-bold tracking-tight">
+                    Gestión de Módulos
+                </h1>
+
+                <Button 
+                    onClick={handleAddModule} 
+                    className="flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-3"
+                >
+                    <Plus className="h-5 w-5" />
+                    Agregar Módulo
+                </Button>
+            </header>
+
+            <Tabs defaultValue="table">
+                <TabsList>
+                    <TabsTrigger value="table">Tabla</TabsTrigger>
+
+                    <TabsTrigger value="modules">Módulos</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="table">
+                    <TableModules 
+                        modules             = { modulesData }
+                        onOpenEditModal     = { openEditModal }
+                        onOpenDeleteDialog  = { openDeleteDialog }
+                        editingModule       = { editingModule }
+                        setEditingModule    = { setEditingModule }
+                    />
+                </TabsContent>
+
+                <TabsContent value="modules">
+                    <div className="grid grid-cols-3 grid-rows-2 gap-6 h-full">
+                        {days.map((day, index) => (
+                            <ModuleDay key={day} day={index + 1} days={days} />
+                        ))}
                     </div>
+                </TabsContent>
+            </Tabs>
 
-                    <Button 
-                        onClick={handleAddModule} 
-                        className="flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-3"
-                    >
-                        <Plus className="h-5 w-5" />
-                        Agregar Módulo
-                    </Button>
-                </div>
-
-                <Tabs defaultValue="table" className="">
-                    <TabsList>
-                        <TabsTrigger value="table">Tabla</TabsTrigger>
-                        <TabsTrigger value="modules">Módulos</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="table">
-                        <TableModules />
-                    </TabsContent>
-
-                    <TabsContent value="modules">
-                        <div className="grid grid-cols-3 grid-rows-2 gap-6 h-[calc(100vh-220px)]">
-                            {DAYS.map((day, index) => (
-                                <ModuleTable key={day} day={index + 1} />
-                            ))}
-                        </div>
-                    </TabsContent>
-                </Tabs>
-
-                <ModuleModal
-                    isOpen  = { isModalOpen }
-                    onClose = { () => setIsModalOpen( false )}
-                    onSave  = { handleSaveModule }
-                    module  = { editingModule }
-                />
-
-                <DeleteConfirmDialog
-                    isOpen      = { !!deleteModule }
-                    onClose     = { () => setDeleteModule( null )}
-                    onConfirm   = { confirmDelete }
-                    name        = { deleteModule?.name || '' }
-                    type        = "el Módulo"
-                />
-            </div>
-        </div>
+            <ModuleModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSave={handleSaveModule}
+                module={editingModule}
+            />
+        </main>
     );
 }
