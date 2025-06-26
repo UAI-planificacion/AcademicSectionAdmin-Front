@@ -1,59 +1,40 @@
 "use client"
 
-import { useState } from "react"
+import {
+    Pencil,
+    Trash2,
+    Clock,
+    CheckCircle,
+    XCircle
+}                           from "lucide-react";
+import type { ColumnDef }   from "@tanstack/react-table";
 
-import { Plus, Pencil, Trash2, Clock, CheckCircle, XCircle } from "lucide-react"
-import type { ColumnDef } from "@tanstack/react-table"
+import { Button }               from "@/components/ui/button";
+import { DataTable }            from "@/components/data-table/data-table";
+import { Badge }                from "@/components/ui/badge";
+// Removed unused DeleteConfirmDialog import
 
-import { Button }       from "@/components/ui/button"
-import { DataTable }    from "@/components/data-table/data-table"
-import { Badge }        from "@/components/ui/badge"
-
-import { ModuleOriginal } from "@/models/module.model"
-
-// import { useModules }   from "@/hooks/use-modules"
-import { useDays }      from "@/hooks/use-days"
-
-import { ModuleModal } from "./module-modal"
-import { DeleteConfirmDialog } from "@/components/dialogs/DeleteConfirmDialog"
-import { useModulesOriginal } from "@/hooks/use-modules-original"
+import { ModuleOriginal } from "@/models/module.model";
+import { useModulesOriginal } from "@/hooks/use-modules-original";
 
 
-export default function TableModules() {
-    //   const [modules, setModules] = useState<Module[]>(initialModules)
-    // const { modules } = useModules();
-    const { modules } = useModulesOriginal();
-
-    const { days } = useDays();
-    const [isModalOpen, setIsModalOpen] = useState(false)
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-    const [currentModule, setCurrentModule] = useState<ModuleOriginal | null>(null)
-
-    const handleAddModule = (module: ModuleOriginal) => {
-        // setModules([...modules, module])
+export default function TableModules(
+    {
+        modules,
+        onOpenEditModal,
+        onOpenDeleteDialog,
+        editingModule,
+        setEditingModule
+    }: {
+        modules: ModuleOriginal[];
+        onOpenEditModal: (module: ModuleOriginal) => void;
+        onOpenDeleteDialog: (module: ModuleOriginal) => void;
+        editingModule: ModuleOriginal | null;
+        setEditingModule: React.Dispatch<React.SetStateAction<ModuleOriginal | null>>;
     }
-
-    const handleUpdateModule = (updatedModule: ModuleOriginal) => {
-        // setModules(modules.map((module) => (module.id === updatedModule.id ? updatedModule : module)))
-    }
-
+) {
     const handleDeleteModule = (id: string) => {
-        // setModules(modules.filter((module) => module.id !== id))
-    }
-
-    const openAddModal = () => {
-        setCurrentModule(null)
-        setIsModalOpen(true)
-    }
-
-    const openEditModal = (module: ModuleOriginal) => {
-        setCurrentModule(module)
-        setIsModalOpen(true)
-    }
-
-    const openDeleteDialog = (module: ModuleOriginal) => {
-        setCurrentModule(module)
-        setIsDeleteDialogOpen(true)
+        // The actual delete logic should be handled by the parent component
     }
 
     // const getDayName = (dayId: number) => {
@@ -98,8 +79,8 @@ export default function TableModules() {
             header: "Hora Inicio",
             cell: ({ row }) => (
                 <div className="flex items-center">
-                <Clock className="mr-2 h-4 w-4" />
-                {row.original.startHour}
+                    <Clock className="mr-2 h-4 w-4" />
+                    {row.original.startHour}
                 </div>
             ),
         },
@@ -108,8 +89,8 @@ export default function TableModules() {
             header: "Hora Fin",
             cell: ({ row }) => (
                 <div className="flex items-center">
-                <Clock className="mr-2 h-4 w-4" />
-                {row.original.endHour}
+                    <Clock className="mr-2 h-4 w-4" />
+                    {row.original.endHour}
                 </div>
             ),
         },
@@ -122,11 +103,11 @@ export default function TableModules() {
             id: "actions",
             cell: ({ row }) => (
                 <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => openEditModal(row.original)}>
+                    <Button variant="ghost" size="icon" onClick={() => onOpenEditModal(row.original)}>
                         <Pencil className="h-4 w-4" />
                     </Button>
 
-                    <Button variant="ghost" size="icon" onClick={() => openDeleteDialog(row.original)}>
+                    <Button variant="ghost" size="icon" onClick={() => onOpenDeleteDialog(row.original)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                 </div>
@@ -139,8 +120,7 @@ export default function TableModules() {
             {/* <div className="flex items-center justify-between mb-6">
                 <h1 className="text-3xl font-bold">Módulos</h1>
                 <Button onClick={openAddModal}>
-                <Plus className="mr-2 h-4 w-4" />
-                Añadir Módulo
+                    Añadir Módulo
                 </Button>
             </div> */}
 
@@ -151,21 +131,13 @@ export default function TableModules() {
                 searchPlaceholder   = "Buscar por nombre..."
             />
 
-            <ModuleModal
+            {/* <ModuleModal
                 isOpen      = { isModalOpen }
                 onClose     = { () => setIsModalOpen( false )}
                 module      = { currentModule }
                 onAdd       = { handleAddModule }
                 onUpdate    = { handleUpdateModule }
-            />
-
-            <DeleteConfirmDialog
-                isOpen      = { isDeleteDialogOpen }
-                onClose     = { () => setIsDeleteDialogOpen( false )}
-                onConfirm   = { () => handleDeleteModule( currentModule?.id || '' )}
-                type        = "módulo"
-                name        = { 'Módulo' }
-            />
+            /> */}
         </div>
-    )
+    );
 }
