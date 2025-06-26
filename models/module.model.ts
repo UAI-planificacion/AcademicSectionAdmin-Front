@@ -1,4 +1,4 @@
-export type Difference = 'A' | 'B' | 'C' | 'D';
+export type Difference = 'A' | 'B' | 'C' | 'D' | null | undefined;
 
 
 interface ModuleBase {
