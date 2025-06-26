@@ -190,9 +190,8 @@ export function ModuleModal({ isOpen, onClose, module, onAdd, onUpdate }: Module
                 </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-
-{/* 
+            {/* <div className="grid grid-cols-3 gap-4"> */}
+                {/*
                 <div className="space-y-2">
                 <Label htmlFor="dayModuleId">ID Módulo Día</Label>
                 <Input
@@ -204,7 +203,7 @@ export function ModuleModal({ isOpen, onClose, module, onAdd, onUpdate }: Module
                 />
                 {errors.dayModuleId && <p className="text-sm text-destructive">{errors.dayModuleId}</p>}
                 </div> */}
-            </div>
+            {/* </div> */}
 
             <div className="flex items-center space-x-2">
                 <Checkbox
