@@ -8,7 +8,7 @@ import { Module } from '@/lib/types';
 
 import { Badge }    from '@/components/ui/badge';
 import { Button }   from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader } from '../ui/card';
+import { Card, CardContent, CardFooter, CardHeader } from '../../components/ui/card';
 
 
 export default function ModuleCard({
