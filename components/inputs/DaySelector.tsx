@@ -38,14 +38,15 @@ export function DaySelector({
 
                 return (
                     <Button
+                        type        = "button"
                         key         = { dayIndex + 1 }
                         variant     = "outline"
                         size        = "sm"
                         onClick     = {() => handleDayToggle( dayIndex + 1)}
                         className   = {cn(
-                            "transition-all duration-200 hover:scale-105",
+                            "transition-all duration-200",
                             isSelected
-                            ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                            ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90 hover:text-primary-foreground"
                             : "bg-background text-foreground hover:bg-accent hover:text-accent-foreground",
                         )}
                     >
