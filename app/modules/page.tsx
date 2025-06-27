@@ -14,13 +14,14 @@ import {
     TabsTrigger
 }                       from "@/components/ui/tabs";
 import { Button }       from '@/components/ui/button';
-import { ModuleModal }  from '@/components/modules/ModuleModal';
+import { ModuleModal }  from '@/app/modules/ModuleModal';
 
 import { useModulesOriginal }   from '@/hooks/use-modules-original';
 import { useModules }           from '@/hooks/use-modules';
 
 import { ModuleOriginal } from '@/models/module.model';
 import type { Module } from '@/models/module.model';
+import { AddModuleModal } from './add-module-modal';
 
 
 const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -28,23 +29,14 @@ const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
 export default function ModulesPage() {
     const { modules: modulesOriginal }      = useModulesOriginal();
-    const [modulesData, setModulesData]     = useState<ModuleOriginal[]>( [] );
     const { modules }                       = useModules();
     const [isModalOpen, setIsModalOpen]     = useState( false );
+    const [modulesData, setModulesData]     = useState<ModuleOriginal[]>( [] );
     const [editingModule, setEditingModule] = useState<ModuleOriginal | null>( null );
 
     const handleAddModule = () => {
         setEditingModule(null);
         setIsModalOpen(true);
-    };
-
-    const openEditModal = (module: ModuleOriginal) => {
-        setEditingModule(module);
-        setIsModalOpen(true);
-    };
-
-    const openDeleteDialog = (module: ModuleOriginal) => {
-        // Handle delete dialog logic here
     };
 
 
@@ -110,13 +102,7 @@ export default function ModulesPage() {
                 </TabsList>
 
                 <TabsContent value="table">
-                    <TableModules 
-                        modules             = { modulesData }
-                        onOpenEditModal     = { openEditModal }
-                        onOpenDeleteDialog  = { openDeleteDialog }
-                        editingModule       = { editingModule }
-                        setEditingModule    = { setEditingModule }
-                    />
+                    <TableModules modules={ modulesData }/>
                 </TabsContent>
 
                 <TabsContent value="modules">
@@ -128,11 +114,10 @@ export default function ModulesPage() {
                 </TabsContent>
             </Tabs>
 
-            <ModuleModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onSave={handleSaveModule}
-                module={editingModule}
+            <AddModuleModal
+                isOpen  = { isModalOpen }
+                onClose = { () => setIsModalOpen( false )}
+                onSave  = { handleSaveModule }
             />
         </main>
     );
