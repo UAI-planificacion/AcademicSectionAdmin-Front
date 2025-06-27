@@ -22,3 +22,11 @@ export interface ModuleOriginal extends ModuleBase {
     createdAt   : Date;
     updatedAt   : Date;
 }
+
+
+export interface ModuleCreate {
+    code        : string;
+    startHour   : string;
+    endHour     : string;
+    dayIds      : number[];
+}
