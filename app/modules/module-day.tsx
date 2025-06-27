@@ -11,8 +11,8 @@ import {
     CardTitle
 }                   from '@/components/ui/card';
 import { Badge }    from '@/components/ui/badge';
-import ModuleCard   from '@/components/modules/ModuleCard';
 
+import ModuleCard       from '@/app/modules/ModuleCard';
 import { useModules }   from '@/hooks/use-modules';
 import { Module }       from '@/models/module.model';
 
