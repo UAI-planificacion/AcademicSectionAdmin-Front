@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react';
+import { JSX } from 'react';
 
 import { Calendar } from 'lucide-react';
 
@@ -12,63 +12,19 @@ import {
 }                   from '@/components/ui/card';
 import { Badge }    from '@/components/ui/badge';
 
-import ModuleCard       from '@/app/modules/ModuleCard';
-import { useModules }   from '@/hooks/use-modules';
-import { Module }       from '@/models/module.model';
+import ModuleCard   from '@/app/modules/ModuleCard';
+import { Module }   from '@/models/module.model';
 
 
 export default function ModuleDay({
     day,
-    days: days,
+    days,
+    modules
 }: {
-    day: number,
-    days: string[]
-}) {
-    const { modules }                       = useModules();
-    const [isModalOpen, setIsModalOpen]     = useState( false );
-    const [editingModule, setEditingModule] = useState<Module | null>( null );
-    const [deleteModule, setDeleteModule]   = useState<Module | null>( null );
-
-    const handleAddModule = () => {
-        setEditingModule( null );
-        setIsModalOpen( true );
-    };
-
-    const handleEditModule = ( module: Module ) => {
-        setEditingModule( module );
-        setIsModalOpen( true );
-    };
-
-    const handleDeleteModule = ( module: Module ) => {
-        setDeleteModule( module );
-    };
-
-    const confirmDelete = () => {
-        if ( deleteModule ) {
-            // setModules( modules.filter( m => m.id !== deleteModule.id ) );
-            setDeleteModule(null);
-        }
-    };
-
-    const handleSaveModule = (moduleData: Omit<Module, 'id'>) => {
-        if (editingModule) {
-        // Edit existing module
-        // setModules(modules.map(m => 
-        //     m.id === editingModule.id 
-        //     ? { ...moduleData, id: editingModule.id }
-        //     : m
-        // ));
-        } else {
-        // Add new module
-        // const newModule: Module = {
-        //     ...moduleData,
-        //     id: Date.now().toString(),
-        // };
-        // setModules([...modules, newModule]);
-        }
-        setIsModalOpen(false);
-    };
-
+    day     : number,
+    days    : string[],
+    modules : Module[]
+}): JSX.Element {
     const getModulesForDay = ( dayId: number ) => modules
         .filter( module => module.dayId === dayId )
         .sort(( a, b ) => a.order - b.order );
@@ -102,10 +58,8 @@ export default function ModuleDay({
                     <div className="space-y-3">
                         {dayModules.map( module => (
                             <ModuleCard
-                                key                 = { module.id }
-                                module              = { module }
-                                handleEditModule    = { handleEditModule }
-                                handleDeleteModule  = { handleDeleteModule }
+                                key     = { module.id }
+                                module  = { module }
                             />
                         ))}
                     </div>
