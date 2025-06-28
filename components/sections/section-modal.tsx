@@ -1,7 +1,7 @@
 "use client"
 
 import type React   from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { toast } from "sonner"
 
@@ -73,6 +73,7 @@ export function SectionModal({
     const [selectedDay, setSelectedDay] = useState<number>( section.day );
     const [isLoading, setIsLoading]     = useState<boolean>( false );
     const [isDelete, setDeleteModule]   = useState<boolean>( false );
+    const [errors, setErrors]           = useState<Record<string, string>>( {} );
     const { periods }                   = usePeriods();
     const { days }                      = useDays();
     const { modules }                   = useModules();
@@ -80,6 +81,11 @@ export function SectionModal({
     const { subjects }                  = useSubjects();
     const dayModules                    = getModulesForDay( modules, selectedDay );
     const sizes                         = Array.from( new Set( rooms.map( room => room.sizeId )));
+
+
+    useEffect(() => {
+        setErrors({});
+    }, [section]);
 
 
     function handleChange ( e: React.ChangeEvent<HTMLInputElement> ) {
@@ -208,8 +214,57 @@ export function SectionModal({
     }
 
 
-    async function handleSubmit ( e: React.FormEvent ): Promise<void> {
+    function validateForm(): boolean {
+        const newErrors: Record<string, string> = {};
+
+        if (!formData.code || formData.code <= 0) {
+            newErrors.code = 'El código de la sección es requerido y debe ser mayor a 0';
+        }
+
+        if (!formData.session || formData.session.trim() === '') {
+            newErrors.session = 'La sesión es requerida';
+        }
+
+        if (!formData.size || formData.size.trim() === '') {
+            newErrors.size = 'El tamaño es requerido';
+        }
+
+        if (!formData.period || formData.period.trim() === '') {
+            newErrors.period = 'El período es requerido';
+        }
+
+        if (!formData.subjectId || formData.subjectId.trim() === '') {
+            newErrors.subjectId = 'La materia es requerida';
+        }
+
+        if (!formData.day || formData.day <= 0) {
+            newErrors.day = 'El día es requerido';
+        }
+
+        if (!formData.moduleId || formData.moduleId.trim() === '') {
+            newErrors.moduleId = 'El módulo es requerido';
+        }
+
+        if (!formData.room || formData.room.trim() === '') {
+            newErrors.room = 'La sala es requerida';
+        }
+
+        const dayModuleId = getDayModuleId();
+        if (!dayModuleId || dayModuleId <= 0) {
+            newErrors.dayModule = 'La combinación de día y módulo no es válida';
+        }
+
+        setErrors(newErrors);
+
+        return Object.keys(newErrors).length === 0;
+    }
+
+
+    async function handleSubmit( e: React.FormEvent ): Promise<void> {
         e.preventDefault();
+
+        // Validar formulario
+        if (!validateForm()) return;
 
         setIsLoading( true );
 
@@ -299,6 +354,8 @@ export function SectionModal({
                                     value       = { formData.code }
                                     onChange    = { handleChange }
                                 />
+
+                                {errors.code && <p className="text-sm text-destructive">{errors.code}</p>}
                             </div>
 
                             <div className="space-y-1">
@@ -315,6 +372,8 @@ export function SectionModal({
                                         ))}
                                     </SelectContent>
                                 </Select>
+
+                                {errors.period && <p className="text-sm text-destructive">{errors.period}</p>}
                             </div>
                         </div>
                     )}
@@ -337,6 +396,8 @@ export function SectionModal({
                                     value: room.id
                                 }))}
                             />
+
+                            {errors.room && <p className="text-sm text-destructive">{errors.room}</p>}
                         </div>
 
                         {isCreating && (
@@ -354,6 +415,8 @@ export function SectionModal({
                                         value: subject.id
                                     }))}
                                 />
+
+                                {errors.subjectId && <p className="text-sm text-destructive">{errors.subjectId}</p>}
                             </div>
                         )}
 
@@ -376,6 +439,8 @@ export function SectionModal({
                                     ))}
                                 </SelectContent>
                             </Select>
+
+                            {errors.day && <p className="text-sm text-destructive">{errors.day}</p>}
                         </div>
 
                         <div className="space-y-1">
@@ -394,6 +459,8 @@ export function SectionModal({
                                     ))}
                                 </SelectContent>
                             </Select>
+
+                            {errors.moduleId && <p className="text-sm text-destructive">{errors.moduleId}</p>}
                         </div>
 
                         <div className="space-y-1">
@@ -412,6 +479,8 @@ export function SectionModal({
                                     ))}
                                 </SelectContent>
                             </Select>
+
+                            {errors.session && <p className="text-sm text-destructive">{errors.session}</p>}
                         </div>
 
                         <div className="space-y-1">
@@ -428,6 +497,8 @@ export function SectionModal({
                                     ))}
                                 </SelectContent>
                             </Select>
+
+                            {errors.size && <p className="text-sm text-destructive">{errors.size}</p>}
                         </div>
 
                         <div className="space-y-1">
@@ -496,6 +567,12 @@ export function SectionModal({
                             }))}
                         />
                     </div>
+
+                    {errors.dayModule && (
+                        <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md border border-destructive/20">
+                            {errors.dayModule}
+                        </div>
+                    )}
 
                     <DialogFooter className={cn(
                         "grid sm:flex gap-2 w-full",
