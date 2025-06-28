@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 
+import { toast } from 'sonner';
+
 import {
     Dialog,
     DialogContent,
@@ -15,18 +17,23 @@ import { Switch }       from '@/components/ui/switch';
 import {DaySelector}    from '@/components/inputs/DaySelector';
 import { Time }         from '@/components/inputs/Time';
 
-import { ModuleOriginal } from '@/models/module.model';
-import { ENV } from '@/config/envs/env';
-import { fetchApi } from '@/services/fetch';
-import { errorToast, successToast } from '@/config/toast/toast.config';
-import { toast } from 'sonner';
-import LoaderMini from '@/icons/LoaderMini';
+import {
+    errorToast,
+    successToast
+}               from '@/config/toast/toast.config';
+import { ENV }  from '@/config/envs/env';
+
+import { ModuleOriginal }   from '@/models/module.model';
+import { fetchApi }         from '@/services/fetch';
+import LoaderMini           from '@/icons/LoaderMini';
+
 
 interface ModuleModalProps {
     isOpen  : boolean;
     onClose : () => void;
-    onSave  : ( module: Omit<ModuleOriginal, 'id'> ) => void;
-    module : ModuleOriginal;
+    onSave  : ( module: ModuleOriginal[] ) => void;
+    module  : ModuleOriginal;
+    days    : number[];
 }
 
 
@@ -44,9 +51,8 @@ const moduleEmpty: ModuleOriginal = {
 }
 
 
-export function ModuleModal({ isOpen, onClose, onSave, module }: ModuleModalProps) {
-    const availableDays             = [0, 1, 2, 3, 4, 5];
-    const [isLoading, setIsLoading] = useState(false);
+export function ModuleModal({ isOpen, onClose, onSave, module, days }: ModuleModalProps) {
+    const [isLoading, setIsLoading] = useState( false );
     const [formData, setFormData]   = useState<ModuleOriginal>( moduleEmpty );
     const [errors, setErrors]       = useState<Record<string, string>>( {} );
 
@@ -58,11 +64,8 @@ export function ModuleModal({ isOpen, onClose, onSave, module }: ModuleModalProp
 
     useEffect(() => {
         const diferrence    = formData.difference ? `-${formData.difference}` :'';
-        // const dayNumber     = `[${formData.days.join('-')}]`;
-        // const generatedName = `M${formData.code}:${dayNumber}${diferrence}`;
         const generatedName = `M${formData.code}${diferrence}`;
         setFormData(prev => ({ ...prev, name: generatedName }));
-    // }, [formData.code, formData.days, formData.difference]);
     }, [formData.code, formData.difference]);
 
 
@@ -101,31 +104,35 @@ export function ModuleModal({ isOpen, onClose, onSave, module }: ModuleModalProp
 
         if ( !validateForm() ) return;
 
-        await onUpdateModule();
-
         console.log('🚀 ~ handleSubmit ~ formData:', formData)
-        onSave( formData );
+
+        const moduleUpdated = await onUpdateModule();
+
+        if ( !moduleUpdated ) return;
+
+        onSave( moduleUpdated );
         onClose();
     };
 
 
-    async function onUpdateModule(): Promise<void> {
+    async function onUpdateModule(): Promise<ModuleOriginal[] | null> {
         setIsLoading( true );
 
         const url = `${ENV.REQUEST_BACK_URL}modules/${module.id}`;
 
         try {
-            const moduleUpdated = await fetchApi<ModuleOriginal | null>( url, "PATCH", formData );
+            const moduleUpdated = await fetchApi<ModuleOriginal[] | null>( url, "PATCH", formData );
 
             if ( !moduleUpdated ) {
                 toast( 'No se pudo actualizar el módulo', errorToast );
-                return;
+                return null;
             }
 
             toast( 'Módulo actualizado correctamente', successToast );
-            onClose();
+            return moduleUpdated;
         } catch ( error ) {
             toast( 'No se pudo actualizar el módulo', errorToast );
+            return null;
         } finally {
             setIsLoading( false );
         }
@@ -218,7 +225,7 @@ export function ModuleModal({ isOpen, onClose, onSave, module }: ModuleModalProp
                         <Label htmlFor="endTime">Días en los que estará el módulo</Label>
 
                         <DaySelector
-                            days        = { availableDays }
+                            days        = { days }
                             value       = { formData.days }
                             onChange    = {( days: number[] ) => handleChange( 'days', days )}
                         />
