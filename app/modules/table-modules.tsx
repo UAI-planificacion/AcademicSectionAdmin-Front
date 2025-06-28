@@ -1,4 +1,6 @@
-"use client"
+"use client";
+
+import { JSX, useState } from "react";
 
 import {
     Pencil,
@@ -8,52 +10,62 @@ import {
     XCircle
 }                           from "lucide-react";
 import type { ColumnDef }   from "@tanstack/react-table";
+import { toast }            from "sonner";
 
 import { Button }               from "@/components/ui/button";
 import { DataTable }            from "@/components/data-table/data-table";
 import { Badge }                from "@/components/ui/badge";
+import { DeleteConfirmDialog }  from "@/components/dialogs/DeleteConfirmDialog";
 
-import { ModuleOriginal } from "@/models/module.model";
-import { useModulesOriginal } from "@/hooks/use-modules-original";
-import { JSX, useState } from "react";
-import { ModuleModal } from "@/app/modules/ModuleModal";
-import { DeleteConfirmDialog } from "@/components/dialogs/DeleteConfirmDialog";
-import { ENV } from "@/config/envs/env";
-import { fetchApi } from "@/services/fetch";
-import { toast } from "sonner";
-import { errorToast, successToast } from "@/config/toast/toast.config";
+import {
+    errorToast,
+    successToast
+}               from "@/config/toast/toast.config";
+import { ENV }  from "@/config/envs/env";
+
+import { ModuleModal }      from "@/app/modules/ModuleModal";
+import { ModuleOriginal }   from "@/models/module.model";
+import { fetchApi }         from "@/services/fetch";
 
 
 export default function TableModules(
-    { modules }: { modules: ModuleOriginal[] }
+    {
+        modules,
+        onSave,
+        days
+    }: {
+        modules : ModuleOriginal[]
+        onSave  : ( modules: ModuleOriginal[] ) => void
+        days    : number[]
+    }
 ): JSX.Element {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isModalDeleteOpen, setIsModalDeleteOpen] = useState(false);
-    const [currentModule, setCurrentModule] = useState<ModuleOriginal>( modules[0] );
+    const [isModalOpen, setIsModalOpen]             = useState( false );
+    const [isModalDeleteOpen, setIsModalDeleteOpen] = useState( false );
+    const [currentModule, setCurrentModule]         = useState<ModuleOriginal>( modules[0] );
 
 
-    function onOpenModal(module: ModuleOriginal){
-        setCurrentModule(module);
-        setIsModalOpen(true);
+    function onOpenModal( module: ModuleOriginal ) {
+        setCurrentModule( module );
+        setIsModalOpen( true );
     }
 
-    function onOpenDeleteDialog(module: ModuleOriginal){
-        setCurrentModule(module);
-        setIsModalDeleteOpen(true);
+
+    function onOpenDeleteDialog( module: ModuleOriginal ): void {
+        setCurrentModule( module );
+        setIsModalDeleteOpen( true );
     }
 
 
     async function handleDeleteModule( id: string ): Promise<void> {
         const url       = `${ENV.REQUEST_BACK_URL}modules/${id}`;
-        const moduleDeleted = await fetchApi<ModuleOriginal | null>( url, "DELETE" );
+        const moduleDeleted = await fetchApi<ModuleOriginal[] | null>( url, "DELETE" );
 
-        if ( !moduleDeleted ) {
+        if ( !moduleDeleted || moduleDeleted.length === 0 ) {
             toast( 'No se pudo eliminar el módulo', errorToast );
             return;
         }
 
-        // setPeriodsData( periodsData.filter(( period ) => period.id !== id ));
-        // deletePeriodStorage( periodSave.id );
+        onSave( moduleDeleted );
         toast( 'Módulo eliminado correctamente', successToast );
     }
 
@@ -144,7 +156,8 @@ export default function TableModules(
                 isOpen  = { isModalOpen }
                 onClose = { () => setIsModalOpen( false )}
                 module  = { currentModule }
-                onSave  = { () => {}}
+                onSave  = { onSave }
+                days    = { days }
             />
 
             <DeleteConfirmDialog
