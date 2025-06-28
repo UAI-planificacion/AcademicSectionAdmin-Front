@@ -2,24 +2,16 @@
 
 import { JSX } from 'react';
 
-import { Clock, Edit, Hash, Trash2 } from 'lucide-react';
+import { Clock, Hash } from 'lucide-react';
 
-import { Module } from '@/lib/types';
+import { Card, CardContent } from '@/components/ui/card';
 
-import { Badge }    from '@/components/ui/badge';
-import { Button }   from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader } from '../../components/ui/card';
+import { Module } from '@/models/module.model';
 
 
-export default function ModuleCard({
-    module,
-    handleEditModule,
-    handleDeleteModule
-}: {
-    module: Module,
-    handleEditModule: ( module: Module ) => void,
-    handleDeleteModule: ( module: Module ) => void,
-}): JSX.Element {
+export default function ModuleCard(
+    { module}: { module: Module }
+): JSX.Element {
     return (
         <Card
             key={module.id}
@@ -68,29 +60,6 @@ export default function ModuleCard({
                     </span>
                 </div>
             </CardContent>
-
-            {/* Action buttons */}
-            {/* <CardFooter className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <Button
-                    variant     = "outline"
-                    size        = "sm"
-                    onClick     = {() => handleEditModule(module)}
-                    className   = "flex-1 h-8 text-xs"
-                >
-                    <Edit className="h-3 w-3 mr-1" />
-                    Editar
-                </Button>
-
-                <Button
-                    variant     = "outline"
-                    size        = "sm"
-                    onClick     = {() => handleDeleteModule( module )}
-                    className   = "flex-1 h-8 text-xs text-destructive hover:text-destructive"
-                >
-                    <Trash2 className="h-3 w-3 mr-1" />
-                    Eliminar
-                </Button>
-            </CardFooter> */}
         </Card>
     );
 }
