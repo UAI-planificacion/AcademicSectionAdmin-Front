@@ -24,7 +24,7 @@ import {
 }               from '@/config/toast/toast.config';
 import { ENV }  from '@/config/envs/env';
 
-import { ModuleCreate } from '@/models/module.model';
+import { ModuleCreate, ModuleOriginal } from '@/models/module.model';
 import LoaderMini       from '@/icons/LoaderMini';
 import { fetchApi }     from '@/services/fetch';
 
@@ -32,7 +32,8 @@ import { fetchApi }     from '@/services/fetch';
 interface ModuleModalProps {
     isOpen  : boolean;
     onClose : () => void;
-    onSave  : ( module: Omit<ModuleCreate, 'id'> ) => void;
+    onSave  : ( module: ModuleOriginal[] ) => void;
+    days    : number[];
 }
 
 
@@ -44,12 +45,15 @@ const moduleEmpty: ModuleCreate = {
 }
 
 
-export function AddModuleModal({ isOpen, onClose, onSave }: ModuleModalProps) {
-    const availableDays             = [0, 1, 2, 3, 4, 5];
+export function AddModuleModal({
+    isOpen,
+    onClose,
+    onSave,
+    days
+}: ModuleModalProps) {
     const [formData, setFormData]   = useState<ModuleCreate[]>([ moduleEmpty ]);
     const [errors, setErrors]       = useState<Record<string, string[]>>( {} );
     const [isLoading, setIsLoading] = useState<boolean>( false );
-    const [modules, setModules]     = useState<ModuleCreate[]>( [] );
 
 
     function validateForm(): boolean {
@@ -95,31 +99,32 @@ export function AddModuleModal({ isOpen, onClose, onSave }: ModuleModalProps) {
 
         if ( !validateForm() ) return;
 
-        console.log('🚀 ~ handleSubmit ~ formData:', formData);
-        setIsLoading(true);
+        setIsLoading( true );
 
-        await onCreateModules();
+        const moduleSave = await onCreateModules();
 
-        setModules([...modules, ...formData]);
-        // onSave(formData);
-        // onClose();
+        if ( !moduleSave ) return;
+
+        onSave( moduleSave );
+        onClose();
     };
 
 
-    async function onCreateModules(): Promise<void> {
+    async function onCreateModules(): Promise<ModuleOriginal[] | null> {
         try {
             const url           = `${ENV.REQUEST_BACK_URL}modules`;
-            const modulesSave   = await fetchApi<ModuleCreate>( url, "POST", formData );
-            console.log('🚀 ~ onCreateModules ~ modulesSave:', modulesSave)
+            const modulesSave   = await fetchApi<ModuleOriginal[]>( url, "POST", formData );
 
-            if ( !modulesSave ) {
+            if ( !modulesSave || modulesSave.length === 0 ) {
                 toast( 'Error al crear los módulos', errorToast );
-                return;
+                return null;
             }
 
             toast( 'Módulos creados correctamente', successToast );
+            return modulesSave;
         } catch ( error ) {
             toast( 'Error al crear los módulos', errorToast );
+            return null;
         } finally {
             setIsLoading( false );
         }
@@ -210,11 +215,11 @@ export function AddModuleModal({ isOpen, onClose, onSave }: ModuleModalProps) {
                                     </Label>
 
                                     <Time
-                                        value={module.startHour}
-                                        onChange={(value: string) => handleChange(index, 'startHour', value)}
-                                        startHour={6}
-                                        endHour={22}
-                                        minuteJump={5}
+                                        value       = { module.startHour }
+                                        onChange    = {( value: string ) => handleChange( index, 'startHour', value )}
+                                        startHour   = { 6 }
+                                        endHour     = { 23 }
+                                        minuteJump  = { 5 }
                                     />
                                 </div>
 
@@ -228,11 +233,11 @@ export function AddModuleModal({ isOpen, onClose, onSave }: ModuleModalProps) {
                                     </Label>
 
                                     <Time
-                                        value={module.endHour}
-                                        onChange={(value: string) => handleChange(index, 'endHour', value)}
-                                        startHour={6}
-                                        endHour={22}
-                                        minuteJump={5}
+                                        value       = { module.endHour }
+                                        onChange    = {( value: string ) => handleChange( index, 'endHour', value )}
+                                        startHour   = { 6 }
+                                        endHour     = { 23 }
+                                        minuteJump  = { 5 }
                                     />
                                 </div>
 
@@ -246,9 +251,9 @@ export function AddModuleModal({ isOpen, onClose, onSave }: ModuleModalProps) {
                                     </Label>
 
                                     <DaySelector
-                                        days={availableDays}
-                                        value={module.dayIds}
-                                        onChange={(days: number[]) => handleChange(index, 'dayIds', days)}
+                                        days        = { days }
+                                        value       = { module.dayIds }
+                                        onChange    = {( days: number[] ) => handleChange( index, 'dayIds', days )}
                                     />
                                 </div>
 
