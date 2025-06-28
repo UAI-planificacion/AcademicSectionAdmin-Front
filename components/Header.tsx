@@ -96,9 +96,9 @@ export default  function Header() {
     return (
         <header className="bg-black py-4 border-b border-gray-200 dark:border-gray-800 transition-colors">
             <div className="flex justify-between items-center container mx-auto gap-2">
-                <h1 className="text-xl xl:text-2xl font-bold">Secciones Académicas</h1>
+                <h1 className="text-xl xl:text-2xl font-bold text-white">Secciones Académicas</h1>
 
-                <Menubar className="hidden md:flex">
+                <Menubar className="hidden md:flex bg-black text-white border-zinc-700">
                     <MenubarMenu>
                         <MenubarTrigger
                             onClick={() => router.push('/sections')}
