@@ -1,48 +1,53 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 import { Module } from '@/models/module.model';
+import { ENV } from '@/config/envs/env';
 
 
-const API_URL = 'http://localhost:3030/api/v1/modules'
+async function fetchModules(): Promise<Module[]> {
+    const API_URL   = `${ENV.REQUEST_BACK_URL}modules`;
+    const response  = await fetch( API_URL );
+
+    if ( !response.ok ) {
+        throw new Error( `Error al obtener módulos: ${response.status}` );
+    }
+
+    return response.json();
+}
+
+
 export interface UseModulesResult {
     modules: Module[];
     loading: boolean;
     error: Error | null;
+    isLoading: boolean;
+    isError: boolean;
+    refetch: () => void;
 }
 
+
 export function useModules(): UseModulesResult {
-    const [modules, setModules] = useState<Module[]>( [] );
-    const [loading, setLoading] = useState<boolean>( true );
-    const [error, setError]     = useState<Error | null>( null );
+    const {
+        data: modules = [],
+        isLoading,
+        error,
+        isError,
+        refetch
+    } = useQuery({
+        queryKey    : ['modules'],
+        queryFn     : fetchModules,
+    });
 
-    useEffect( () => {
-        const fetchModules = async () => {
-            try {
-                setLoading( true );
-                const response = await fetch( API_URL );
-
-                if ( !response.ok ) {
-                    throw new Error( `Error al obtener módulos: ${response.status}` );
-                }
-
-                const data = await response.json();
-
-                setModules( data );
-                setError( null );
-            } catch ( err ) {
-                console.error( 'Error al cargar los módulos:', err );
-                setError( err instanceof Error ? err : new Error( String( err )));
-            } finally {
-                setLoading( false );
-            }
-        };
-
-        fetchModules();
-    }, []);
-
-    return { modules, loading, error };
+    return {
+        modules,
+        loading: isLoading,
+        error: error as Error | null,
+        isLoading,
+        isError,
+        refetch
+    };
 }
 
 // Función para obtener los módulos de un día específico
