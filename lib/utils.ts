@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
 }
 
-export function formatDate(date?: Date): string {
+export function formatDate( date?: Date | string  | null | undefined ): string {
     if (!date) return "-"
     return new Intl.DateTimeFormat("es-ES", {
         day: "2-digit",
