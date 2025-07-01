@@ -9,6 +9,7 @@ export interface Sizes {
     lessThan?       : number;
     greaterThan?    : number;
     label           : string;
+    order           : number;
 }
 
 
