@@ -47,10 +47,39 @@ export function useSizes(): UseSizesResult {
 
                 const data: Size[] = await response.json();
 
-                const transformedData = data.map((size: Size) => ({
-                    ...size,
-                    label: `${size.id} (${size.detail})`
-                }));
+                const transformedData = data.map((size: Size) => {
+                    // Calcular el orden basado en el rango de capacidad
+                    let order = 0;
+                    
+                    switch (size.id) {
+                        case 'XS':
+                            order = 1; // < 30
+                            break;
+                        case 'S':
+                            order = 2; // 30 - 39
+                            break;
+                        case 'MS':
+                            order = 3; // 40 - 49
+                            break;
+                        case 'M':
+                            order = 4; // 50 - 59
+                            break;
+                        case 'L':
+                            order = 5; // 60 - 69
+                            break;
+                        case 'XL':
+                            order = 6; // > 70
+                            break;
+                        default:
+                            order = 0;
+                    }
+                    
+                    return {
+                        ...size,
+                        label: `${size.id} (${size.detail})`,
+                        order
+                    };
+                });
 
                 saveSizesStorage( transformedData );
                 setSizes( transformedData );
