@@ -12,6 +12,7 @@ export default function SignIn(): JSX.Element {
         <Button
             type    = "button"
             variant = {'outline'}
+            className="bg-black text-white border-zinc-700 hover:bg-zinc-900 hover:text-white"
             onClick = { async () => await signIn()}
         >
             <MicrosoftIcon/>
