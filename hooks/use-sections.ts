@@ -1,49 +1,51 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 import { Section } from '@/models/section.model';
+import { ENV } from '@/config/envs/env';
 
-const API_URL = 'http://localhost:3030/api/v1/sections';
+
+async function fetchSections(): Promise<Section[]> {
+    const API_URL   = `${ENV.REQUEST_BACK_URL}sections`;
+    const response  = await fetch( API_URL );
+
+    if ( !response.ok ) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+}
+
 
 interface UseSectionsReturn {
     sections: Section[];
     loading: boolean;
     error: Error | null;
-    refetchSections: () => Promise<void>;
+    isLoading: boolean;
+    isError: boolean;
+    refetch: () => void;
+    refetchSections: () => void;
 }
 
+
 export function useSections(): UseSectionsReturn {
-    const [sections, setSections]   = useState<Section[]>( [] );
-    const [loading, setLoading]     = useState<boolean>( true );
-    const [error, setError]         = useState<Error | null>( null );
+    const {
+        data: sections = [],
+        isLoading,
+        error,
+        isError,
+        refetch
+    } = useQuery({
+        queryKey    : ['sections'],
+        queryFn     : fetchSections,
+    });
 
-    const fetchSections = useCallback(async () => {
-        setLoading( true );
-        setError( null );
-
-        try {
-            const response = await fetch( API_URL );
-
-            if ( !response.ok ) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data: Section[] = await response.json();
-
-            setSections( data );
-        } catch ( e ) {
-            if ( e instanceof Error ) {
-                setError( e );
-            } else {
-                setError( new Error( 'An unknown error occurred' ));
-            }
-        } finally {
-            setLoading( false );
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchSections();
-    }, [fetchSections]);
-
-    return { sections, loading, error, refetchSections: fetchSections };
+    return {
+        sections,
+        loading: isLoading,
+        error: error as Error | null,
+        isLoading,
+        isError,
+        refetch,
+        refetchSections: refetch
+    };
 }
