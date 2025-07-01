@@ -1,6 +1,14 @@
 "use client"
 
-import { useState, useEffect, JSX, useMemo, useCallback } from 'react';
+import {
+    useState,
+    useEffect,
+    JSX,
+    useMemo,
+    useCallback,
+    useRef
+}                       from 'react';
+import { useRouter }    from 'next/navigation';
 
 import { toast } from 'sonner';
 
@@ -16,8 +24,10 @@ import { useSections }  from '@/hooks/use-sections';
 import { useSpaces }    from '@/hooks/use-spaces';
 import { useModules }   from '@/hooks/use-modules';
 
-import { SectionModal } from '@/components/sections/section-modal';
-import { ModuleGrid }   from '@/components/sections/module-grid';
+import { SectionModal } from '@/app/sections/section-modal';
+import { ModuleGrid }   from '@/app/sections/module-grid';
+import LoadExcel        from '@/app/sections/LoadExcel';
+import TableSkeleton    from '@/app/sections/TableSkeleton';
 
 import { Section, UpdateSection }   from '@/models/section.model';
 import { Sizes }                    from '@/models/size.model';
@@ -44,22 +54,37 @@ function orderSizes( sizeOrderMap: Map<string, number>, a: Space, b: Space ): nu
 
 
 export function SchedulerDashboard(): JSX.Element {
-    const { sections: initialSections, isLoading: sectionsLoading, isError: sectionsError, error: sectionsErrorMessage }   = useSections();
-    const { spaces: initialRooms, loading: spacesLoading }          = useSpaces();
-    const { sizes }     = useSizes()
-    const { modules }   = useModules();
+    const router = useRouter();
 
+    // Hooks de datos
+    const { modules, isLoading: modulesLoading, isError: modulesError } = useModules();
+    const {
+        sections    : initialSections,
+        isLoading   : sectionsLoading,
+        isError     : sectionsError,
+        error       : sectionsErrorMessage
+    } = useSections();
+    const { spaces: initialRooms, loading: spacesLoading } = useSpaces();
+    const { sizes, loading: sizesLoading } = useSizes();
+
+    // Estados locales
     const [sections, setSections]                   = useState<Section[]>( [] );
     const [filteredSections, setFilteredSections]   = useState<Section[]>( [] );
     const [rooms, setRooms]                         = useState<Space[]>( [] );
     const [filteredRooms, setFilteredRooms]         = useState<Space[]>( [] );
     const [selectedSection, setSelectedSection]     = useState<Section | null>( null );
     const [isModalOpen, setIsModalOpen]             = useState<boolean>( false );
+    const [showLoadExcel, setShowLoadExcel]         = useState<boolean>( false );
     const [isInitialized, setIsInitialized]         = useState<boolean>( false );
+    const [isCalculating, setIsCalculating]         = useState<boolean>( false );
     const [sortConfig, setSortConfig]               = useState<SortConfig>({
         field       : "name",
         direction   : "asc",
     });
+    
+    // Ref para cache persistente de sectionsByCellMemo
+    const sectionsByCellRef     = useRef<Map<string, Section[]>>(new Map());
+    const lastSectionsLengthRef = useRef<number>(0);
 
 
     const filters: Filters = {
@@ -73,14 +98,104 @@ export function SchedulerDashboard(): JSX.Element {
 
 
     useEffect(() => {
-        if ( !sectionsLoading && !spacesLoading ) {
-            setSections( initialSections );
-            setFilteredSections( initialSections );
-            setRooms( initialRooms );
-            setFilteredRooms( initialRooms );
-            setIsInitialized( true );
+        if ( !modulesLoading && !modulesError && modules.length === 0 ) {
+            toast( 'No se encontraron los módulos, debes cargarlos manualmente.', errorToast );
+            router.push( '/modules' );
+
+            return;
         }
-    }, [ initialSections, initialRooms, sectionsLoading, spacesLoading ]);
+    }, [modules, modulesLoading, modulesError, router]);
+
+
+    useEffect(() => {
+        if ( !sectionsLoading && initialSections.length === 0 && !sectionsError ) {
+            toast( 'No se encontraron secciones. Debes cargar un archivo Excel.', errorToast );
+            setShowLoadExcel( true );
+
+            return;
+        }
+    }, [sectionsLoading, initialSections, sectionsError]);
+
+
+    useEffect(() => {
+        if ( !modulesLoading && !sectionsLoading && !spacesLoading && !sizesLoading ) {
+            if ( modules.length > 0 && !sectionsError ) {
+                setSections( initialSections );
+                setFilteredSections( initialSections );
+                setRooms( initialRooms );
+                setFilteredRooms( initialRooms );
+                setIsInitialized( true );
+            }
+        }
+    }, [initialSections, initialRooms, modules, modulesLoading, sectionsLoading, spacesLoading, sizesLoading, sectionsError]);
+
+
+    useEffect(() => {
+        if ( !isInitialized ) return;
+
+        const currentLength     = sections.length;
+        const lastLength        = lastSectionsLengthRef.current;
+        const lengthDifference  = Math.abs( currentLength - lastLength );
+        const shouldRecalculate = lastLength === 0 || lengthDifference > 5;
+
+        if ( shouldRecalculate ) {
+            if ( currentLength > 100 && lastLength === 0 ) {
+                setIsCalculating( true );
+            }
+
+            if ( lastLength === 0 ) {
+                const timeoutId = setTimeout(() => {
+                    const newMap = new Map<string, Section[]>();
+
+                    sections.forEach(section => {
+                        const key = `${section.room}-${section.day}-${section.moduleId}`;
+
+                        if (!newMap.has( key )) {
+                            newMap.set( key, [] );
+                        }
+
+                        newMap.get( key )!.push( section );
+                    });
+
+                    sectionsByCellRef.current = newMap;
+                    lastSectionsLengthRef.current = currentLength;
+                    setIsCalculating(false);
+                }, 0);
+
+                return () => clearTimeout(timeoutId);
+            } else {
+                const newMap = new Map<string, Section[]>();
+
+                sections.forEach(section => {
+                    const key = `${section.room}-${section.day}-${section.moduleId}`;
+
+                    if (!newMap.has(key)) {
+                        newMap.set(key, []);
+                    }
+
+                    newMap.get(key)!.push(section);
+                });
+
+                sectionsByCellRef.current = newMap;
+                lastSectionsLengthRef.current = currentLength;
+            }
+        } else {
+            const newMap = new Map<string, Section[]>();
+
+            sections.forEach(section => {
+                const key = `${section.room}-${section.day}-${section.moduleId}`;
+
+                if (!newMap.has(key)) {
+                    newMap.set(key, []);
+                }
+
+                newMap.get(key)!.push(section);
+            });
+
+            sectionsByCellRef.current       = newMap;
+            lastSectionsLengthRef.current   = currentLength;
+        }
+    }, [sections, isInitialized]);
 
 
     useEffect(() => {
@@ -320,28 +435,69 @@ export function SchedulerDashboard(): JSX.Element {
     }, []);
 
 
-    // Manejo de error states
-    if (sectionsError) {
+    const handleLoadExcelSuccess = useCallback(() => {
+        setShowLoadExcel( false );
+        toast( 'Archivo Excel cargado exitosamente. Recargando datos...', successToast );
+        window.location.reload();
+    }, []);
+
+    const handleLoadExcelCancel = useCallback(() => {
+        setShowLoadExcel( false );
+    }, []);
+
+
+    const getSectionsForCell = useCallback((roomId: string, day: number, moduleId: string) => {
+        const key = `${roomId}-${day}-${moduleId}`;
+        return sectionsByCellRef.current.get(key) || [];
+    }, []);
+
+
+    if (modulesLoading || sectionsLoading || spacesLoading || sizesLoading || !isInitialized) {
+        return <TableSkeleton />;
+    }
+
+    if ( sectionsError ) {
         return (
             <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                     <p className="text-destructive mb-2">Error al cargar secciones</p>
+
                     <p className="text-muted-foreground text-sm">{sectionsErrorMessage?.message}</p>
+
+                    <div className="mt-4">
+                        <p className="text-sm text-muted-foreground mb-2">Debes cargar un archivo Excel con las secciones</p>
+
+                        <LoadExcel
+                            onSuccess   = { handleLoadExcelSuccess }
+                            onCancel    = { handleLoadExcelCancel }
+                        />
+                    </div>
                 </div>
             </div>
+        );
+    }
+
+    if ( showLoadExcel ) {
+        return (
+            <LoadExcel
+                onSuccess   = { handleLoadExcelSuccess }
+                onCancel    = { handleLoadExcelCancel }
+            />
         );
     }
 
     return (
         <>
             <ModuleGrid
-                sections        = { filteredSections }
-                rooms           = { sortedRooms }
-                onSectionClick  = { handleSectionClick }
-                onSectionMove   = { handleSectionMove }
-                onSectionSave   = { handleSaveSection }
-                onSortChange    = { handleSortChange }
-                sortConfig      = { sortConfig }
+                sections            = { filteredSections }
+                rooms               = { sortedRooms }
+                onSectionClick      = { handleSectionClick }
+                onSectionMove       = { handleSectionMove }
+                onSectionSave       = { handleSaveSection }
+                onSortChange        = { handleSortChange }
+                sortConfig          = { sortConfig }
+                getSectionsForCell  = { getSectionsForCell }
+                isCalculating       = { isCalculating }
             />
 
             {isModalOpen && selectedSection && (
