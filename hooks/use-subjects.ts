@@ -1,61 +1,51 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
-// import {
-//     getSubjectsFromStorage,
-//     saveSubjectsToStorage
-// }                   from '@/lib/localStorage';
-import { Subject }  from '@/lib/types';
+import { Subject } from '@/lib/types';
+import { ENV } from '@/config/envs/env';
 
 
-const API_URL = 'http://localhost:3030/api/v1/subjects';
+async function fetchSubjects(): Promise<Subject[]> {
+    const API_URL   = `${ENV.REQUEST_BACK_URL}subjects`;
+    const response  = await fetch( API_URL );
+
+    if ( !response.ok ) {
+        throw new Error( `Error al obtener materias: ${response.status}` );
+    }
+
+    return response.json();
+}
+
 
 export interface UseSubjectsResult {
     subjects    : Subject[];
     loading     : boolean;
     error       : Error | null;
+    isLoading   : boolean;
+    isError     : boolean;
+    refetch     : () => void;
 }
 
+
 export function useSubjects(): UseSubjectsResult {
-    const [subjects, setSubjects]   = useState<Subject[]>([]);
-    const [loading, setLoading]     = useState<boolean>( true );
-    const [error, setError]         = useState<Error | null>( null );
+    const {
+        data: subjects = [],
+        isLoading,
+        error,
+        isError,
+        refetch
+    } = useQuery({
+        queryKey    : ['subjects'],
+        queryFn     : fetchSubjects,
+    });
 
-    useEffect(() => {
-        const fetchSubjects = async () => {
-            setLoading( true );
-
-            // const cachedSubjects  = getSubjectsFromStorage();
-
-            // if ( cachedSubjects && cachedSubjects.length > 0 ) {
-            //     setSubjects( cachedSubjects );
-            //     setLoading( false );
-            //     return;
-            // }
-
-            try {
-                const response = await fetch( API_URL );
-
-                if ( !response.ok ) {
-                    throw new Error( `Error al obtener materias: ${response.status}` );
-                }
-
-                const data = await response.json();
-
-                // saveSubjectsToStorage( data );
-                setSubjects( data );
-                setError( null );
-            } catch ( err ) {
-                console.error( 'Error al cargar las materias:', err );
-                setError( err instanceof Error ? err : new Error( String( err )));
-            } finally {
-                setLoading( false );
-            }
-        };
-
-        fetchSubjects();
-    }, []);
-
-    return { subjects, loading, error };
+    return {
+        subjects,
+        loading: isLoading,
+        error: error as Error | null,
+        isLoading,
+        isError,
+        refetch
+    };
 }
