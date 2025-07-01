@@ -19,12 +19,12 @@ async function fetchModules(): Promise<Module[]> {
 
 
 export interface UseModulesResult {
-    modules: Module[];
-    loading: boolean;
-    error: Error | null;
-    isLoading: boolean;
-    isError: boolean;
-    refetch: () => void;
+    modules     : Module[];
+    loading     : boolean;
+    error       : Error | null;
+    isLoading   : boolean;
+    isError     : boolean;
+    refetch     : () => void;
 }
 
 
