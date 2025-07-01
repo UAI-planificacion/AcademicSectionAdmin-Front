@@ -1,64 +1,51 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
-import {
-    getModuleOriginalsStorage,
-    saveModuleOriginalsStorage
-}                   from '@/stores/local-storage-module-original';
-import { ModuleOriginal }   from '@/models/module.model';
-import { ENV }      from '@/config/envs/env';
+import { ModuleOriginal } from '@/models/module.model';
+import { ENV } from '@/config/envs/env';
 
 
-const API_URL = `${ENV.REQUEST_BACK_URL}modules/original`;
+async function fetchModulesOriginal(): Promise<ModuleOriginal[]> {
+    const API_URL   = `${ENV.REQUEST_BACK_URL}modules/original`;
+    const response  = await fetch( API_URL );
+
+    if ( !response.ok ) {
+        throw new Error( `Error al obtener módulos originales: ${response.status}` );
+    }
+
+    return response.json();
+}
 
 
 export interface UseModulesOriginalResult {
-    modules : ModuleOriginal[];
-    loading : boolean;
-    error   : Error | null;
+    modules     : ModuleOriginal[];
+    loading     : boolean;
+    error       : Error | null;
+    isLoading   : boolean;
+    isError     : boolean;
+    refetch     : () => void;
 }
 
 
 export function useModulesOriginal(): UseModulesOriginalResult {
-    const [modules, setModules] = useState<ModuleOriginal[]>( [] );
-    const [loading, setLoading] = useState<boolean>( true );
-    const [error, setError]     = useState<Error | null>( null );
+    const {
+        data: modules = [],
+        isLoading,
+        error,
+        isError,
+        refetch
+    } = useQuery({
+        queryKey    : ['modules-original'],
+        queryFn     : fetchModulesOriginal,
+    });
 
-    useEffect( () => {
-        ( async () => {
-            try {
-                const cachedModules = getModuleOriginalsStorage();
-
-                if ( cachedModules.length > 0 ) {
-                    setModules( cachedModules );
-                    setLoading( false );
-                    return;
-                }
-
-                setLoading( true );
-                const response = await fetch( API_URL );
-
-                if ( !response.ok ) {
-                    setLoading( false );
-                    setModules( [] );
-                    setError( new Error( `Error al obtener módulos originales: ${response.status}` ));
-                    return;
-                }
-
-                const data = await response.json();
-
-                setModules( data );
-                saveModuleOriginalsStorage( data );
-                setError( null );
-            } catch ( err ) {
-                console.error( 'Error al cargar los módulos originales:', err );
-                setError( err instanceof Error ? err : new Error( String( err )));
-            } finally {
-                setLoading( false );
-            }
-        })();
-    }, []);
-
-    return { modules, loading, error };
+    return {
+        modules,
+        loading: isLoading,
+        error: error as Error | null,
+        isLoading,
+        isError,
+        refetch
+    };
 }
