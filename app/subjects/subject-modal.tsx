@@ -3,18 +3,29 @@
 import { useState, useEffect } from "react";
 import type React from "react";
 
+import { toast } from "sonner";
+
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle
-}                   from "@/components/ui/dialog";
-import { Button }   from "@/components/ui/button";
-import { Input }    from "@/components/ui/input";
-import { Label }    from "@/components/ui/label";
+}                       from "@/components/ui/dialog";
+import { Button }       from "@/components/ui/button";
+import { Input }        from "@/components/ui/input";
+import { Label }        from "@/components/ui/label";
+import { DatePicker }   from "@/components/inputs/DatePicker";
 
-import { generateId }   from "@/lib/utils";
-import { Subject } from "@/lib/types";
+import {
+    errorToast,
+    successToast
+}               from "@/config/toast/toast.config";
+import { ENV }  from "@/config/envs/env";
+
+import { Subject }  from "@/lib/types";
+import LoaderMini   from "@/icons/LoaderMini";
+import { fetchApi } from "@/services/fetch";
+
 
 interface SubjectModalProps {
     isOpen      : boolean;
@@ -24,6 +35,13 @@ interface SubjectModalProps {
     onUpdate    : ( subject: Subject ) => void;
 }
 
+
+const subjectEmpty = {
+    id          : "",
+    name        : "",
+    startDate   : '',
+}
+
 export function SubjectModal({
     isOpen,
     onClose,
@@ -31,80 +49,96 @@ export function SubjectModal({
     onAdd,
     onUpdate
 }: SubjectModalProps ) {
-    const [formData, setFormData] = useState<Partial<Subject>>({
-        name        : "",
-        startDate   : new Date(),
-    });
+    const oldId = subject?.id;
+    const [isLoading, setIsLoading] = useState<boolean>( false );
+    const [formData, setFormData] = useState<Partial<Subject>>( subjectEmpty );
 
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
-        if (subject) {
-            setFormData({
-                id          : subject.id,
-                name        : subject.name,
-                startDate   : subject.startDate,
-                endDate     : subject.endDate,
-                createdAt   : subject.createdAt,
-                updatedAt   : subject.updatedAt,
-            })
-        } else {
-            setFormData({
-                name        : "",
-                startDate   : new Date(),
-            })
-        }
-
+        setFormData( subject ? { ...subject } : subjectEmpty );
         setErrors({});
     }, [subject, isOpen]);
 
-    const validateForm = (): boolean => {
+
+    function validateForm(): boolean {
         const newErrors: Record<string, string> = {};
 
-        if (!formData.name || formData.name.trim() === "") {
-            newErrors.name = "El nombre es requerido"
+        if ( !formData.id || formData.id.trim() === "" ) {
+            newErrors.id = "El ID es requerido"
         }
 
-        if (!formData.startDate) {
-            newErrors.startDate = "La fecha de inicio es requerida"
+        if ( !formData.name || formData.name.trim() === "" ) {
+            newErrors.name = "El nombre es requerido";
         }
 
-        if (formData.endDate && formData.startDate && new Date(formData.endDate) < new Date(formData.startDate)) {
-            newErrors.endDate = "La fecha de fin debe ser posterior a la fecha de inicio"
+        if ( !formData.startDate ) {
+            newErrors.startDate = "La fecha de inicio es requerida";
         }
 
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        if ( formData.endDate && formData.startDate && new Date( formData.endDate ) < new Date( formData.startDate )) {
+            newErrors.endDate = "La fecha de fin debe ser posterior a la fecha de inicio";
+        }
+
+        setErrors( newErrors );
+        return Object.keys( newErrors ).length === 0;
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+
+    async function handleSubmit( e: React.FormEvent ): Promise<void> {
         e.preventDefault()
 
+        console.log('🚀 ~ file: subject-modal.tsx:106 ~ validateForm:', formData)
         if ( !validateForm() ) return;
 
-        const now = new Date()
+        setIsLoading( true );
 
-        if (subject) {
-            // Actualizar asignatura existente
-            onUpdate({
-                ...subject,
-                ...formData,
-                updatedAt: now,
-            } as Subject)
-        } else {
-            // Añadir nueva asignatura
-            onAdd({
-                id: generateId("SUB"),
-                name: formData.name || "",
-                startDate: formData.startDate || new Date(),
-                endDate: formData.endDate,
-                createdAt: now,
-                updatedAt: now,
-            } as Subject)
+
+        const subjetcSave = subject
+            ? await onUpdateSubject()
+            : await onCreateSubject();
+
+        setIsLoading( false );
+
+        if ( !subjetcSave ) {
+            toast( 'No se pudo guardar la asignatura', errorToast );
+            return;
         }
 
-        onClose()
+        toast( 'Asignatura guardada correctamente', successToast );
+        onClose();
     }
+
+
+    async function onCreateSubject(): Promise<Subject | null> {
+        const url = `${ENV.REQUEST_BACK_URL}subjects`;
+        console.log('🚀 ~ file: subject-modal.tsx:115 ~ url:', url)
+
+        const subjectSave = await fetchApi<Subject | null>( url, "POST", formData );
+        console.log('🚀 ~ file: subject-modal.tsx:117 ~ subjectSave:', subjectSave)
+
+        if ( !subjectSave ) {
+            return null;
+        }
+
+        onAdd( subjectSave );
+        return subjectSave;
+    }
+
+
+    async function onUpdateSubject(): Promise<Subject | null> {
+        const url = `${ENV.REQUEST_BACK_URL}subjects/${oldId}`;
+
+        const subjectSave = await fetchApi<Subject | null>( url, "PATCH", formData );
+
+        if ( !subjectSave ) {
+            return null;
+        }
+
+        onUpdate( subjectSave );
+        return subjectSave;
+    }
+
 
     const handleChange = (field: keyof Subject, value: any) => {
         setFormData((prev) => ({
@@ -112,7 +146,6 @@ export function SubjectModal({
             [field]: value,
         }))
 
-        // Limpiar error cuando el usuario corrige el campo
         if (errors[field]) {
             setErrors((prev) => ({
                 ...prev,
@@ -121,10 +154,6 @@ export function SubjectModal({
         }
     }
 
-    const formatDateForInput = (date?: Date | null ): string => {
-        if (!date) return ""
-        return new Date(date).toISOString().split("T")[0]
-    }
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -134,12 +163,17 @@ export function SubjectModal({
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4 py-4">
-                    {subject && (
-                        <div className="space-y-2">
+                    <div className="space-y-2">
                         <Label htmlFor="id">ID</Label>
-                        <Input id="id" value={formData.id || ""} disabled />
-                        </div>
-                    )}
+
+                        <Input
+                            id          = "id"
+                            value       = { formData.id || "" }
+                            onChange    = {( e ) => handleChange( "id", e.target.value )}
+                        />
+
+                        {errors.id && <p className="text-sm text-destructive">{errors.id}</p>}
+                    </div>
 
                     <div className="space-y-2">
                         <Label htmlFor="name">Nombre</Label>
@@ -157,11 +191,9 @@ export function SubjectModal({
                         <div className="space-y-2">
                             <Label htmlFor="startDate">Fecha de Inicio</Label>
 
-                            <Input
-                                id          = "startDate"
-                                type        = "date"
-                                value       = { formatDateForInput( formData.startDate )}
-                                onChange    = {( e ) => handleChange("startDate", new Date( e.target.value ))}
+                            <DatePicker
+                                value       = { formData.startDate ? new Date( formData.startDate ) : undefined }
+                                onChange    = {( e ) => handleChange("startDate", e)}
                             />
 
                             {errors.startDate && <p className="text-sm text-destructive">{errors.startDate}</p>}
@@ -170,11 +202,9 @@ export function SubjectModal({
                         <div className="space-y-2">
                             <Label htmlFor="endDate">Fecha de Fin (Opcional)</Label>
 
-                            <Input
-                                id          = "endDate"
-                                type        = "date"
-                                value       = { formatDateForInput( formData.endDate )}
-                                onChange    = {( e ) => handleChange( "endDate", e.target.value ? new Date( e.target.value ) : undefined )}
+                            <DatePicker
+                                value       = { formData.endDate ? new Date( formData.endDate ) : undefined }
+                                onChange    = {( e ) => handleChange( "endDate", e )}
                             />
 
                             {errors.endDate && <p className="text-sm text-destructive">{errors.endDate}</p>}
@@ -182,11 +212,23 @@ export function SubjectModal({
                     </div>
 
                     <div className="flex justify-end gap-2 pt-4">
-                        <Button type="button" variant="outline" onClick={onClose}>
+                        <Button
+                            type        = "button"
+                            variant     = "outline"
+                            onClick     = { onClose }
+                            disabled    = { isLoading }
+                        >
+                            { isLoading && <LoaderMini /> }
                             Cancelar
                         </Button>
 
-                        <Button type="submit">{subject ? "Actualizar" : "Añadir"}</Button>
+                        <Button
+                            type        = "submit"
+                            disabled    = { isLoading }
+                        >
+                            { isLoading && <LoaderMini /> }
+                            {subject ? "Actualizar" : "Añadir"}
+                        </Button>
                     </div>
                 </form>
             </DialogContent>
