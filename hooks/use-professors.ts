@@ -1,62 +1,51 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
-// import {
-//     getProfessorsFromStorage,
-//     saveProfessorsToStorage
-// }                       from '@/lib/localStorage';
-import { Professor }    from '@/lib/types';
+import { Professor } from '@/lib/types';
+import { ENV } from '@/config/envs/env';
 
 
-const API_URL = 'http://localhost:3030/api/v1/professors';
+async function fetchProfessors(): Promise<Professor[]> {
+    const API_URL   = `${ENV.REQUEST_BACK_URL}professors`;
+    const response  = await fetch( API_URL );
+
+    if ( !response.ok ) {
+        throw new Error( `Error al obtener profesores: ${response.status}` );
+    }
+
+    return response.json();
+}
+
 
 export interface UseProfessorsResult {
     professors  : Professor[];
     loading     : boolean;
     error       : Error | null;
+    isLoading   : boolean;
+    isError     : boolean;
+    refetch     : () => void;
 }
 
 
 export function useProfessors(): UseProfessorsResult {
-    const [professors, setProfessors]   = useState<Professor[]>( [] );
-    const [loading, setLoading]         = useState<boolean>( true );
-    const [error, setError]             = useState<Error | null>( null );
+    const {
+        data: professors = [],
+        isLoading,
+        error,
+        isError,
+        refetch
+    } = useQuery({
+        queryKey    : ['professors'],
+        queryFn     : fetchProfessors,
+    });
 
-    useEffect(() => {
-        const fetchProfessors = async () => {
-            setLoading( true );
-
-            // const cachedProfessors = getProfessorsFromStorage();
-
-            // if ( cachedProfessors && cachedProfessors.length > 0 ) {
-            //     setProfessors( cachedProfessors );
-            //     setLoading( false );
-            //     return;
-            // }
-
-            try {
-                const response = await fetch( API_URL );
-
-                if ( !response.ok ) {
-                    throw new Error( `Error al obtener profesores: ${response.status}` );
-                }
-
-                const data = await response.json();
-
-                // saveProfessorsToStorage( data );
-                setProfessors( data );
-                setError( null );
-            } catch ( err ) {
-                console.error( 'Error al cargar los profesores:', err );
-                setError( err instanceof Error ? err : new Error( String( err )));
-            } finally {
-                setLoading( false );
-            }
-        };
-
-        fetchProfessors();
-    }, []);
-
-    return { professors, loading, error };
+    return {
+        professors,
+        loading: isLoading,
+        error: error as Error | null,
+        isLoading,
+        isError,
+        refetch
+    };
 }
