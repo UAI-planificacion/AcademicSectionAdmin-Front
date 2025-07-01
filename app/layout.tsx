@@ -5,6 +5,7 @@ import './globals.css'
 import { ThemeProvider }    from '@/components/theme-provider'
 import Header               from '@/components/Header'
 import { Toaster }          from "@/components/ui/sonner"
+import { QueryProvider }    from '@/providers/query-provider'
 
 
 export const metadata: Metadata = {
@@ -21,19 +22,21 @@ export default function RootLayout({
     return (
         <html lang="es" suppressHydrationWarning={true} >
             <body>
-                <ThemeProvider
-                    attribute       = "class"
-                    defaultTheme    = "system"
-                    enableSystem 
-                >
-                    <Header />
+                <QueryProvider>
+                    <ThemeProvider
+                        attribute       = "class"
+                        defaultTheme    = "system"
+                        enableSystem 
+                    >
+                        <Header />
 
-                    <Toaster />
+                        <Toaster />
 
-                    <main className="flex-grow">
-                        {children}
-                    </main>
-                </ThemeProvider>
+                        <main className="flex-grow">
+                            {children}
+                        </main>
+                    </ThemeProvider>
+                </QueryProvider>
             </body>
         </html>
     )
