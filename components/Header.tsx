@@ -9,6 +9,7 @@ import {
     Calendar,
     CalendarClock,
     Clock,
+    Computer,
     Cuboid,
     GraduationCap,
     Moon,
@@ -38,45 +39,25 @@ export default  function Header() {
     const { setTheme } = useTheme();
     const router = useRouter();
 
-    // Estado local para almacenar la información de la sesión
     const [sessionData, setSessionData] = useState<any>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<any>(null);
 
-    // Cargar la sesión al montar el componente
     useEffect(() => {
-        let isMounted = true;
-
         const fetchSession = async () => {
             try {
                 const session = await getSession();
                 console.log('🚀 ~ file: Header.tsx:22 ~ session:', session);
-
-                // Solo actualizar el estado si el componente sigue montado
-                if (isMounted) {
-                    setSessionData(session);
-                }
+                setSessionData(session);
             } catch (err) {
                 console.error('Error al obtener la sesión:', err);
-
-                // Solo actualizar el estado si el componente sigue montado
-                if (isMounted) {
-                    setError(err);
-                }
+                setError(err);
             } finally {
-                // Solo actualizar el estado si el componente sigue montado
-                if (isMounted) {
-                    setLoading(false);
-                }
+                setLoading(false);
             }
         };
 
         fetchSession();
-
-        // Limpieza al desmontar el componente
-        return () => {
-            isMounted = false;
-        };
     }, []);
     
     // Refrescar la sesión cuando cambie el estado de autenticación
@@ -92,6 +73,17 @@ export default  function Header() {
             setLoading(false);
         }
     };
+
+    if ( error ) {
+        return (
+            <header className="bg-black py-4 border-b border-gray-200 dark:border-gray-800 transition-colors">
+                <div className="flex justify-between items-center container mx-auto gap-2">
+                    <h1 className="text-xl xl:text-2xl font-bold text-white">Secciones Académicas</h1>
+                    <p className="text-red-500">Error al obtener la sesión</p>
+                </div>
+            </header>
+        );
+    }
 
     return (
         <header className="bg-black py-4 border-b border-gray-200 dark:border-gray-800 transition-colors">
@@ -182,9 +174,10 @@ export default  function Header() {
 
                 <div className="flex items-center gap-2">
                     {loading ? (
-                        <Button variant="outline" disabled>Cargando...</Button>
+                        <Button className="bg-black text-white border-zinc-700 hover:bg-zinc-900 hover:text-white" variant="outline" disabled>Cargando...</Button>
                     ) : sessionData?.data?.user ? (
                         <Button 
+                            className="bg-black text-white border-zinc-700 hover:bg-zinc-900 hover:text-white"
                             variant="outline" 
                             onClick={async () => {
                                 await signOut();
@@ -199,26 +192,31 @@ export default  function Header() {
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="icon">
+                            <Button variant="outline" size="icon" className="bg-black text-white border-zinc-700 hover:bg-zinc-900 hover:text-white">
                                 <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
 
                                 <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
 
-                                <span className="sr-only">Toggle theme</span>
+                                <Computer className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+
+                                <span className="sr-only">Cambiar tema</span>
                             </Button>
                         </DropdownMenuTrigger>
 
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setTheme("light")}>
-                                Light
+                        <DropdownMenuContent align="end" className="bg-black text-white border-zinc-700">
+                            <DropdownMenuItem onClick={() => setTheme("light")} className="flex items-center justify-between">
+                                Claro
+                                <Sun className="h-[1.2rem] w-[1.2rem]" />
                             </DropdownMenuItem>
 
-                            <DropdownMenuItem onClick={() => setTheme("dark")}>
-                                Dark
+                            <DropdownMenuItem onClick={() => setTheme("dark")} className="flex items-center justify-between">
+                                Oscuro
+                                <Moon className="h-[1.2rem] w-[1.2rem]" />
                             </DropdownMenuItem>
 
-                            <DropdownMenuItem onClick={() => setTheme("system")}>
-                                System
+                            <DropdownMenuItem onClick={() => setTheme("system")} className="flex items-center justify-between">
+                                Sistema
+                                <Computer className="h-[1.2rem] w-[1.2rem]" />
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
