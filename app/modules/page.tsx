@@ -29,14 +29,13 @@ import { ENV }          from '@/config/envs/env';
 import { fetchApi } from '@/services/fetch';
 import LoaderMini   from '@/icons/LoaderMini';
 import { useDays }  from '@/hooks/use-days';
-import { saveModuleOriginalsStorage } from '@/stores/local-storage-module-original';
 
 
 export default function ModulesPage() {
-    const { modules: modulesOriginal }  = useModulesOriginal();
+    const { modules: modulesOriginal, isError: modulesOriginalError, error: modulesOriginalErrorMessage } = useModulesOriginal();
     const [modulesData, setModulesData] = useState<ModuleOriginal[]>( [] );
 
-    const { modules }                   = useModules();
+    const { modules, isError: modulesError, error: modulesErrorMessage } = useModules();
     const [moduleDays, setModuleDays]   = useState<Module[]>( [] );
 
     const [isModalOpen, setIsModalOpen] = useState( false );
@@ -63,7 +62,6 @@ export default function ModulesPage() {
         setIsLoading( true );
         setModulesData( [] );
         setModulesData( moduleData );
-        saveModuleOriginalsStorage( moduleData );
 
         try {
             const url           = `${ENV.REQUEST_BACK_URL}modules`;
@@ -82,6 +80,31 @@ export default function ModulesPage() {
         }
     };
 
+    if (modulesOriginalError) {
+        return (
+            <main className="container mx-auto py-10">
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-center">
+                        <p className="text-destructive mb-2">Error al cargar módulos originales</p>
+                        <p className="text-muted-foreground text-sm">{modulesOriginalErrorMessage?.message}</p>
+                    </div>
+                </div>
+            </main>
+        );
+    }
+
+    if (modulesError) {
+        return (
+            <main className="container mx-auto py-10">
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-center">
+                        <p className="text-destructive mb-2">Error al cargar módulos</p>
+                        <p className="text-muted-foreground text-sm">{modulesErrorMessage?.message}</p>
+                    </div>
+                </div>
+            </main>
+        );
+    }
 
     return (
         <main className="container mx-auto py-10">
