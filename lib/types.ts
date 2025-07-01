@@ -3,6 +3,7 @@ export type Size = 'XS' | 'XE' | 'S' | 'SE' | 'MS' | 'M' | 'L' | 'XL' | 'XXL';
 
 
 export interface Space {
+    [key: string]: any;
     id          : string;
     building    : string;
     capacity    : number;
@@ -60,8 +61,8 @@ export interface Period {
 export interface Subject {
     id          : string;
     name        : string;
-    startDate   : Date | null;
-    endDate     : Date | null;
+    startDate   : string | null;
+    endDate     : string | null;
     createdAt   : Date;
     updatedAt   : Date;
 }
