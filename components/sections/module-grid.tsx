@@ -72,12 +72,12 @@ export function ModuleGrid({
 
     // Estados para los filtros
     const [localFilters, setLocalFilters] = useState<Filters & { rooms?: string[], types?: string[], capacities?: string[] }>({
-        periods: [],
-        buildings: [],
-        sizes: [],
-        rooms: [],
-        types: [],
-        capacities: [],
+        periods     : [],
+        buildings   : [],
+        sizes       : [],
+        rooms       : [],
+        types       : [],
+        capacities  : [],
     });
 
     // Referencias para sincronizar el scroll
@@ -95,7 +95,7 @@ export function ModuleGrid({
     const uniqueBuildings   = useMemo(() => Array.from( new Set( rooms.map( room => room.building ))), [rooms]);
 
     // Función para aplicar filtros localmente
-    const applyFilters = useCallback((filters: Filters) => {
+    const applyFilters = useCallback(( filters: Filters ) => {
         let filtered = [...rooms];
 
         // Filtrar por sala (ID)
@@ -130,30 +130,31 @@ export function ModuleGrid({
     const handleFilterChange = useCallback((filterType: keyof Filters, values: string[]) => {
         setLocalFilters(prev => {
             const newFilters = { ...prev, [filterType]: values };
-            // Aplicar filtros localmente
-            applyFilters(newFilters);
-            // Notificar al componente padre si es necesario
-            if (onFilterChange) {
-                onFilterChange(newFilters);
+
+            applyFilters( newFilters );
+
+            if ( onFilterChange ) {
+                onFilterChange( newFilters );
             }
+
             return newFilters;
         });
     }, [onFilterChange, applyFilters]);
-    
-    // Efecto para aplicar los filtros iniciales y cuando cambian las salas
+
+
     useEffect(() => {
         setFilteredRooms(rooms);
         applyFilters(localFilters);
     }, [rooms, applyFilters, localFilters]);
 
-    // Efecto para notificar al componente padre sobre los filtros iniciales
+
     useEffect(() => {
-        if (onFilterChange) {
-            onFilterChange(localFilters);
+        if ( onFilterChange ) {
+            onFilterChange( localFilters );
         }
     }, [onFilterChange, localFilters]);
 
-    // Función para sincronizar el scroll vertical
+
     const handleScroll = ( e: React.UIEvent<HTMLDivElement> ) => {
         if ( e.currentTarget === scrollableTableRef.current && fixedTableRef.current ) {
             fixedTableRef.current.scrollTop = e.currentTarget.scrollTop;
@@ -162,40 +163,42 @@ export function ModuleGrid({
         }
     }
 
-    // Función para obtener las secciones para una sala, día y módulo específicos - memoizada
+
     const sectionsByCellMemo = useMemo(() => {
         const map = new Map<string, Section[]>();
 
-        sections.forEach(section => {
+        sections.forEach( section => {
             const key = `${section.room}-${section.day}-${section.moduleId}`;
-            if (!map.has(key)) {
-                map.set(key, []);
+
+            if ( !map.has( key )) {
+                map.set( key, [] );
             }
-            map.get(key)!.push(section);
+
+            map.get( key )!.push( section );
         });
-        
+
         return map;
     }, [sections]);
 
+
     const getSectionsForCell = useCallback(( roomId: string, day: number, moduleId: string ) => {
         const key = `${roomId}-${day}-${moduleId}`;
-        return sectionsByCellMemo.get(key) || [];
+        return sectionsByCellMemo.get( key ) || [];
     }, [sectionsByCellMemo]);
 
-    // Manejadores de eventos para drag and drop
-    const handleDragStart = ( e: React.DragEvent, sectionId: string ) => {
+
+    function handleDragStart( e: React.DragEvent, sectionId: string ): void {
         e.dataTransfer.setData( 'text/plain', sectionId );
         setDraggedSection( sectionId );
-        // Establecer el efecto de arrastre
         e.dataTransfer.effectAllowed = 'move';
     }
 
-    const handleDragOver = ( e: React.DragEvent, roomId: string, day: number, moduleId: string ) => {
+
+    function handleDragOver( e: React.DragEvent, roomId: string, day: number, moduleId: string ): void{
         e.preventDefault();
         const cellId = `${roomId}-${day}-${moduleId}`;
         setDragOverCell( cellId );
 
-        // Verificar si la celda destino ya está ocupada
         const cellSections = getSectionsForCell( roomId, day, moduleId );
 
         e.dataTransfer.dropEffect = cellSections.length > 0
@@ -203,17 +206,16 @@ export function ModuleGrid({
             : 'move';
     }
 
-    const handleDragLeave = () => {
-        setDragOverCell( null )
-    }
 
-    const handleDrop = ( e: React.DragEvent, roomId: string, day: number, moduleId: string ) => {
+    const handleDragLeave = () => setDragOverCell( null );
+
+
+    function handleDrop( e: React.DragEvent, roomId: string, day: number, moduleId: string ): void {
         e.preventDefault();
         const sectionId = e.dataTransfer.getData( 'text/plain' );
         setDraggedSection( null );
         setDragOverCell( null );
 
-        // Verificar si la celda destino ya está ocupada
         const cellSections = getSectionsForCell( roomId, day, moduleId );
 
         if ( cellSections.length > 0 ) {
@@ -222,7 +224,6 @@ export function ModuleGrid({
             return;
         }
 
-        // Intentar mover la sección
         const success = onSectionMove( sectionId, roomId, day, moduleId );
 
         if ( !success ) {
@@ -258,7 +259,6 @@ export function ModuleGrid({
                                     cn( "cursor-pointer px-2 bg-black border-r border-zinc-700 w-[120px] max-w-[120px]", fixedColumnsConfig.name.widthClass )
                                 }>
                                     <div className="flex items-center justify-between">
-                                        {/* <span className="text-left text-white text-sm">Sala</span> */}
                                         <Cuboid className="text-white w-5 h-5 mx-2" />
 
                                         <Popover>
@@ -277,6 +277,7 @@ export function ModuleGrid({
                                                         defaultValues={localFilters.rooms || []}
                                                     />
                                                 </div>
+
                                                 <div className="p-2 border-t">
                                                     <MultiSelectCombobox
                                                         options={periods.map((period) => ({ value: period.id, label: period.label }))}
@@ -307,7 +308,6 @@ export function ModuleGrid({
                                     cn( "cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.type.widthClass )
                                 }>
                                     <div className="flex items-center justify-between">
-                                        {/* <span className="text-white text-sm">Tipo</span> */}
                                         <Armchair className="text-white w-5 h-5 mx-1" />
 
                                         <Popover>
@@ -352,7 +352,6 @@ export function ModuleGrid({
                                     cn( "cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.building.widthClass )
                                 }>
                                     <div className="flex items-center justify-between">
-                                        {/* <span className="text-white text-sm">Edificio</span> */}
                                         <Building2 className="text-white w-5 h-5 ml-0.5 mr-1.5" />
 
                                         <Popover>
@@ -397,7 +396,6 @@ export function ModuleGrid({
                                     cn( "cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.size.widthClass )
                                 }>
                                     <div className="flex items-center justify-between">
-                                        {/* <span className="text-white text-sm">Talla</span> */}
                                         <Proportions className="text-white w-5 h-5 ml-0.5 mr-1.5" />
 
                                         <Popover>
@@ -440,7 +438,6 @@ export function ModuleGrid({
 
                                 <th title="Capacidad" className={cn("cursor-pointer border-r border-r-zinc-700 px-2 bg-black", fixedColumnsConfig.capacity.widthClass)}>
                                     <div className="flex items-center justify-between">
-                                        {/* <span className="text-white text-sm">Capacidad</span> */}
                                         <Ruler className="text-white w-5 h-5 ml-0.5 mr-1.5" />
 
                                         <Popover>
