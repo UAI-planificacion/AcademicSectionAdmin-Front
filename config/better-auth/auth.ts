@@ -3,6 +3,23 @@ import { ENV } from "../envs/env"
 
 
 export const auth = betterAuth({
+    session: {
+        expiresIn: 60 * 60 * 24 * 7,
+        updateAge: 60 * 60 * 24,
+    },
+    cookies: {
+        sessionToken: {
+            name: "better-auth.session_token",
+            options: {
+                httpOnly: true,
+                sameSite: "lax",
+                path: "/",
+                secure: false,
+                maxAge: 60 * 60 * 24 * 7,
+                domain: undefined
+            }
+        }
+    },
     socialProviders: {
         microsoft: { 
             clientId                : ENV.MSAL.CLIENT_ID, 
