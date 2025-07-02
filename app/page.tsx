@@ -2,7 +2,7 @@
 
 export default function Home() {
     return (
-        <div className="flex min-h-[calc(100vh-6rem)] flex-col items-center justify-center p-4 bg-gray-50 dark:bg-zinc-900">
+        <div className="flex min-h-[calc(100vh-4.8rem)] flex-col items-center justify-center bg-gray-50 dark:bg-zinc-900">
             <div className="w-full max-w-4xl mx-auto">
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold mb-2">Administrador de Secciones Académicas</h1>
