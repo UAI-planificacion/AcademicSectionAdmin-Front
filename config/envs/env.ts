@@ -9,12 +9,7 @@ const envSchema = z.object({
         message: 'Request back URL is required',
     }),
     NEXT_PUBLIC_REQUEST_ENDPOINT: z.string(),
-    
-    // Authentication key
-    NEXT_PUBLIC_KEY: z.string().min(1, {
-        message: 'Authentication key is required',
-    }),
-    
+
     // MSAL Authentication
     NEXT_PUBLIC_MSAL_CLIENT_ID: z.string().min(1, {
         message: 'MSAL Client ID is required',
@@ -56,7 +51,6 @@ const envSchema = z.object({
 const processEnv = {
     NEXT_PUBLIC_REQUEST_BACK_URL    : process.env.NEXT_PUBLIC_REQUEST_BACK_URL,
     NEXT_PUBLIC_REQUEST_ENDPOINT    : process.env.NEXT_PUBLIC_REQUEST_ENDPOINT,
-    NEXT_PUBLIC_KEY                 : process.env.NEXT_PUBLIC_KEY,
     NEXT_PUBLIC_MSAL_CLIENT_ID      : process.env.NEXT_PUBLIC_MSAL_CLIENT_ID,
     NEXT_PUBLIC_MSAL_CLIENT_SECRET  : process.env.NEXT_PUBLIC_MSAL_CLIENT_SECRET,
     NEXT_PUBLIC_MSAL_TENANT_ID      : process.env.NEXT_PUBLIC_MSAL_TENANT_ID,
@@ -92,20 +86,14 @@ export const ENV = {
     // API URLs
     REQUEST_BACK_URL: parsedEnv.data.NEXT_PUBLIC_REQUEST_BACK_URL,
     REQUEST_ENDPOINT: parsedEnv.data.NEXT_PUBLIC_REQUEST_ENDPOINT,
-    
-    // Authentication key
-    KEY: parsedEnv.data.NEXT_PUBLIC_KEY,
-    
     // MSAL
     MSAL: {
         CLIENT_ID: parsedEnv.data.NEXT_PUBLIC_MSAL_CLIENT_ID,
         CLIENT_SECRET: parsedEnv.data.NEXT_PUBLIC_MSAL_CLIENT_SECRET,
         TENANT_ID: parsedEnv.data.NEXT_PUBLIC_MSAL_TENANT_ID,
     },
-    
     // App URL
     URL: parsedEnv.data.NEXT_PUBLIC_URL,
-    
     // UAI Services
     UAI_RESERV: parsedEnv.data.NEXT_PUBLIC_UAI_RESERV,
     UAI_KEY: parsedEnv.data.NEXT_PUBLIC_UAI_KEY,
@@ -113,7 +101,6 @@ export const ENV = {
     COST_CENTER: parsedEnv.data.NEXT_PUBLIC_COST_CENTER,
     ACADEMIC_PERIOD: parsedEnv.data.NEXT_PUBLIC_ACADEMIC_PERIOD,
     SUBJECTS: parsedEnv.data.NEXT_PUBLIC_SUBJECTS,
-    
     // Registration
     KEY_REGISTRATIONS: parsedEnv.data.NEXT_PUBLIC_KEY_REGISTRATIONS,
     VALUE_REGISTRATIONS: parsedEnv.data.NEXT_PUBLIC_VALUE_REGISTRATIONS,
