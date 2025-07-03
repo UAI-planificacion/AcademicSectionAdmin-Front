@@ -5,9 +5,10 @@ import {
     saveDaysStorage
 }               from '@/stores/local-storage-days';
 import { Day }  from '@/lib/types';
+import { ENV } from '@/config/envs/env';
 
 
-const API_URL = 'http://localhost:3030/api/v1/days';
+const API_URL = `${ENV.REQUEST_BACK_URL}days`;
 
 interface UseDaysReturn {
     days        : Day[];

@@ -49,6 +49,7 @@ import type {
 import LoaderMini from "@/icons/LoaderMini";
 
 import { errorToast, successToast } from "@/config/toast/toast.config";
+import { ENV } from "@/config/envs/env";
 
 
 interface SectionModalProps {
@@ -139,7 +140,7 @@ export function SectionModal({
         console.log('🚀 ~ file: section-modal.tsx:102 ~ formData:', saveSection)
 
         try {
-            const data = await fetch( 'http://localhost:3030/api/v1/sections', {
+            const data = await fetch( `${ENV.REQUEST_BACK_URL}sections`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -185,7 +186,7 @@ export function SectionModal({
         console.log('🚀 ~ file: section-modal.tsx:102 ~ formData:', saveSection)
 
         try {
-            const data = await fetch( `http://localhost:3030/api/v1/sections/${formData.id}`, {
+            const data = await fetch( `${ENV.REQUEST_BACK_URL}sections/${formData.id}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json'
@@ -284,7 +285,7 @@ export function SectionModal({
         setIsLoading( true );
 
         try {
-            const data = await fetch( `http://localhost:3030/api/v1/sections/${section.id}`, {
+            const data = await fetch( `${ENV.REQUEST_BACK_URL}sections/${section.id}`, {
                 method: 'DELETE'
             })
 

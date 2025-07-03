@@ -5,8 +5,9 @@ import {
     getSpacesStorage
 }               from '@/stores/local-storage-spaces';
 import { Space } from '@/lib/types';
+import { ENV } from '@/config/envs/env';
 
-const API_URL = 'http://localhost:3030/api/v1/spaces';
+const API_URL = `${ENV.REQUEST_BACK_URL}spaces`;
 
 interface UseSpacesReturn {
     spaces          : Space[];

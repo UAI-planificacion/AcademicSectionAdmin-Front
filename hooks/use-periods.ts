@@ -8,6 +8,7 @@ import {
 } from '@/stores/local-storage-periods';
 
 import { Period }  from '@/lib/types';
+import { ENV } from '@/config/envs/env';
 
 
 export interface UsePeriodsResult {
@@ -17,7 +18,7 @@ export interface UsePeriodsResult {
 }
 
 
-const API_URL = 'http://localhost:3030/api/v1/periods';
+const API_URL = `${ENV.REQUEST_BACK_URL}periods`;
 
 
 export function usePeriods(): UsePeriodsResult {
