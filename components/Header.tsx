@@ -82,86 +82,86 @@ export default function Header() {
                     {
                         session?.user && (
                             <Menubar className="hidden md:flex bg-black text-white border-zinc-700">
-                            <MenubarMenu>
-                                <MenubarTrigger
-                                    onClick={() => router.push('/sections')}
-                                    id="sections"
-                                >
-                                    <GraduationCap className="mr-2 h-6 w-6" />
-                                    <span className="hidden xl:block">Secciones</span>
-                                </MenubarTrigger>
-                            </MenubarMenu>
+                                <MenubarMenu>
+                                    <MenubarTrigger
+                                        onClick={() => router.push('/sections')}
+                                        id="sections"
+                                    >
+                                        <GraduationCap className="mr-2 h-6 w-6" />
+                                        <span className="hidden xl:block">Secciones</span>
+                                    </MenubarTrigger>
+                                </MenubarMenu>
 
-                            <MenubarMenu>
-                                <MenubarTrigger
-                                    onClick={() => router.push('/modules')}
-                                    id="modules"
-                                >
-                                    <Clock className="mr-2 h-5 w-5" />
-                                    <span className="hidden xl:block">Módulos</span>
-                                </MenubarTrigger>
-                            </MenubarMenu>
+                                <MenubarMenu>
+                                    <MenubarTrigger
+                                        onClick={() => router.push('/modules')}
+                                        id="modules"
+                                    >
+                                        <Clock className="mr-2 h-5 w-5" />
+                                        <span className="hidden xl:block">Módulos</span>
+                                    </MenubarTrigger>
+                                </MenubarMenu>
 
-                            <MenubarMenu>
-                                <MenubarTrigger
-                                    onClick={() => router.push('/days')}
-                                    id="days"
-                                >
-                                    <Calendar className="mr-2 h-5 w-5" />
-                                    <span className="hidden xl:block">Días</span>
-                                </MenubarTrigger>
-                            </MenubarMenu>
+                                <MenubarMenu>
+                                    <MenubarTrigger
+                                        onClick={() => router.push('/days')}
+                                        id="days"
+                                    >
+                                        <Calendar className="mr-2 h-5 w-5" />
+                                        <span className="hidden xl:block">Días</span>
+                                    </MenubarTrigger>
+                                </MenubarMenu>
 
-                            <MenubarMenu>
-                                <MenubarTrigger
-                                    onClick={() => router.push('/periods')}
-                                    id="periods"
-                                >
-                                    <CalendarClock className="mr-2 h-5 w-5" />
-                                    <span className="hidden xl:block">Periodos</span>
-                                </MenubarTrigger>
-                            </MenubarMenu>
+                                <MenubarMenu>
+                                    <MenubarTrigger
+                                        onClick={() => router.push('/periods')}
+                                        id="periods"
+                                    >
+                                        <CalendarClock className="mr-2 h-5 w-5" />
+                                        <span className="hidden xl:block">Periodos</span>
+                                    </MenubarTrigger>
+                                </MenubarMenu>
 
-                            <MenubarMenu>
-                                <MenubarTrigger
-                                    onClick={() => router.push('/spaces')}
-                                    id="spaces"
-                                >
-                                    <Cuboid className="mr-2 h-5 w-5" />
-                                    <span className="hidden xl:block">Espacios</span>
-                                </MenubarTrigger>
-                            </MenubarMenu>
+                                <MenubarMenu>
+                                    <MenubarTrigger
+                                        onClick={() => router.push('/spaces')}
+                                        id="spaces"
+                                    >
+                                        <Cuboid className="mr-2 h-5 w-5" />
+                                        <span className="hidden xl:block">Espacios</span>
+                                    </MenubarTrigger>
+                                </MenubarMenu>
 
-                            <MenubarMenu>
-                                <MenubarTrigger
-                                    onClick={() => router.push('/sizes')}
-                                    id="sizes"
-                                >
-                                    <Ruler className="mr-2 h-5 w-5" />
-                                    <span className="hidden xl:block">Tamaños</span>
-                                </MenubarTrigger>
-                            </MenubarMenu>
+                                <MenubarMenu>
+                                    <MenubarTrigger
+                                        onClick={() => router.push('/sizes')}
+                                        id="sizes"
+                                    >
+                                        <Ruler className="mr-2 h-5 w-5" />
+                                        <span className="hidden xl:block">Tamaños</span>
+                                    </MenubarTrigger>
+                                </MenubarMenu>
 
-                            <MenubarMenu>
-                                <MenubarTrigger
-                                    onClick={() => router.push('/subjects')}
-                                    id="subjects"
-                                >
-                                    <Book className="mr-2 h-5 w-5" />
-                                    <span className="hidden xl:block">Asignaturas</span>
-                                </MenubarTrigger>
-                            </MenubarMenu>
+                                <MenubarMenu>
+                                    <MenubarTrigger
+                                        onClick={() => router.push('/subjects')}
+                                        id="subjects"
+                                    >
+                                        <Book className="mr-2 h-5 w-5" />
+                                        <span className="hidden xl:block">Asignaturas</span>
+                                    </MenubarTrigger>
+                                </MenubarMenu>
 
-                            <MenubarMenu>
-                                <MenubarTrigger
-                                    onClick={() => router.push('/professors')}
-                                    id="professors"
-                                >
-                                    <User className="mr-2 h-5 w-5" />
-                                    <span className="hidden xl:block">Profesores</span>
-                                </MenubarTrigger>
-                            </MenubarMenu>
-                        </Menubar>
+                                <MenubarMenu>
+                                    <MenubarTrigger
+                                        onClick={() => router.push('/professors')}
+                                        id="professors"
+                                    >
+                                        <User className="mr-2 h-5 w-5" />
+                                        <span className="hidden xl:block">Profesores</span>
+                                    </MenubarTrigger>
+                                </MenubarMenu>
+                            </Menubar>
                         )
                     }
 
