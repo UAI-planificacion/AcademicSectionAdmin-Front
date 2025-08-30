@@ -1,15 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { Section } from '@/models/section.model';
-import { ENV } from '@/config/envs/env';
+import { Section }  from '@/models/section.model';
+import { ENV }      from '@/config/envs/env';
 
 
 async function fetchSections(): Promise<Section[]> {
-    const API_URL   = `${ENV.REQUEST_BACK_URL}sections`;
+    const API_URL   = `${ENV.REQUEST_BACK_URL}Sections`;
     const response  = await fetch( API_URL );
 
     if ( !response.ok ) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error( `HTTP error! status: ${response.status}` );
     }
 
     return response.json();
@@ -17,13 +17,13 @@ async function fetchSections(): Promise<Section[]> {
 
 
 interface UseSectionsReturn {
-    sections: Section[];
-    loading: boolean;
-    error: Error | null;
-    isLoading: boolean;
-    isError: boolean;
-    refetch: () => void;
-    refetchSections: () => void;
+    sections        : Section[];
+    loading         : boolean;
+    error           : Error | null;
+    isLoading       : boolean;
+    isError         : boolean;
+    refetch         : () => void;
+    refetchSections : () => void;
 }
 
 
