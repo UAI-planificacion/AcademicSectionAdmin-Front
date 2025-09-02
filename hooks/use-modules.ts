@@ -2,16 +2,16 @@
 
 import { useQuery } from '@tanstack/react-query';
 
-import { Module } from '@/models/module.model';
-import { ENV } from '@/config/envs/env';
+import { Module }   from '@/models/module.model';
+import { ENV }      from '@/config/envs/env';
 
 
 async function fetchModules(): Promise<Module[]> {
-    const API_URL   = `${ENV.REQUEST_BACK_URL}modules`;
+    const API_URL   = `${ ENV.REQUEST_BACK_URL }modules`;
     const response  = await fetch( API_URL );
 
     if ( !response.ok ) {
-        throw new Error( `Error al obtener módulos: ${response.status}` );
+        throw new Error( `Error al obtener módulos: ${ response.status }` );
     }
 
     return response.json();
@@ -42,8 +42,8 @@ export function useModules(): UseModulesResult {
 
     return {
         modules,
-        loading: isLoading,
-        error: error as Error | null,
+        loading : isLoading,
+        error   : error as Error | null,
         isLoading,
         isError,
         refetch

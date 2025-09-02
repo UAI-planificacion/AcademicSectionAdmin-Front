@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { Plus } from 'lucide-react';
-import { toast } from 'sonner';
+import { Plus }     from 'lucide-react';
+import { toast }    from 'sonner';
 
 import TableModules         from '@/app/modules/table-modules';
 import ModuleDay            from '@/app/modules/module-day';
@@ -32,14 +32,25 @@ import { useDays }  from '@/hooks/use-days';
 
 
 export default function ModulesPage() {
-    const { modules: modulesOriginal, isError: modulesOriginalError, error: modulesOriginalErrorMessage } = useModulesOriginal();
+    const {
+        modules : modulesOriginal,
+        isError : modulesOriginalError,
+        error   : modulesOriginalErrorMessage
+    } = useModulesOriginal();
+
+
+    const {
+        modules,
+        isError : modulesError,
+        error   : modulesErrorMessage
+    } = useModules();
+
+
     const [modulesData, setModulesData] = useState<ModuleOriginal[]>( [] );
-
-    const { modules, isError: modulesError, error: modulesErrorMessage } = useModules();
     const [moduleDays, setModuleDays]   = useState<Module[]>( [] );
-
     const [isModalOpen, setIsModalOpen] = useState( false );
     const [isLoading, setIsLoading]     = useState( false );
+
 
     const { days }      = useDays();
     const availableDays = days.map( day => day.id - 1 );

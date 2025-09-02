@@ -28,23 +28,24 @@ import { ModuleOriginal }   from "@/models/module.model";
 import { fetchApi }         from "@/services/fetch";
 
 
-export default function TableModules(
-    {
-        modules,
-        onSave,
-        days
-    }: {
-        modules : ModuleOriginal[]
-        onSave  : ( modules: ModuleOriginal[] ) => void
-        days    : number[]
-    }
-): JSX.Element {
+interface Props {
+    modules : ModuleOriginal[];
+    onSave  : ( modules: ModuleOriginal[] ) => void;
+    days    : number[];
+}
+
+
+export default function TableModules({
+    modules,
+    onSave,
+    days
+}: Props ): JSX.Element {
     const [isModalOpen, setIsModalOpen]             = useState( false );
     const [isModalDeleteOpen, setIsModalDeleteOpen] = useState( false );
     const [currentModule, setCurrentModule]         = useState<ModuleOriginal>( modules[0] );
 
 
-    function onOpenModal( module: ModuleOriginal ) {
+    function onOpenModal( module: ModuleOriginal ): void {
         setCurrentModule( module );
         setIsModalOpen( true );
     }
@@ -72,21 +73,21 @@ export default function TableModules(
 
     const columns: ColumnDef<ModuleOriginal>[] = [
         {
-            accessorKey: "id",
-            header: "ID",
+            accessorKey : "id",
+            header      : "ID",
         },
         {
-            accessorKey: "code",
-            header: "Código",
+            accessorKey : "code",
+            header      : "Código",
         },
         {
-            accessorKey: "name",
-            header: "Nombre",
+            accessorKey : "name",
+            header      : "Nombre",
         },
         {
-            accessorKey: "isActive",
-            header: "Estado",
-            cell: ({ row }) => (
+            accessorKey : "isActive",
+            header      : "Estado",
+            cell        : ({ row }) => (
                 <div className="flex items-center">
                     {row.original.isActive ? (
                         <>
@@ -103,9 +104,9 @@ export default function TableModules(
             ),
         },
         {
-            accessorKey: "startHour",
-            header: "Hora Inicio",
-            cell: ({ row }) => (
+            accessorKey : "startHour",
+            header      : "Hora Inicio",
+            cell        : ({ row }) => (
                 <div className="flex items-center">
                     <Clock className="mr-2 h-4 w-4" />
                     {row.original.startHour}
@@ -113,9 +114,9 @@ export default function TableModules(
             ),
         },
         {
-            accessorKey: "endHour",
-            header: "Hora Fin",
-            cell: ({ row }) => (
+            accessorKey : "endHour",
+            header      : "Hora Fin",
+            cell        : ({ row }) => (
                 <div className="flex items-center">
                     <Clock className="mr-2 h-4 w-4" />
                     {row.original.endHour}
@@ -123,13 +124,13 @@ export default function TableModules(
             ),
         },
         {
-            accessorKey: "difference",
-            header: "Diferencia",
-            cell: ({ row }) => row.original.difference || "-",
+            accessorKey : "difference",
+            header      : "Diferencia",
+            cell        : ({ row }) => row.original.difference || "-",
         },
         {
-            id: "actions",
-            cell: ({ row }) => (
+            id      : "actions",
+            cell    : ({ row }) => (
                 <div className="flex items-center gap-2">
                     <Button variant="ghost" size="icon" onClick={() => onOpenModal(row.original)}>
                         <Pencil className="h-4 w-4" />
@@ -139,9 +140,10 @@ export default function TableModules(
                         <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                 </div>
-            ),
-        },
+            )
+        }
     ]
+
 
     return (
         <div className="container mx-auto">
