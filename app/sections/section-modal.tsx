@@ -30,7 +30,7 @@ import {
     SECTION_BUILDING_PLANNED,
     SECTION_SESSION
 }                           from "@/lib/section";
-import type { Space }       from "@/lib/types";
+import type { SpaceData }   from "@/lib/types";
 import { cn }               from "@/lib/utils";
 import { getSpaceTypeName } from "@/lib/space";
 
@@ -54,7 +54,7 @@ import { ENV } from "@/config/envs/env";
 
 interface SectionModalProps {
     section     : Section;
-    rooms       : Space[];
+    rooms       : SpaceData[];
     onClose     : () => void;
     onSave      : ( section: Section ) => boolean;
     onDelete    : ( sectionId: string ) => void;
@@ -81,7 +81,7 @@ export function SectionModal({
     const { professors }                = useProfessors();
     const { subjects }                  = useSubjects();
     const dayModules                    = getModulesForDay( modules, selectedDay );
-    const sizes                         = Array.from( new Set( rooms.map( room => room.sizeId )));
+    const sizes                         = Array.from( new Set( rooms.map( room => room.size )));
 
 
     useEffect(() => {
@@ -393,8 +393,8 @@ export function SectionModal({
                                 isOpen              = { false }
                                 multiple            = { false }
                                 options             = { rooms.map(( room ) => ({
-                                    label: `${room.id} (${getSpaceTypeName(room.type)}, ${room.sizeId}, ${room.capacity})`,
-                                    value: room.id
+                                    label: `${room.name} (${getSpaceTypeName(room.type)}, ${room.size}, ${room.capacity})`,
+                                    value: room.name
                                 }))}
                             />
 
