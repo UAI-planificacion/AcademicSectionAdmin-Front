@@ -17,7 +17,7 @@ import {
 }  from "lucide-react"
 
 import type {
-    Space,
+    SpaceData,
     SortConfig,
     SortField,
     SortDirection,
@@ -45,7 +45,7 @@ import { Section } from "@/models/section.model";
 
 interface ModuleGridProps {
     sections        : Section[];
-    rooms           : Space[];
+    rooms           : SpaceData[];
     onSectionClick  : ( sectionId: string ) => void;
     onSectionMove   : ( sectionId: string, newRoomId: string, newDay: number, newModuleId: string ) => boolean;
     onSectionSave   : ( section: Section ) => boolean;
@@ -69,7 +69,7 @@ export function ModuleGrid({
     isCalculating,
 }: ModuleGridProps ): React.JSX.Element{
     // Filtrar las salas localmente
-    const [filteredRooms, setFilteredRooms]     = useState<Space[]>(rooms);
+    const [filteredRooms, setFilteredRooms]     = useState<SpaceData[]>(rooms);
     const [draggedSection, setDraggedSection]   = useState<string | null>( null );
     const [dragOverCell, setDragOverCell]       = useState<string | null>( null );
     const [errorMessage, setErrorMessage]       = useState<string | null>( null );
@@ -94,7 +94,7 @@ export function ModuleGrid({
     const { sizes }     = useSizes();
 
     // Extraer valores únicos para los filtros
-    const uniqueRoomIds     = useMemo(() => Array.from( new Set( rooms.map( room => room.id ))), [rooms]);
+    const uniqueRoomIds     = useMemo(() => Array.from( new Set( rooms.map( room => room.name ))), [rooms]);
     const uniqueTypes       = useMemo(() => Array.from( new Set( rooms.map( room => room.type ))), [rooms]);
     const uniqueBuildings   = useMemo(() => Array.from( new Set( rooms.map( room => room.building ))), [rooms]);
 
@@ -104,7 +104,7 @@ export function ModuleGrid({
 
         // Filtrar por sala (ID)
         if (filters.rooms && filters.rooms.length > 0) {
-            filtered = filtered.filter(room => filters.rooms!.includes(room.id));
+            filtered = filtered.filter(room => filters.rooms!.includes(room.name));
         }
 
         // Filtrar por tipo
@@ -119,7 +119,7 @@ export function ModuleGrid({
 
         // Filtrar por talla
         if (filters.sizes && filters.sizes.length > 0) {
-            filtered = filtered.filter(room => filters.sizes.includes(room.sizeId));
+            filtered = filtered.filter(room => filters.sizes.includes(room.size));
         }
 
         // Filtrar por capacidad
@@ -167,11 +167,11 @@ export function ModuleGrid({
         }
     }
 
-    const renderCellContent = useCallback((room: Space, day: any, module: any, moduleIndex: number, isLastModule: boolean) => {
+    const renderCellContent = useCallback((room: SpaceData, day: any, module: any, moduleIndex: number, isLastModule: boolean) => {
         if ( isCalculating ) {
             return (
                 <td 
-                    key={`skeleton-${room.id}-${day.id}-${module.id}`}
+                    key={`skeleton-${room.name}-${day.id}-${module.id}`}
                     className={cn(
                         "border-x border-l-zinc-300 dark:border-l-zinc-700 p-2 h-16 min-w-[80px] relative",
                         isLastModule ? "border-r-zinc-400 dark:border-r-zinc-600" : "border-r-zinc-300 dark:border-r-zinc-700"
@@ -185,8 +185,8 @@ export function ModuleGrid({
             );
         }
 
-        const cellId        = `${room.id}-${day.id}-${module.id}`;
-        const cellSections  = getSectionsForCell(room.id, day.id, module.id);
+        const cellId        = `${room.name}-${day.id}-${module.id}`;
+        const cellSections  = getSectionsForCell(room.name, day.id, module.id);
         const isDragOver    = dragOverCell === cellId;
         const hasSection    = cellSections.length > 0;
         const section       = hasSection ? cellSections[0] : null;
@@ -197,7 +197,7 @@ export function ModuleGrid({
                 section                 = { section }
                 dayId                   = { day.id }
                 moduleId                = { module.id }
-                roomId                  = { room.id }
+                roomId                  = { room.name }
                 isLastModule            = { isLastModule }
                 moduleIndex             = { moduleIndex }
                 isDragOver              = { isDragOver }
@@ -512,8 +512,8 @@ export function ModuleGrid({
                             {filteredRooms.map((room) => (
                                 <tr key={`fixed-${room.id}`} className="border-b h-16">
                                     {/* Sala */}
-                                    <td title={'Sala: ' + room.id} className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm", fixedColumnsConfig.name.widthClass)}>
-                                        {room.id}
+                                    <td title={'Sala: ' + room.name} className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm", fixedColumnsConfig.name.widthClass)}>
+                                        {room.name}
                                     </td>
 
                                     {/* Tipo */}
@@ -527,8 +527,8 @@ export function ModuleGrid({
                                     </td>
 
                                     {/* Talla */}
-                                    <td title={'Talla: ' + room.sizeId} className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm", fixedColumnsConfig.size.widthClass)}>
-                                        {room.sizeId}
+                                    <td title={'Talla: ' + room.size} className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm", fixedColumnsConfig.size.widthClass)}>
+                                        {room.size}
                                     </td>
 
                                     {/* Capacidad */}
@@ -593,10 +593,10 @@ export function ModuleGrid({
                                     {days.slice(0, 6).map(( day ) => {
                                         const dayModules = dayModulesMap.get(day.id) || [];
 
-                                         return dayModules.map((module, moduleIndex) => {
-                                             const isLastModule = moduleIndex === dayModules.length - 1;
-                                             return renderCellContent(room, day, module, moduleIndex, isLastModule);
-                                         })
+                                        return dayModules.map((module, moduleIndex) => {
+                                            const isLastModule = moduleIndex === dayModules.length - 1;
+                                            return renderCellContent(room, day, module, moduleIndex, isLastModule);
+                                        });
                                     })}
                                 </tr>
                             ));
