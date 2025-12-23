@@ -9,8 +9,25 @@ export interface Space {
     capacity    : number;
     type        : Type;
     sizeId      : Size;
-    createdAt?  : string;
-    updatedAt?  : string;
+    // createdAt?  : string;
+    // updatedAt?  : string;
+}
+
+
+export interface SpaceData {
+	id			: string;
+	name		: string;
+	size		: Size;
+	building	: string;
+	type		: string;
+	capacity	: number;
+}
+
+
+export type Option = {
+    id?     : string;
+    label   : string;
+    value   : string;
 }
 
 
@@ -44,17 +61,19 @@ export interface SortConfig {
 
 
 export type Status = 'InProgress' | 'Closed' | 'Open';
+
+
 export interface Period {
-    id              : string;
-    name            : string;
-    startDate       : Date | null;
-    endDate         : Date | null;
-    openingDate     : Date | null;
-    closingDate     : Date | null;
-    status          : Status;
-    createdAt       : Date;
-    updatedAt       : Date;
-    label           : string;
+    id          : string;
+    name        : string;
+    startDate   : Date | null;
+    endDate     : Date | null;
+    openingDate : Date | null;
+    closingDate : Date | null;
+    status      : Status;
+    createdAt   : Date;
+    updatedAt   : Date;
+    label       : string;
 }
 
 
