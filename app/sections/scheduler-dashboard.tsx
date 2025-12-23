@@ -13,7 +13,7 @@ import { useRouter }    from 'next/navigation';
 import { toast } from 'sonner';
 
 import type {
-    Space,
+    SpaceData,
     SortDirection,
     SortField,
     Filters,
@@ -21,7 +21,7 @@ import type {
 } from '@/lib/types';
 
 import { useSections }  from '@/hooks/use-sections';
-import { useSpaces }    from '@/hooks/use-spaces';
+import { useSpace }     from '@/hooks/use-space';
 import { useModules }   from '@/hooks/use-modules';
 
 import { SectionModal } from '@/app/sections/section-modal';
@@ -46,9 +46,9 @@ const createSizeOrderMap = ( sizes: Sizes[] ): Map<string, number> =>
     new Map(sizes.map( size => [ size.id, size.order ]));
 
 
-function orderSizes( sizeOrderMap: Map<string, number>, a: Space, b: Space ): number {
-    const orderA = sizeOrderMap.get( a.sizeId ) || 0;
-    const orderB = sizeOrderMap.get( b.sizeId ) || 0;
+function orderSizes( sizeOrderMap: Map<string, number>, a: SpaceData, b: SpaceData ): number {
+    const orderA = sizeOrderMap.get( a.size ) || 0;
+    const orderB = sizeOrderMap.get( b.size ) || 0;
     return orderA - orderB;
 }
 
@@ -64,14 +64,14 @@ export function SchedulerDashboard(): JSX.Element {
         isError     : sectionsError,
         error       : sectionsErrorMessage
     } = useSections();
-    const { spaces: initialRooms, loading: spacesLoading } = useSpaces();
+    const { spacesData: initialRooms, isLoading: spacesLoading } = useSpace();
     const { sizes, loading: sizesLoading } = useSizes();
 
     // Estados locales
     const [sections, setSections]                   = useState<Section[]>( [] );
     const [filteredSections, setFilteredSections]   = useState<Section[]>( [] );
-    const [rooms, setRooms]                         = useState<Space[]>( [] );
-    const [filteredRooms, setFilteredRooms]         = useState<Space[]>( [] );
+    const [rooms, setRooms]                         = useState<SpaceData[]>( [] );
+    const [filteredRooms, setFilteredRooms]         = useState<SpaceData[]>( [] );
     const [selectedSection, setSelectedSection]     = useState<Section | null>( null );
     const [isModalOpen, setIsModalOpen]             = useState<boolean>( false );
     const [showLoadExcel, setShowLoadExcel]         = useState<boolean>( false );
@@ -216,11 +216,11 @@ export function SchedulerDashboard(): JSX.Element {
         }
 
         if ( filters.sizes && filters.sizes.length > 0 ) {
-            filteredRms = filteredRms.filter( room => filters.sizes.includes( room.sizeId ));
+            filteredRms = filteredRms.filter( room => filters.sizes.includes( room.size ));
         }
 
         if ( filters.rooms && filters.rooms.length > 0 ) {
-            filteredRms = filteredRms.filter( room => filters.rooms.includes( room.id ));
+            filteredRms = filteredRms.filter( room => filters.rooms.includes( room.name ));
         }
 
         if ( filters.types && filters.types.length > 0 ) {
@@ -231,7 +231,7 @@ export function SchedulerDashboard(): JSX.Element {
             filteredRms = filteredRms.filter( room => filters.capacities.includes( room.capacity.toString() ));
         }
 
-        const filteredRoomIds = new Set(filteredRms.map( room => room.id ))
+        const filteredRoomIds = new Set(filteredRms.map( room => room.name ))
         filteredSecs = filteredSecs.filter( section => filteredRoomIds.has( section.room ));
 
         console.log("************Secciones filtradas:", filteredSecs.length)
@@ -242,13 +242,13 @@ export function SchedulerDashboard(): JSX.Element {
     }, [ sections, rooms, isInitialized ]);
 
     const sizeOrderMap      = useMemo(() => createSizeOrderMap( sizes ), [ sizes ]);
-    const filteredRoomIds   = useMemo(() => new Set( filteredRooms.map( room => room.id )), [ filteredRooms ]);
+    const filteredRoomIds   = useMemo(() => new Set( filteredRooms.map( room => room.name )), [ filteredRooms ]);
     const sortedRooms       = useMemo(() => {
         if ( !filteredRooms.length ) return [];
 
         return [...filteredRooms].sort(( a, b ) => {
             const comparison = {
-                name        : a.id.localeCompare( b.id ),
+                name        : a.name.localeCompare( b.name ),
                 type        : a.type.localeCompare( b.type ),
                 building    : a.building.localeCompare( b.building ),
                 size        : orderSizes( sizeOrderMap, a, b ),
