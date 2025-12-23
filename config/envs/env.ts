@@ -9,6 +9,8 @@ const envSchema = z.object({
         message: 'Request back URL is required',
     }),
     NEXT_PUBLIC_REQUEST_ENDPOINT: z.string(),
+    NEXT_PUBLIC_ROOM_SYSTEM_URL : z.string(),
+    NEXT_PUBLIC_ROOM_ENDPOINT   : z.string(),
 
     // MSAL Authentication
     NEXT_PUBLIC_MSAL_CLIENT_ID: z.string().min(1, {
@@ -51,6 +53,8 @@ const envSchema = z.object({
 const processEnv = {
     NEXT_PUBLIC_REQUEST_BACK_URL    : process.env.NEXT_PUBLIC_REQUEST_BACK_URL,
     NEXT_PUBLIC_REQUEST_ENDPOINT    : process.env.NEXT_PUBLIC_REQUEST_ENDPOINT,
+    NEXT_PUBLIC_ROOM_SYSTEM_URL     : process.env.NEXT_PUBLIC_ROOM_SYSTEM_URL,
+    NEXT_PUBLIC_ROOM_ENDPOINT       : process.env.NEXT_PUBLIC_ROOM_ENDPOINT,
     NEXT_PUBLIC_MSAL_CLIENT_ID      : process.env.NEXT_PUBLIC_MSAL_CLIENT_ID,
     NEXT_PUBLIC_MSAL_CLIENT_SECRET  : process.env.NEXT_PUBLIC_MSAL_CLIENT_SECRET,
     NEXT_PUBLIC_MSAL_TENANT_ID      : process.env.NEXT_PUBLIC_MSAL_TENANT_ID,
@@ -86,6 +90,9 @@ export const ENV = {
     // API URLs
     REQUEST_BACK_URL: parsedEnv.data.NEXT_PUBLIC_REQUEST_BACK_URL,
     REQUEST_ENDPOINT: parsedEnv.data.NEXT_PUBLIC_REQUEST_ENDPOINT,
+
+    ROOM_SYSTEM_URL     : parsedEnv.data.NEXT_PUBLIC_ROOM_SYSTEM_URL,
+    ROOM_ENDPOINT       : parsedEnv.data.NEXT_PUBLIC_ROOM_ENDPOINT,
     // MSAL
     MSAL: {
         CLIENT_ID: parsedEnv.data.NEXT_PUBLIC_MSAL_CLIENT_ID,
