@@ -3,10 +3,11 @@ import { useState, useEffect, useCallback } from 'react';
 import {
     saveSpacesStorage,
     getSpacesStorage
-}               from '@/stores/local-storage-spaces';
-import { Space } from '@/lib/types';
-import { ENV } from '@/config/envs/env';
+}                   from '@/stores/local-storage-spaces';
+import { Space }    from '@/lib/types';
+import { ENV }      from '@/config/envs/env';
 
+// const API_URL = `${ENV.REQUEST_BACK_URL}spaces`;
 const API_URL = `${ENV.REQUEST_BACK_URL}spaces`;
 
 interface UseSpacesReturn {
