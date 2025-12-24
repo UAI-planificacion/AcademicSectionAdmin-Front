@@ -31,9 +31,9 @@ import {
     PopoverContent,
     PopoverTrigger
 }                           from "@/components/ui/popover";
-import { SectionCard }      from "@/app/sections/SectionCard";
 import MultiSelectCombobox  from "@/components/inputs/Combobox";
 import { Button }           from "@/components/ui/button";
+import { SectionCard }      from "@/app/sections/SectionCard";
 
 import { useDays }                      from "@/hooks/use-days";
 import { useModules, getModulesForDay } from "@/hooks/use-modules";
@@ -44,17 +44,18 @@ import { Section } from "@/models/section.model";
 
 
 interface ModuleGridProps {
-    sections        : Section[];
-    rooms           : SpaceData[];
-    onSectionClick  : ( sectionId: string ) => void;
-    onSectionMove   : ( sectionId: string, newRoomId: string, newDay: number, newModuleId: string ) => boolean;
-    onSectionSave   : ( section: Section ) => boolean;
-    onSortChange    : ( field: SortField, direction: SortDirection ) => void;
-    sortConfig      : SortConfig;
-    onFilterChange? : ( filters: Filters ) => void;
-    getSectionsForCell: ( roomId: string, day: number, moduleId: string ) => Section[];
-    isCalculating   : boolean;
+    sections            : Section[];
+    rooms               : SpaceData[];
+    onSectionClick      : ( sectionId: string ) => void;
+    onSectionMove       : ( sectionId: string, newRoomId: string, newDay: number, newModuleId: string ) => boolean;
+    onSectionSave       : ( section: Section ) => boolean;
+    onSortChange        : ( field: SortField, direction: SortDirection ) => void;
+    sortConfig          : SortConfig;
+    onFilterChange?     : ( filters: Filters ) => void;
+    getSectionsForCell  : ( roomId: string, day: number, moduleId: string ) => Section[];
+    isCalculating       : boolean;
 }
+
 
 export function ModuleGrid({
     sections,
@@ -129,7 +130,7 @@ export function ModuleGrid({
 
         setFilteredRooms(filtered);
     }, [rooms]);
-    
+
     // Manejar cambios en los filtros
     const handleFilterChange = useCallback((filterType: keyof Filters, values: string[]) => {
         setLocalFilters(prev => {
@@ -147,8 +148,8 @@ export function ModuleGrid({
 
 
     useEffect(() => {
-        setFilteredRooms(rooms);
-        applyFilters(localFilters);
+        setFilteredRooms( rooms );
+        applyFilters( localFilters );
     }, [rooms, applyFilters, localFilters]);
 
 
@@ -167,7 +168,14 @@ export function ModuleGrid({
         }
     }
 
-    const renderCellContent = useCallback((room: SpaceData, day: any, module: any, moduleIndex: number, isLastModule: boolean) => {
+
+    const renderCellContent = useCallback((
+        room            : SpaceData,
+        day             : any,
+        module          : any,
+        moduleIndex     : number,
+        isLastModule    : boolean
+    ): React.JSX.Element => {
         if ( isCalculating ) {
             return (
                 <td 
@@ -277,16 +285,16 @@ export function ModuleGrid({
             )}
 
             {/* Tabla para columnas fijas */}
-            <div className="z-10 overflow-y-auto w-[85rem] max-h-[calc(100vh-95px)] rounded-tl-lg relative hide-vertical-scrollbar" ref={fixedTableRef} onScroll={handleScroll}>
+            <div className="z-10 overflow-y-auto w-[140rem] max-h-[calc(100vh-95px)] rounded-tl-lg relative hide-vertical-scrollbar" ref={fixedTableRef} onScroll={handleScroll}>
                 <div className="relative hide-vertical-scrollbar">
                     <table className="border-collapse w-full hide-vertical-scrollbar">
                         <thead className="sticky top-0 z-50 bg-black hide-vertical-scrollbar">
                             <tr className="h-20">
                                 <th title="Sala" className={
-                                    cn( "cursor-pointer px-2 bg-black border-r border-zinc-700 w-[120px] max-w-[120px]", fixedColumnsConfig.name.widthClass )
+                                    cn( "cursor-pointer px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.name.widthClass )
                                 }>
                                     <div className="flex items-center justify-between">
-                                        <Cuboid className="text-white w-5 h-5 mx-2" />
+                                        <Cuboid className="text-white w-4 h-4 mx-0.5" />
 
                                         <Popover>
                                             <PopoverTrigger asChild>
@@ -307,7 +315,7 @@ export function ModuleGrid({
 
                                                 <div className="p-2 border-t">
                                                     <MultiSelectCombobox
-                                                        options={periods.map((period) => ({ value: period.id, label: period.label }))}
+                                                        options={periods.map((period) => ({ value: period.id, label: period.label || '' }))}
                                                         placeholder="Filtrar por periodo"
                                                         onSelectionChange={(values) => handleFilterChange('periods', values as string[])}
                                                         defaultValues={localFilters.periods}
@@ -335,7 +343,7 @@ export function ModuleGrid({
                                     cn( "cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.type.widthClass )
                                 }>
                                     <div className="flex items-center justify-between">
-                                        <Armchair className="text-white w-5 h-5 mx-1" />
+                                        <Armchair className="text-white w-4 h-4 mx-0.5" />
 
                                         <Popover>
                                             <PopoverTrigger asChild>
@@ -379,7 +387,7 @@ export function ModuleGrid({
                                     cn( "cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.building.widthClass )
                                 }>
                                     <div className="flex items-center justify-between">
-                                        <Building2 className="text-white w-5 h-5 ml-0.5 mr-1.5" />
+                                        <Building2 className="text-white w-4 h-4 mx-0.5" />
 
                                         <Popover>
                                             <PopoverTrigger asChild>
@@ -423,7 +431,7 @@ export function ModuleGrid({
                                     cn( "cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.size.widthClass )
                                 }>
                                     <div className="flex items-center justify-between">
-                                        <Proportions className="text-white w-5 h-5 ml-0.5 mr-1.5" />
+                                        <Proportions className="text-white w-4 h-4 mx-0.5" />
 
                                         <Popover>
                                             <PopoverTrigger asChild>
@@ -436,8 +444,8 @@ export function ModuleGrid({
                                                 <div className="p-2">
                                                     <MultiSelectCombobox
                                                         options={sizes.map((size) => ({ 
-                                                            value: size.id, 
-                                                            label: size.label 
+                                                            value: size.id || '', 
+                                                            label: size.label || '' 
                                                         }))}
                                                         placeholder="Filtrar por talla"
                                                         onSelectionChange={(values) => handleFilterChange('sizes', values as string[])}
@@ -465,7 +473,7 @@ export function ModuleGrid({
 
                                 <th title="Capacidad" className={cn("cursor-pointer border-r border-r-zinc-700 px-2 bg-black", fixedColumnsConfig.capacity.widthClass)}>
                                     <div className="flex items-center justify-between">
-                                        <Ruler className="text-white w-5 h-5 ml-0.5 mr-1.5" />
+                                        <Ruler className="text-white w-4 h-4 mx-0.5" />
 
                                         <Popover>
                                             <PopoverTrigger asChild>
