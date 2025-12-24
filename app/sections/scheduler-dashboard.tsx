@@ -43,7 +43,7 @@ import { useSizes } from '@/hooks/use-sizes';
 
 
 const createSizeOrderMap = ( sizes: Sizes[] ): Map<string, number> =>
-    new Map(sizes.map( size => [ size.id, size.order ]));
+    new Map(sizes.map( size => [ size?.id || '', size?.order || 0 ]));
 
 
 function orderSizes( sizeOrderMap: Map<string, number>, a: SpaceData, b: SpaceData ): number {
@@ -81,7 +81,7 @@ export function SchedulerDashboard(): JSX.Element {
         field       : "name",
         direction   : "asc",
     });
-    
+
     // Ref para cache persistente de sectionsByCellMemo
     const sectionsByCellRef     = useRef<Map<string, Section[]>>(new Map());
     const lastSectionsLengthRef = useRef<number>(0);
@@ -129,7 +129,7 @@ export function SchedulerDashboard(): JSX.Element {
         }
     }, [initialSections, initialRooms, modules, modulesLoading, sectionsLoading, spacesLoading, sizesLoading, sectionsError]);
 
-
+    // TODO! Aquí revisar el método de cálculo de secciones por celda
     useEffect(() => {
         if ( !isInitialized ) return;
 
@@ -206,7 +206,7 @@ export function SchedulerDashboard(): JSX.Element {
         let filteredSecs = [...sections];
 
         if ( filters.periods.length > 0 ) {
-            filteredSecs = filteredSecs.filter( section => filters.periods.includes( section.period ));
+            filteredSecs = filteredSecs.filter( section => filters.periods.includes( section.period.name ));
         }
 
         let filteredRms = [...rooms];
