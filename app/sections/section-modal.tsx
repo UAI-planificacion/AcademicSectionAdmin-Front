@@ -107,6 +107,20 @@ export function SectionModal({
                 day       : newDay,
                 moduleId  : newDayModules.length > 0 ? newDayModules[0].id : "",
             }))
+        } else if ( name === "period" ) {
+            // Find the full period object from the periods array
+            const selectedPeriod = periods.find( p => p.id === value );
+            if ( selectedPeriod ) {
+                setFormData(( prev ) => ({ 
+                    ...prev, 
+                    period: {
+                        id          : selectedPeriod.id,
+                        name        : selectedPeriod.label || '',
+                        startDate   : new Date(), // These would come from the period object if available
+                        endDate     : new Date(),
+                    }
+                }));
+            }
         } else {
             setFormData(( prev ) => ({ ...prev, [ name ]: value }))
         }
@@ -132,7 +146,7 @@ export function SectionModal({
             chairsAvailable         : formData.chairsAvailable,
             professorId             : formData.professorId,
             roomId                  : formData.room,
-            periodId                : formData.period,
+            periodId                : formData.period.id,
             subjectId               : formData.subjectId,
             dayModuleId             : getDayModuleId()
         }
@@ -141,25 +155,25 @@ export function SectionModal({
 
         try {
             const data = await fetch( `${ENV.REQUEST_BACK_URL}sections`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify( saveSection )
-        });
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify( saveSection )
+            });
 
-        if ( !data.ok ) {
-            toast( 'No se pudo crear la sección', errorToast );
-            return null;
-        }
+            if ( !data.ok ) {
+                toast( 'No se pudo crear la sección', errorToast );
+                return null;
+            }
 
-        const response = await data.json();
+            const response = await data.json();
 
-        toast( 'Sección creada correctamente', successToast );
+            toast( 'Sección creada correctamente', successToast );
 
-        console.log('🚀 ~ file: section-modal.tsx:123 ~ response:', response)
+            console.log('🚀 ~ file: section-modal.tsx:123 ~ response:', response)
 
-        return response;
+            return response;
         } catch ( error ) {
             toast( 'No se pudo crear la sección', errorToast );
             return null;
@@ -193,17 +207,17 @@ export function SectionModal({
                 },
                 body: JSON.stringify( saveSection )
             });
-    
+
             if ( !data.ok ) {
                 toast( 'No se pudo actualizar la sección', errorToast );
-    
+
                 return null;
             }
-    
+
             const response = await data.json();
-    
+
             toast( 'Sección actualizada correctamente', successToast );
-    
+
             return response;
         } catch (error) {
             toast( 'No se pudo actualizar la sección', errorToast );
@@ -230,7 +244,7 @@ export function SectionModal({
             newErrors.size = 'El tamaño es requerido';
         }
 
-        if (!formData.period || formData.period.trim() === '') {
+        if (!formData.period || !formData.period.id || formData.period.id.trim() === '') {
             newErrors.period = 'El período es requerido';
         }
 
@@ -331,7 +345,7 @@ export function SectionModal({
                             <div className="flex justify-between py-3 px-4 border-b border-border">
                                 <Badge variant="secondary">Periodo</Badge>
 
-                                <div className="text-sm">{formData.period}</div>
+                                <div className="text-sm">{formData.period.name}</div>
                             </div>
 
                             <div className="flex justify-between py-3 px-4 last:border-b-0 bg-zinc-100 dark:bg-zinc-900/50">
@@ -361,7 +375,7 @@ export function SectionModal({
 
                             <div className="space-y-1">
                                 <Label htmlFor="period">Periodo</Label>
-                                <Select value={formData.period} onValueChange={(value) => handleSelectChange("period", value)}>
+                                <Select value={formData.period.id} onValueChange={(value) => handleSelectChange("period", value)}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Seleccionar periodo" />
                                     </SelectTrigger>
