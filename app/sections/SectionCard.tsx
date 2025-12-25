@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, memo, useCallback } from 'react';
+import React, { useState, memo, useCallback, useMemo } from 'react';
 
 import { PlusCircle } from 'lucide-react';
 
@@ -15,6 +15,7 @@ import { SectionModal }     from '@/app/sections/section-modal';
 import { cn }               from '@/lib/utils';
 import { Section }          from '@/models/section.model';
 import { getSpacesStorage } from '@/stores/local-storage-spaces';
+import { useModules }       from '@/hooks/use-modules';
 
 
 const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -57,6 +58,15 @@ export const SectionCard = memo(function SectionCard({
 }: SectionCardProps): React.ReactElement {
     const [isMoving, setIsMoving] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
+
+    const { modules } = useModules();
+
+    const moduleHours = useMemo(() => {
+        const hours = modules.find(module => module.id.split('-')[0] === moduleId.split('-')[0]);
+        if ( !hours ) return '';
+        return `${hours.startHour} - ${hours.endHour}`;
+    }, [modules, moduleId]);
+
 
     const handleCreateSection = useCallback(() => {
         setShowCreateModal(true);
@@ -105,7 +115,7 @@ export const SectionCard = memo(function SectionCard({
             onDragLeave = { onDragLeave }
             onDrop      = { handleDrop }
             className   = { cn(
-                "border p-0.5 text-center min-w-[80px] h-[40px] transition-none hover:bg-zinc-200/80 dark:hover:bg-zinc-800/50 transition-colors group",
+                "border p-0.5 text-center min-w-[80px] h-[40px] transition-none hover:bg-zinc-200/80 dark:hover:bg-zinc-800/50 transition-colors group relative",
                 isLastModule && "border-r-zinc-400 dark:border-r-zinc-600 transition-colors",
                 !isLastModule && "border-r-zinc-200 dark:border-r-zinc-800 transition-colors",
                 moduleIndex % 2 === 0 && "bg-white dark:bg-zinc-900 transition-colors",
@@ -132,24 +142,72 @@ export const SectionCard = memo(function SectionCard({
                     onDelete    = { handleDeleteSection }
                     isCreating  = { true }
                     section     = {{
+                        // Session fields
                         id                      : "",
-                        code                    : 1,
-                        session                 : "",
-                        size                    : "",
+                        spaceId                 : roomId,
+                        isEnglish               : false,
+                        chairsAvailable         : 0,
                         correctedRegistrants    : 0,
                         realRegistrants         : 0,
                         plannedBuilding         : "",
-                        chairsAvailable         : 0,
+                        professor               : null,
+                        module                  : {
+                            id          : moduleId,
+                            code        : "",
+                            name        : "",
+                            startHour   : "",
+                            endHour     : "",
+                            difference  : null,
+                        },
+                        date                    : new Date(),
+                        dayId                   : dayId,
+                        dayModuleId             : 0,
+                        
+                        // Section parent fields
+                        code                    : 1,
+                        isClosed                : false,
+                        groupId                 : "",
+                        startDate               : new Date(),
+                        endDate                 : new Date(),
+                        building                : null,
+                        spaceSizeId             : null,
+                        spaceType               : null,
+                        workshop                : 0,
+                        lecture                 : 0,
+                        tutoringSession         : 0,
+                        laboratory              : 0,
+                        subject                 : {
+                            id      : "",
+                            name    : "",
+                        },
+                        period                  : {
+                            id          : "",
+                            name        : "",
+                            startDate   : new Date(),
+                            endDate     : new Date(),
+                        },
+                        quota                   : 0,
+                        registered              : 0,
+
+                        // Computed/mapped fields for backward compatibility
+                        room                    : roomId,
                         professorName           : "",
                         professorId             : "",
-                        room                    : roomId,
                         day                     : dayId,
                         moduleId                : moduleId,
                         subjectName             : "",
                         subjectId               : "",
-                        period                  : "",
+                        size                    : "",
+                        session                 : "",
                     }}
                 />
+            )}
+
+            {/* Placeholder text - only visible when cell is empty */}
+            {!section && (
+                <span className="absolute inset-0 flex items-center justify-center text-[14px] text-gray-600 dark:text-gray-400 opacity-30 pointer-events-none select-none">
+                    { moduleHours }
+                </span>
             )}
 
             {section && (
@@ -171,7 +229,7 @@ export const SectionCard = memo(function SectionCard({
                                 </span>
 
                                 <span className="truncate">
-                                    {section.period}
+                                    {section.period.name}
                                 </span>
 
                                 <span className="text-xs truncate">
@@ -187,7 +245,7 @@ export const SectionCard = memo(function SectionCard({
                                 </span>
 
                                 <span className="truncate">
-                                    Periodo: {section.period}
+                                    Periodo: {section.period.name}
                                 </span>
 
                                 <span className="truncate">
@@ -258,7 +316,7 @@ export const SectionCard = memo(function SectionCard({
         prevSection!.code                    === nextSection!.code                    &&
         prevSection!.subjectId               === nextSection!.subjectId               &&
         prevSection!.subjectName             === nextSection!.subjectName             &&
-        prevSection!.period                  === nextSection!.period                  &&
+        prevSection!.period.name             === nextSection!.period.name             &&
         prevSection!.professorName           === nextSection!.professorName           &&
         prevSection!.professorId             === nextSection!.professorId             &&
         prevSection!.room                    === nextSection!.room                    &&
