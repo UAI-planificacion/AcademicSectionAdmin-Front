@@ -17,7 +17,7 @@ export default function TableSkeleton() {
                         </thead>
 
                         <tbody>
-                            {Array.from({ length: 10 }).map((_, index) => (
+                            {Array.from({ length: 20 }).map((_, index) => (
                                 <tr key={`skeleton-row-${index}`} className="border-b h-16">
                                     <td className="border-x p-2 bg-white dark:bg-zinc-900">
                                         <div className="animate-pulse h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
@@ -54,7 +54,7 @@ export default function TableSkeleton() {
                     </thead>
 
                     <tbody>
-                        {Array.from({ length: 10 }).map((_, rowIndex) => (
+                        {Array.from({ length: 20 }).map((_, rowIndex) => (
                             <tr key={`skeleton-content-row-${rowIndex}`} className="border-b h-16">
                                 {Array.from({ length: 30 }).map((_, colIndex) => (
                                     <td key={`skeleton-cell-${rowIndex}-${colIndex}`} className="border-x p-2">
