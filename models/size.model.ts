@@ -8,8 +8,8 @@ export interface Sizes {
     max?            : number;
     lessThan?       : number;
     greaterThan?    : number;
-    label           : string;
-    order           : number;
+    label?           : string;
+    order?           : number;
 }
 
 
