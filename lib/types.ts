@@ -73,7 +73,7 @@ export interface Period {
     status      : Status;
     createdAt   : Date;
     updatedAt   : Date;
-    label       : string;
+    label?       : string;
 }
 
 
