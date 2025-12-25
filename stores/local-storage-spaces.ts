@@ -1,12 +1,12 @@
 import { compressToUTF16, decompressFromUTF16 } from "lz-string";
 
-import type { Space } from '@/lib/types';
+import type { Space, SpaceData } from '@/lib/types';
 
 
 const KEY_SPACE = 'spaces';
 
 
-export const getSpacesStorage = (): Space[] => {
+export const getSpacesStorage = (): SpaceData[] => {
     const storedSpaces = localStorage.getItem( KEY_SPACE );
 
     return storedSpaces
@@ -15,14 +15,14 @@ export const getSpacesStorage = (): Space[] => {
 };
 
 
-export const saveSpacesStorage = ( spaces: Space[] ): void => {
+export const saveSpacesStorage = ( spaces: SpaceData[] ): void => {
     clearSpacesStorage();
 
     localStorage.setItem( KEY_SPACE, compressToUTF16( JSON.stringify( spaces )));
 };
 
 
-export const saveSpaceStorage = ( space: Space ): void => {
+export const saveSpaceStorage = ( space: SpaceData ): void => {
     const spaces = getSpacesStorage();
     const index = spaces.findIndex( ( s ) => s.id === space.id );
 
