@@ -20,7 +20,7 @@ async function fetchSections(): Promise<FlatSection[]> {
     }
 
     const apiSections: ApiSection[] = await response.json();
-    
+
     // Transform: flatMap Section[] (with sessions) to FlatSection[]
     const flatSections: FlatSection[] = apiSections.flatMap(section => 
         section.sessions.map(session => ({
