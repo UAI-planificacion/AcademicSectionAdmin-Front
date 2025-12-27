@@ -215,45 +215,53 @@ export const SectionCard = memo(function SectionCard({
                     <Tooltip>
                         <TooltipTrigger>
                             <div
-                                draggable
-                                onDragStart={handleDragStart}
-                                className={cn(
+                                draggable       
+                                onDragStart     = { handleDragStart }
+                                onDoubleClick   = { handleSectionClick }
+                                title           = "Doble clic para editar, arrastrar para mover"
+                                className       = { cn(
                                     "max-w-24 grid grid-rows-2 bg-black text-white h-full p-1 rounded cursor-move text-xs",
                                     draggedSection === section.id && "opacity-50",
                                 )}
-                                onDoubleClick={handleSectionClick}
-                                title="Doble clic para editar, arrastrar para mover"
                             >
                                 <span className="truncate">
-                                    {section.subjectId}-{section.code}
+                                    { section.subjectId }-{ section.code }
                                 </span>
 
                                 <span className="truncate">
-                                    {section.period.name}
+                                    { section.period.name }
                                 </span>
 
                                 <span className="text-xs truncate">
-                                    {section.professorName}
+                                    { section.professorName }
                                 </span>
                             </div>
                         </TooltipTrigger>
 
-                        {!isMoving && <TooltipContent>
+                        { !isMoving && <TooltipContent>
                             <div className="grid">
                                 <span className="truncate">
-                                    SSEC: {section.subjectId}-{section.code}
+                                    SSEC: { section.subjectId }-{ section.code }
                                 </span>
 
                                 <span className="truncate">
-                                    Periodo: {section.period.name}
+                                    Periodo: { section.period.name }
                                 </span>
 
                                 <span className="truncate">
-                                    Salón: {section.room}
+                                    Espacio: { section.room }
                                 </span>
 
                                 <span className="truncate">
-                                    Día: {dayNames[section.day - 1]} | Módulo: {section.moduleId}
+                                    Fecha: { section.date.toString().split('T')[0] }
+                                </span>
+
+                                <span className="truncate">
+                                    Día: { dayNames[ section.day - 1 ]}
+                                </span>
+
+                                <span className="truncate">
+                                    Módulo: { section.module.name }
                                 </span>
 
                                 <span className="truncate">
@@ -261,15 +269,19 @@ export const SectionCard = memo(function SectionCard({
                                 </span>
 
                                 <span className="truncate">
-                                    Evento: { section.session }
+                                    Sesión: { section.session }
                                 </span>
 
                                 <span className="truncate">
-                                    Registrados: { section.realRegistrants } | Corregidos: { section.correctedRegistrants }
+                                    Idioma: { section.isEnglish ? 'Inglés' : 'Español' }
                                 </span>
 
                                 <span className="truncate">
-                                    Edificio Planeado: { section.plannedBuilding }
+                                    Registrados: { section.quota }
+                                </span>
+
+                                <span className="truncate">
+                                    Corregidos: { section.registered }
                                 </span>
 
                                 <span className="truncate">
