@@ -2,7 +2,7 @@
 export interface Section {
     // Session fields (from new model)
     id                      : string;
-    spaceId                 : string;  // maps to 'room' in old model
+    spaceId                 : string | null;  // maps to 'room' in old model
     isEnglish               : boolean;
     chairsAvailable         : number;
     correctedRegistrants    : number;
@@ -51,7 +51,7 @@ export interface Section {
     registered              : number;
     
     // Computed/mapped fields for backward compatibility
-    room                    : string;  // = spaceId
+    room                    : string | null;  // = spaceId
     professorName           : string;  // = professor?.name || ''
     professorId             : string;  // = professor?.id || ''
     day                     : number;  // = dayId

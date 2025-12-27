@@ -142,7 +142,7 @@ interface RequestSessionDetail {
     id                  : string;
     session             : Session;
     building            : BuildingEnum;
-    spaceId             : string;
+    spaceId             : string | null;
     isEnglish           : boolean;
     isConsecutive       : boolean;
     isAfternoon         : boolean;
@@ -172,7 +172,7 @@ export interface RequestSession {
 export interface Session {
     id                      : string;
     name                    : Session;
-    spaceId                 : string;
+    spaceId                 : string | null;
     isEnglish               : boolean;
     chairsAvailable         : number;
     correctedRegistrants    : number;
