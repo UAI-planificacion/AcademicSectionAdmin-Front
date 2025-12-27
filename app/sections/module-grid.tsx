@@ -268,66 +268,83 @@ export function ModuleGrid({
     }
 
     const fixedColumnsConfig = {
-        name        : { widthClass: "w-[100px] max-w-[100px] truncate" },
-        type        : { widthClass: "w-[80px] max-w-[80px] truncate" },
-        building    : { widthClass: "w-[80px] max-w-[80px] truncate text-center" },
-        size        : { widthClass: "w-[80px] max-w-[80px] truncate text-center" },
-        capacity    : { widthClass: "w-[80px] max-w-[80px] truncate text-center" },
+        name        : { widthClass: "w-[70px] max-w-[70px] truncate" },
+        type        : { widthClass: "w-[70px] max-w-[70px] truncate" },
+        building    : { widthClass: "w-[70px] max-w-[70px] truncate text-center" },
+        size        : { widthClass: "w-[50px] max-w-[50px] truncate text-center" },
+        capacity    : { widthClass: "w-[50px] max-w-[50px] truncate text-center" },
     };
 
     return (
         <div className="flex max-h-screen border rounded-lg">
-            {errorMessage && (
+            { errorMessage && (
                 <div className="absolute top-2 right-2 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded flex items-center z-20">
                     <AlertCircle className="h-4 w-4 mr-2" />
-                    {errorMessage}
+
+                    { errorMessage }
                 </div>
             )}
 
             {/* Tabla para columnas fijas */}
-            <div className="z-10 overflow-y-auto w-[140rem] max-h-[calc(100vh-95px)] rounded-tl-lg relative hide-vertical-scrollbar" ref={fixedTableRef} onScroll={handleScroll}>
+            <div className="z-10 overflow-y-auto w-[100rem] max-h-[calc(100vh-95px)] rounded-tl-lg relative hide-vertical-scrollbar" ref={fixedTableRef} onScroll={handleScroll}>
                 <div className="relative hide-vertical-scrollbar">
                     <table className="border-collapse w-full hide-vertical-scrollbar">
                         <thead className="sticky top-0 z-50 bg-black hide-vertical-scrollbar">
                             <tr className="h-20">
-                                <th title="Sala" className={
-                                    cn( "cursor-pointer px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.name.widthClass )
-                                }>
-                                    <div className="flex items-center justify-between">
-                                        <Cuboid className="text-white w-4 h-4 mx-0.5" />
+                                <th
+                                    title       = "Espacio"
+                                    className   = { cn(
+                                        "cursor-pointer px-2 content-center bg-black border-r border-zinc-700",
+                                        fixedColumnsConfig.name.widthClass
+                                    )}
+                                >
+                                    <div className="flex items-center gap-2 justify-center">
+                                        <Cuboid className="text-white w-4 h-4" />
 
+                                        <span className="text-[13px] text-white">Espacio</span>
+                                    </div>
+
+                                    <div className="flex items-center justify-between">
                                         <Popover>
                                             <PopoverTrigger asChild>
-                                                <Button variant="ghost" className="px-2">
-                                                    <Filter className="text-white w-4 h-4 cursor-pointer" />
+                                                <Button
+                                                    variant     = "ghost"
+                                                    size        = "icon"
+                                                    className   = "px-2"
+                                                >
+                                                    <Filter className={cn(
+                                                        "text-white w-4 h-4 cursor-pointer",
+                                                        localFilters.rooms.length > 0 && 'text-blue-500',
+                                                        localFilters.periods.length > 0 && 'text-blue-500',
+                                                    )} />
                                                 </Button>
                                             </PopoverTrigger>
 
                                             <PopoverContent className="w-64 h-[29rem] p-0" align="center">
                                                 <div className="p-2">
                                                     <MultiSelectCombobox
-                                                        options={uniqueRoomIds.map((id) => ({ value: id, label: id }))}
-                                                        placeholder="Filtrar por sala"
-                                                        onSelectionChange={(values) => handleFilterChange('rooms', values as string[])}
-                                                        defaultValues={localFilters.rooms || []}
+                                                        options             = { uniqueRoomIds.map(( id ) => ({ value: id, label: id }))}
+                                                        placeholder         = "Filtrar por sala"
+                                                        onSelectionChange   = {( values ) => handleFilterChange( 'rooms', values as string[] )}
+                                                        defaultValues       = { localFilters.rooms || [] }
                                                     />
                                                 </div>
 
                                                 <div className="p-2 border-t">
                                                     <MultiSelectCombobox
-                                                        options={periods.map((period) => ({ value: period.id, label: period.label || '' }))}
-                                                        placeholder="Filtrar por periodo"
-                                                        onSelectionChange={(values) => handleFilterChange('periods', values as string[])}
-                                                        defaultValues={localFilters.periods}
+                                                        options             = { periods.map((period) => ({ value: period.id, label: period.label || '' }))}
+                                                        placeholder         = "Filtrar por periodo"
+                                                        onSelectionChange   = {( values ) => handleFilterChange( 'periods', values as string[] )}
+                                                        defaultValues       = { localFilters.periods }
                                                     />
                                                 </div>
                                             </PopoverContent>
                                         </Popover>
 
                                         <Button
-                                            variant="ghost"
-                                            className="px-2"
-                                            onClick={() => onSortChange("name", sortConfig.field === "name" && sortConfig.direction === "asc" ? "desc" : "asc")}
+                                            variant = "ghost"
+                                            size    = "icon"
+                                            onClick = {() => onSortChange( "name", sortConfig.field === "name" && sortConfig.direction === "asc" ? "desc" : "asc" )}
                                         >
                                             {sortConfig.field === "name"
                                                 ? sortConfig.direction === "asc"
@@ -339,64 +356,92 @@ export function ModuleGrid({
                                     </div>
                                 </th>
 
-                                <th title="Tipo" className={
-                                    cn( "cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.type.widthClass )
-                                }>
-                                    <div className="flex items-center justify-between">
-                                        <Armchair className="text-white w-4 h-4 mx-0.5" />
+                                <th
+                                    title       = "Tipo"
+                                    className   = { cn(
+                                        "cursor-pointer border-l px-2 bg-black border-r border-zinc-700",
+                                        fixedColumnsConfig.type.widthClass
+                                    )}
+                                >
+                                    <div className="flex items-center gap-2 justify-center">
+                                        <Armchair className="text-white w-4 h-4" />
 
+                                        <span className="text-[13px] text-white">Tipo</span>
+                                    </div>
+
+                                    <div className="flex items-center justify-between">
                                         <Popover>
                                             <PopoverTrigger asChild>
-                                                <Button variant="ghost" className="px-2">
-                                                    <Filter className="text-white w-4 h-4 cursor-pointer" />
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                >
+                                                    <Filter className={cn(
+                                                        "text-white w-4 h-4 cursor-pointer",
+                                                        localFilters.types.length > 0 && 'text-blue-500'
+                                                    )} />
                                                 </Button>
                                             </PopoverTrigger>
 
-                                            <PopoverContent className="w-64 h-[21.6rem] p-0" align="center">
+                                            <PopoverContent className="w-64 h-[25.8rem] p-0" align="center">
                                                 <div className="p-2">
                                                     <MultiSelectCombobox
-                                                        options={uniqueTypes.map((type) => ({ 
-                                                            value: type, 
-                                                            label: getSpaceTypeName(type) 
+                                                        placeholder         = "Filtrar por tipo"
+                                                        onSelectionChange   = {( values ) => handleFilterChange( 'types', values as string[] )}
+                                                        defaultValues       = { localFilters.types || [] }
+                                                        isOpen              = { true }
+                                                        options             = { uniqueTypes.map(( type ) => ({ 
+                                                            value: type,
+                                                            label: getSpaceTypeName( type )
                                                         }))}
-                                                        placeholder="Filtrar por tipo"
-                                                        onSelectionChange={(values) => handleFilterChange('types', values as string[])}
-                                                        defaultValues={localFilters.types || []}
-                                                        isOpen={true}   
                                                     />
                                                 </div>
                                             </PopoverContent>
                                         </Popover>
 
                                         <Button
-                                            variant="ghost"
-                                            className="px-2"
-                                            onClick={() => onSortChange("type", sortConfig.field === "type" && sortConfig.direction === "asc" ? "desc" : "asc")}
+                                            variant = "ghost"
+                                            size    = "icon"
+                                            onClick = {() => onSortChange("type", sortConfig.field === "type" && sortConfig.direction === "asc" ? "desc" : "asc")}
                                         >
-                                        {sortConfig.field === "type"
-                                            ? sortConfig.direction === "asc"
-                                                ? <ArrowUpAZ className="h-4 w-4 text-white" />
-                                                : <ArrowDownAZ className="h-4 w-4 text-white" />
-                                            : <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
-                                        }
+                                            { sortConfig.field === "type"
+                                                ? sortConfig.direction === "asc"
+                                                    ? <ArrowUpAZ className="h-4 w-4 text-white" />
+                                                    : <ArrowDownAZ className="h-4 w-4 text-white" />
+                                                : <ArrowUpAZ className="h-4 w-4 opacity-50 text-white" />
+                                            }
                                         </Button>
                                     </div>
                                 </th>
 
-                                <th title="Edificio" className={
-                                    cn( "cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.building.widthClass )
-                                }>
-                                    <div className="flex items-center justify-between">
-                                        <Building2 className="text-white w-4 h-4 mx-0.5" />
+                                <th
+                                    title="Edificio"
+                                    className={cn(
+                                        "cursor-pointer border-l px-2 bg-black border-r border-zinc-700",
+                                        fixedColumnsConfig.building.widthClass
+                                    )}
+                                >
+                                    <div className="flex items-center gap-2 justify-center">
+                                        <Building2 className="text-white w-4 h-4" />
 
+                                        <span className="text-[13px] text-white">Edificio</span>
+                                    </div>
+
+                                    <div className="flex items-center justify-between">
                                         <Popover>
                                             <PopoverTrigger asChild>
-                                                <Button variant="ghost" className="px-2">
-                                                    <Filter className="text-white w-4 h-4 cursor-pointer" />
+                                                <Button
+                                                    variant = "ghost"
+                                                    size    = "icon"
+                                                >
+                                                    <Filter className={cn(
+                                                        "text-white w-4 h-4 cursor-pointer",
+                                                        localFilters.buildings.length > 0 && 'text-blue-500'
+                                                    )} />
                                                 </Button>
                                             </PopoverTrigger>
 
-                                            <PopoverContent className="w-64 h-96 p-0" align="center">
+                                            <PopoverContent className="w-64 h-[25.8rem] p-0" align="center">
                                                 <div className="p-2">
                                                     <MultiSelectCombobox
                                                         options={uniqueBuildings.map((building) => ({ 
@@ -413,9 +458,9 @@ export function ModuleGrid({
                                         </Popover>
 
                                         <Button
-                                            variant="ghost"
-                                            className="px-2"
-                                            onClick={() => onSortChange("building", sortConfig.field === "building" && sortConfig.direction === "asc" ? "desc" : "asc")}
+                                            variant = "ghost"
+                                            size    = "icon"
+                                            onClick = {() => onSortChange("building", sortConfig.field === "building" && sortConfig.direction === "asc" ? "desc" : "asc")}
                                         >
                                             {sortConfig.field === "building"
                                                 ? sortConfig.direction === "asc"
@@ -427,41 +472,55 @@ export function ModuleGrid({
                                     </div>
                                 </th>
 
-                                <th title="Talla" className={
-                                    cn( "cursor-pointer border-l px-2 bg-black border-r border-zinc-700", fixedColumnsConfig.size.widthClass )
-                                }>
-                                    <div className="flex items-center justify-between">
-                                        <Proportions className="text-white w-4 h-4 mx-0.5" />
+                                <th
+                                    title       = "Talla"
+                                    className   = { cn(
+                                        "cursor-pointer border-l px-2 bg-black border-r border-zinc-700",
+                                        fixedColumnsConfig.size.widthClass
+                                    )}
+                                >
+                                    <div className="flex items-center gap-2 justify-center">
+                                        <Proportions className="text-white w-4 h-4" />
 
+                                        <span className="text-[13px] text-white">Talla</span>
+                                    </div>
+
+                                    <div className="flex items-center justify-between">
                                         <Popover>
                                             <PopoverTrigger asChild>
-                                                <Button variant="ghost" className="px-2">
-                                                    <Filter className="text-white w-4 h-4 cursor-pointer" />
+                                                <Button
+                                                    variant = "ghost"
+                                                    size    = "icon"
+                                                >
+                                                    <Filter className={cn(
+                                                        "text-white w-4 h-4 cursor-pointer",
+                                                        localFilters.sizes.length > 0 && 'text-blue-500'
+                                                    )} />
                                                 </Button>
                                             </PopoverTrigger>
 
-                                            <PopoverContent className="w-64 h-[21.6rem] p-0" align="center">
+                                            <PopoverContent className="w-64 h-[22.1rem] p-0" align="center">
                                                 <div className="p-2">
                                                     <MultiSelectCombobox
-                                                        options={sizes.map((size) => ({ 
+                                                        placeholder         = "Filtrar por talla"
+                                                        onSelectionChange   = {( values ) => handleFilterChange('sizes', values as string[])}
+                                                        defaultValues       = { localFilters.sizes }
+                                                        isOpen              = { true }
+                                                        options             = { sizes.map(( size ) => ({ 
                                                             value: size.id || '', 
                                                             label: size.label || '' 
                                                         }))}
-                                                        placeholder="Filtrar por talla"
-                                                        onSelectionChange={(values) => handleFilterChange('sizes', values as string[])}
-                                                        defaultValues={localFilters.sizes}
-                                                        isOpen={true}
                                                     />
                                                 </div>
                                             </PopoverContent>
                                         </Popover>
 
                                         <Button
-                                            variant="ghost"
-                                            className="px-2"
-                                            onClick={() => onSortChange("size", sortConfig.field === "size" && sortConfig.direction === "asc" ? "desc" : "asc")}
+                                            variant = "ghost"
+                                            size    = "icon"
+                                            onClick = {() => onSortChange("size", sortConfig.field === "size" && sortConfig.direction === "asc" ? "desc" : "asc")}
                                         >
-                                            {sortConfig.field === "size"
+                                            { sortConfig.field === "size"
                                                 ? sortConfig.direction === "asc"
                                                     ? <ArrowUpAZ className="h-4 w-4 text-white" />
                                                     : <ArrowDownAZ className="h-4 w-4 text-white" />
@@ -471,40 +530,58 @@ export function ModuleGrid({
                                     </div>
                                 </th>
 
-                                <th title="Capacidad" className={cn("cursor-pointer border-r border-r-zinc-700 px-2 bg-black", fixedColumnsConfig.capacity.widthClass)}>
-                                    <div className="flex items-center justify-between">
-                                        <Ruler className="text-white w-4 h-4 mx-0.5" />
+                                <th
+                                    title       = "Capacidad"
+                                    className   = { cn(
+                                        "cursor-pointer border-r border-r-zinc-700 px-2 bg-black",
+                                        fixedColumnsConfig.capacity.widthClass
+                                    )}
+                                >
+                                    <div className="flex items-center gap-2 justify-center">
+                                        <Ruler className="text-white w-4 h-4" />
 
+                                        <span className="text-[13px] text-white">Cap.</span>
+                                    </div>
+
+                                    <div className="flex items-center justify-between">
                                         <Popover>
                                             <PopoverTrigger asChild>
-                                            <Button variant="ghost" className="px-2">
-                                                    <Filter className="text-white w-4 h-4 cursor-pointer" />
+                                                <Button
+                                                    variant = "ghost"
+                                                    size    = "icon"
+                                                >
+                                                    <Filter className={cn(
+                                                        "text-white w-4 h-4 cursor-pointer",
+                                                        localFilters.capacities.length > 0 && 'text-blue-500'
+                                                    )} />
                                                 </Button>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-64 h-[25.5rem] p-0" align="center">
+
+                                            <PopoverContent className="w-64 h-[25.8rem] p-0" align="center">
                                                 <div className="p-2">
                                                     <MultiSelectCombobox
-                                                        options={Array.from(new Set(rooms.map(room => room.capacity)))
-                                                            .sort((a, b) => a - b)
+                                                        placeholder         = "Filtrar por capacidad"
+                                                        onSelectionChange   = {( values ) => handleFilterChange( 'capacities', values as string[] )}
+                                                        defaultValues       = { localFilters.capacities || [] }
+                                                        isOpen              = { true }
+                                                        options             = { Array.from( new Set( rooms.map( room => room.capacity )))
+                                                            .sort(( a, b ) => a - b)
                                                             .map(capacity => ({
                                                                 value: capacity.toString(),
                                                                 label: capacity.toString()
-                                                            }))}
-                                                        placeholder="Filtrar por capacidad"
-                                                        onSelectionChange={(values) => handleFilterChange('capacities', values as string[])}
-                                                        defaultValues={localFilters.capacities || []}
-                                                        isOpen={true}
+                                                            }))
+                                                        }
                                                     />
                                                 </div>
                                             </PopoverContent>
                                         </Popover>
 
                                         <Button
-                                            variant="ghost"
-                                            className="px-2"
-                                            onClick={() => onSortChange("capacity", sortConfig.field === "capacity" && sortConfig.direction === "asc" ? "desc" : "asc")}
+                                            variant = "ghost"
+                                            size    = "icon"
+                                            onClick = {() => onSortChange("capacity", sortConfig.field === "capacity" && sortConfig.direction === "asc" ? "desc" : "asc")}
                                         >
-                                            {sortConfig.field === "capacity"
+                                            { sortConfig.field === "capacity"
                                                 ? sortConfig.direction === "asc"
                                                     ? <ArrowUp01 className="h-4 w-4 text-white" />
                                                     : <ArrowDown10 className="h-4 w-4 text-white" />
@@ -517,31 +594,61 @@ export function ModuleGrid({
                         </thead>
 
                         <tbody>
-                            {filteredRooms.map((room) => (
+                            { filteredRooms.map(( room ) => (
                                 <tr key={`fixed-${room.id}`} className="border-b h-16">
-                                    {/* Sala */}
-                                    <td title={'Sala: ' + room.name} className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm", fixedColumnsConfig.name.widthClass)}>
-                                        {room.name}
+                                    {/* Espacio */}
+                                    <td
+                                        title       = { `Espacio: ${ room.name }` }
+                                        className   = { cn(
+                                            "border-x text-[12px] p-2 bg-white dark:bg-zinc-900 transition-colors",
+                                            fixedColumnsConfig.name.widthClass
+                                        )}
+                                    >
+                                        { room.name }
                                     </td>
 
                                     {/* Tipo */}
-                                    <td title={'Tipo: ' + getSpaceTypeName(room.type)} className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm", fixedColumnsConfig.type.widthClass)}>
-                                        {getSpaceTypeName(room.type)}
+                                    <td
+                                        title       = { `Tipo: ${ getSpaceTypeName( room.type )}` }
+                                        className   = { cn(
+                                            "border-x text-[12px] p-2 bg-white dark:bg-zinc-900 transition-colors",
+                                            fixedColumnsConfig.type.widthClass
+                                        )}
+                                    >
+                                        { getSpaceTypeName( room.type )}
                                     </td>
 
                                     {/* Edificio */}
-                                    <td title={'Edificio: ' + room.building} className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm", fixedColumnsConfig.building.widthClass)}>
-                                        {room.building}
+                                    <td
+                                        title       = { `Edificio: ${ room.building }` }
+                                        className   = { cn(
+                                            "border-x text-[12px] p-2 bg-white dark:bg-zinc-900 transition-colors",
+                                            fixedColumnsConfig.building.widthClass
+                                        )}
+                                    >
+                                        { room.building }
                                     </td>
 
                                     {/* Talla */}
-                                    <td title={'Talla: ' + room.size} className={cn("border-x p-2 bg-white dark:bg-zinc-900 transition-colors text-sm", fixedColumnsConfig.size.widthClass)}>
-                                        {room.size}
+                                    <td
+                                        title       = { `Talla: ${ room.size }` }
+                                        className   = { cn(
+                                            "border-x text-[12px] p-2 bg-white dark:bg-zinc-900 transition-colors",
+                                            fixedColumnsConfig.size.widthClass
+                                        )}
+                                    >
+                                        { room.size }
                                     </td>
 
                                     {/* Capacidad */}
-                                    <td title={'Capacidad: ' + room.capacity.toString()} className={cn("border-x border-r-zinc-400 dark:border-r-zinc-600 p-2 bg-white dark:bg-zinc-900 transition-colors relative text-sm", fixedColumnsConfig.capacity.widthClass)}>
-                                        {room.capacity}
+                                    <td
+                                        title       = { `Capacidad: ${ room.capacity }` }
+                                        className   = { cn(
+                                            "border-x text-[12px] border-r-zinc-400 dark:border-r-zinc-600 p-2 bg-white dark:bg-zinc-900 transition-colors relative",
+                                            fixedColumnsConfig.capacity.widthClass
+                                        )}
+                                    >
+                                        { room.capacity }
                                         <div className="absolute top-0 bottom-0 right-0 w-[6px] shadow-[2px_0px_4px_rgba(0,0,0,0.15)] pointer-events-none"></div>
                                     </td>
                                 </tr>
