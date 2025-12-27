@@ -131,7 +131,9 @@ export function SchedulerDashboard(): JSX.Element {
 
     // TODO! Aquí revisar el método de cálculo de secciones por celda
     useEffect(() => {
-        if ( !isInitialized ) return;
+        if ( !isInitialized ) {
+            return;
+        }
 
         const currentLength     = sections.length;
         const lastLength        = lastSectionsLengthRef.current;
@@ -148,6 +150,9 @@ export function SchedulerDashboard(): JSX.Element {
                     const newMap = new Map<string, Section[]>();
 
                     sections.forEach(section => {
+                        // Skip sections without assigned room
+                        if (!section.room) return;
+
                         const key = `${section.room}-${section.day}-${section.moduleId}`;
 
                         if (!newMap.has( key )) {
@@ -157,8 +162,8 @@ export function SchedulerDashboard(): JSX.Element {
                         newMap.get( key )!.push( section );
                     });
 
-                    sectionsByCellRef.current = newMap;
-                    lastSectionsLengthRef.current = currentLength;
+                    sectionsByCellRef.current       = newMap;
+                    lastSectionsLengthRef.current   = currentLength;
                     setIsCalculating(false);
                 }, 0);
 
@@ -167,6 +172,9 @@ export function SchedulerDashboard(): JSX.Element {
                 const newMap = new Map<string, Section[]>();
 
                 sections.forEach(section => {
+                    // Skip sections without assigned room
+                    if (!section.room) return;
+
                     const key = `${section.room}-${section.day}-${section.moduleId}`;
 
                     if (!newMap.has(key)) {
@@ -176,13 +184,16 @@ export function SchedulerDashboard(): JSX.Element {
                     newMap.get(key)!.push(section);
                 });
 
-                sectionsByCellRef.current = newMap;
-                lastSectionsLengthRef.current = currentLength;
+                sectionsByCellRef.current       = newMap;
+                lastSectionsLengthRef.current   = currentLength;
             }
         } else {
             const newMap = new Map<string, Section[]>();
 
             sections.forEach(section => {
+                // Skip sections without assigned room
+                if (!section.room) return;
+
                 const key = `${section.room}-${section.day}-${section.moduleId}`;
 
                 if (!newMap.has(key)) {
@@ -200,8 +211,6 @@ export function SchedulerDashboard(): JSX.Element {
 
     useEffect(() => {
         if ( !isInitialized ) return;
-
-        console.log("Aplicando filtros:", filters);
 
         let filteredSecs = [...sections];
 
@@ -232,7 +241,8 @@ export function SchedulerDashboard(): JSX.Element {
         }
 
         const filteredRoomIds = new Set(filteredRms.map( room => room.name ))
-        filteredSecs = filteredSecs.filter( section => filteredRoomIds.has( section.room ));
+
+        filteredSecs = filteredSecs.filter( section => section.room && filteredRoomIds.has( section.room ));
 
         console.log("************Secciones filtradas:", filteredSecs.length)
         console.log("**********Salas filtradas:", filteredRms.length)
@@ -322,7 +332,7 @@ export function SchedulerDashboard(): JSX.Element {
 
             setSections(prevSections => [ ...prevSections, section ]);
 
-            if ( filteredRoomIds.has( section.room )) {
+            if ( section.room && filteredRoomIds.has( section.room )) {
                 setFilteredSections(prevFiltered => [...prevFiltered, section]);
             }
 
@@ -360,7 +370,7 @@ export function SchedulerDashboard(): JSX.Element {
 
     const onUpdateSection = useCallback( async ( updatedSection: Section ) => {
         const saveSection: UpdateSection = {
-            roomId      : updatedSection.room,
+            roomId      : updatedSection.room ?? undefined,
             dayModuleId : getDayModuleId( updatedSection )
         }
 
