@@ -1,4 +1,6 @@
-export type Type = 'ROOM' | 'AUDITORIO' | 'DIS' | 'LAB' | 'LABPC' | 'GARAGE' | 'CORE' | 'COMMUNIC';
+import { BuildingEnum, SpaceType } from "@/models/section-session.model";
+
+// export type Type = 'ROOM' | 'AUDITORIO' | 'DIS' | 'LAB' | 'LABPC' | 'GARAGE' | 'CORE' | 'COMMUNIC';
 export type Size = 'XS' | 'XE' | 'S' | 'SE' | 'MS' | 'M' | 'L' | 'XL' | 'XXL';
 
 
@@ -7,7 +9,7 @@ export interface Space {
     id          : string;
     building    : string;
     capacity    : number;
-    type        : Type;
+    type        : SpaceType;
     sizeId      : Size;
     // createdAt?  : string;
     // updatedAt?  : string;
@@ -18,8 +20,8 @@ export interface SpaceData {
 	id			: string;
 	name		: string;
 	size		: Size;
-	building	: string;
-	type		: string;
+	building	: BuildingEnum;
+	type		: SpaceType;
 	capacity	: number;
 }
 
@@ -39,8 +41,8 @@ export interface Day {
 }
 
 
-export type SortField       = "name" | "type" | "building" | "size" | "capacity"
-export type SortDirection   = "asc" | "desc"
+export type SortField       = "name" | "type" | "building" | "size" | "capacity";
+export type SortDirection   = "asc" | "desc";
 
 
 export interface Filters {
