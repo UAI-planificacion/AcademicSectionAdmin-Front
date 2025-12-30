@@ -14,7 +14,7 @@ const authClient = createAuthClient({
     },
 });
 
-export const signIn = async () => await authClient.signIn.social({ provider: "microsoft", callbackURL: "/" });
+export const signIn = async () => await authClient.signIn.social({ provider: "microsoft", callbackURL: "/sections" });
 
 export const signOut = async () => {
     try {
