@@ -31,8 +31,7 @@ import {
     SECTION_SESSION
 }                           from "@/lib/section";
 import type { SpaceData }   from "@/lib/types";
-import { cn }               from "@/lib/utils";
-import { getSpaceTypeName } from "@/lib/space";
+import { cn, getSpaceType }               from "@/lib/utils";
 
 import { usePeriods }                   from "@/hooks/use-periods"
 import { useSubjects }                  from "@/hooks/use-subjects";
@@ -407,7 +406,7 @@ export function SectionModal({
                                 isOpen              = { false }
                                 multiple            = { false }
                                 options             = { rooms.map(( room ) => ({
-                                    label: `${room.name} (${getSpaceTypeName(room.type)}, ${room.size}, ${room.capacity})`,
+                                    label: `${room.name} (${getSpaceType(room.type)}, ${room.size}, ${room.capacity})`,
                                     value: room.name
                                 }))}
                             />
