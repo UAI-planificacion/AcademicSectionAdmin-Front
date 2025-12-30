@@ -57,14 +57,24 @@ export function SchedulerDashboard(): JSX.Element {
     const router = useRouter();
 
     // Hooks de datos
-    const { modules, isLoading: modulesLoading, isError: modulesError } = useModules();
+    const {
+        modules,
+        isLoading   : modulesLoading,
+        isError     : modulesError
+    } = useModules();
+
     const {
         sections    : initialSections,
         isLoading   : sectionsLoading,
         isError     : sectionsError,
         error       : sectionsErrorMessage
     } = useSections();
-    const { spacesData: initialRooms, isLoading: spacesLoading } = useSpace();
+
+    const {
+        spacesData  : initialRooms,
+        isLoading   : spacesLoading
+    } = useSpace();
+
     const { sizes, loading: sizesLoading } = useSizes();
 
     // Estados locales
