@@ -79,7 +79,7 @@ export default function Header() {
                 <div className="flex justify-between items-center container mx-auto gap-2">
                     <h1 className="text-xl xl:text-2xl font-bold text-white">Secciones Académicas</h1>
 
-                    {
+                    {/* {
                         session?.user && (
                             <Menubar className="hidden md:flex bg-black text-white border-zinc-700">
                                 <MenubarMenu>
@@ -163,7 +163,7 @@ export default function Header() {
                                 </MenubarMenu>
                             </Menubar>
                         )
-                    }
+                    } */}
 
                     <div className="flex items-center gap-2">
                         {isLoading ? (
