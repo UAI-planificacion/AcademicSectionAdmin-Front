@@ -220,8 +220,12 @@ export const SectionCard = memo(function SectionCard({
                                 onDoubleClick   = { handleSectionClick }
                                 title           = "Doble clic para editar, arrastrar para mover"
                                 className       = { cn(
-                                    "max-w-24 grid grid-rows-2 bg-black text-white h-full p-1 rounded cursor-move text-xs",
+                                    "max-w-24 grid grid-rows-2 text-white h-full p-1 rounded cursor-move text-xs",
                                     draggedSection === section.id && "opacity-50",
+                                    section.lecture && "bg-[#1A9850]",
+                                    section.tutoringSession && "bg-[#F76C3B]",
+                                    section.laboratory && "bg-[#A6D96A]",
+                                    section.workshop && "bg-[#1A9850]"
                                 )}
                             >
                                 <span className="truncate">
