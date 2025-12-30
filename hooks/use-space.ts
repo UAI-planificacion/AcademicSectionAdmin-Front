@@ -2,10 +2,11 @@ import { useMemo } from "react";
 
 import { useQuery } from "@tanstack/react-query";
 
-import { ENV }          from "@/config/envs/env";
-import { Option, Size }       from "@/lib/types";
-import { fetchApi }     from "@/services_/fetch";
-import { KEY_QUERYS }   from "@/lib/key-queries";
+import { ENV }                      from "@/config/envs/env";
+import { BuildingEnum, SpaceType }  from "@/models/section-session.model";
+import { Option, Size, SpaceData }  from "@/lib/types";
+import { fetchApi }                 from "@/services_/fetch";
+import { KEY_QUERYS }               from "@/lib/key-queries";
 
 
 export type Skill = {
@@ -42,16 +43,6 @@ export type Space = {
     active      : boolean;
 }
 
-// Interface for flattened space data
-export interface SpaceData {
-	id			: string;
-	name		: string;
-	size		: Size;
-	building	: string;
-	type		: string;
-    capacity    : number;
-}
-
 // Function to transform cost center data to options format
 export const memoizedSpaceData = (
 	spaceData : Space | undefined
@@ -71,8 +62,8 @@ export const memoizedSpaceDataFlat = (
 		id			: space.idlovvals.toString(),
 		name		: space.description,
 		size		: space.skill.size as Size,
-		building    : space.skill.building,
-		type		: space.skill.type,
+		building    : space.skill.building as BuildingEnum,
+		type		: space.skill.type as SpaceType,
         capacity    : space.skill.capacity,
 	})) ?? [];
 }, [spaceData]);
@@ -99,12 +90,10 @@ interface UseSpaceReturn {
 export const useSpace = ( 
 	params : UseSpaceParams = {} 
 ): UseSpaceReturn => {
-	const { enabled = true }    = params;
-    // const url                   = `${ENV.ROOM_SYSTEM_URL}${ENV.ROOM_ENDPOINT}`
-    const url                   = `http://localhost:5000/api/v1/lov/search-by-description/Salas`
+	let { enabled } = params;
+    const url       = `${ENV.ROOM_SYSTEM_URL}${ENV.ROOM_ENDPOINT}`;
 
-    // = 'http://localhost:5000/api/v1/'
-// NEXT_PUBLIC_ROOM_ENDPOINT = 'lov/search-by-description/Salas'
+    if ( enabled === undefined ) enabled = true;
 
 	const {
 		data,
