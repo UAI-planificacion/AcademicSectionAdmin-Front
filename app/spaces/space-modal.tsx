@@ -33,7 +33,7 @@ import { ENV }  from "@/config/envs/env";
 import LoaderMini from "@/icons/LoaderMini";
 import { fetchApi } from "@/services/fetch";
 import { saveSpaceStorage } from "@/stores/local-storage-spaces";
-import { getSpaceTypeName } from "@/lib/space";
+import { getSpaceType, typeOptions } from "@/lib/utils";
 
 
 interface SpaceModalProps {
@@ -44,7 +44,7 @@ interface SpaceModalProps {
     onUpdate    : ( space: Space ) => void;
 }
 
-const typeOptions: Type[] = ["ROOM", "AUDITORIO", "DIS", "LAB", "LABPC", "GARAGE", "CORE", "COMMUNIC"]
+// const typeOptions: Type[] = ["ROOM", "AUDITORIO", "DIS", "LAB", "LABPC", "GARAGE", "CORE", "COMMUNIC"]
 const sizeOptions: Size[] = ["XS", "XE", "S", "SE", "MS", "M", "L", "XL", "XXL"]
 
 const spaceEmpty: Space = {
@@ -139,7 +139,7 @@ export function SpaceModal({ isOpen, onClose, space, onAdd, onUpdate }: SpaceMod
         }
 
         onAdd( spaceSave );
-        saveSpaceStorage( spaceSave );
+        // saveSpaceStorage( spaceSave );
 
         return spaceSave;
     }
@@ -154,7 +154,7 @@ export function SpaceModal({ isOpen, onClose, space, onAdd, onUpdate }: SpaceMod
         }
 
         onUpdate( spaceSave );
-        saveSpaceStorage( spaceSave );
+        // saveSpaceStorage( spaceSave );
         return spaceSave;
     }
 
@@ -206,7 +206,7 @@ export function SpaceModal({ isOpen, onClose, space, onAdd, onUpdate }: SpaceMod
                                 <SelectContent>
                                     {typeOptions.map(( type ) => (
                                         <SelectItem key={ type } value={ type }>
-                                            {getSpaceTypeName( type )}
+                                            {getSpaceType( type )}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
