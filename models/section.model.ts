@@ -51,7 +51,7 @@ export interface Section {
     registered              : number;
     
     // Computed/mapped fields for backward compatibility
-    room                    : string | null;  // = spaceId
+    room                    : string;  // = spaceId
     professorName           : string;  // = professor?.name || ''
     professorId             : string;  // = professor?.id || ''
     day                     : number;  // = dayId
@@ -90,4 +90,12 @@ export interface UpdateSection {
     professorId?            : string;
     dayModuleId?            : number;
     roomId?                 : string;
+}
+
+
+export enum Session {
+    C = 'C', // Cátedra
+    A = 'A', // Ayudantía
+    T = 'T', // Taller
+    L = 'L'  // Laboratorio
 }
