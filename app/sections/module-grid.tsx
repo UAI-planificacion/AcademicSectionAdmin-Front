@@ -16,15 +16,18 @@ import {
     ArrowDown10
 }  from "lucide-react"
 
+import {
+    cn,
+    getBuildingName,
+    getSpaceType
+} from "@/lib/utils";
 import type {
     SpaceData,
     SortConfig,
     SortField,
     SortDirection,
     Filters
-}                           from "@/lib/types";
-import { cn }               from "@/lib/utils";
-import { getSpaceTypeName } from "@/lib/space";
+} from "@/lib/types";
 
 import {
     Popover,
@@ -41,6 +44,7 @@ import { usePeriods }                   from "@/hooks/use-periods";
 import { useSizes }                     from "@/hooks/use-sizes";
 
 import { Section } from "@/models/section.model";
+// import { BuildingEnum } from "@/models/section-session.model";
 
 
 interface ModuleGridProps {
@@ -392,7 +396,7 @@ export function ModuleGrid({
                                                         isOpen              = { true }
                                                         options             = { uniqueTypes.map(( type ) => ({ 
                                                             value: type,
-                                                            label: getSpaceTypeName( type )
+                                                            label: getSpaceType( type )
                                                         }))}
                                                     />
                                                 </div>
@@ -609,13 +613,13 @@ export function ModuleGrid({
 
                                     {/* Tipo */}
                                     <td
-                                        title       = { `Tipo: ${ getSpaceTypeName( room.type )}` }
+                                        title       = { `Tipo: ${ getSpaceType( room.type )}` }
                                         className   = { cn(
                                             "border-x text-[12px] p-2 bg-white dark:bg-zinc-900 transition-colors",
                                             fixedColumnsConfig.type.widthClass
                                         )}
                                     >
-                                        { getSpaceTypeName( room.type )}
+                                        { getSpaceType( room.type )}
                                     </td>
 
                                     {/* Edificio */}
@@ -626,7 +630,7 @@ export function ModuleGrid({
                                             fixedColumnsConfig.building.widthClass
                                         )}
                                     >
-                                        { room.building }
+                                        { getBuildingName( room.building )}
                                     </td>
 
                                     {/* Talla */}
