@@ -1,3 +1,5 @@
+import { Difference } from "./module.model";
+
 // Hybrid interface combining Section parent data with Session data
 export interface Section {
     // Session fields (from new model)
@@ -18,7 +20,7 @@ export interface Section {
         name        : string;
         startHour   : string;
         endHour     : string;
-        difference  : 'A' | 'B' | null;
+        difference  : Difference;
     };
     date                    : Date;
     dayId                   : number;  // maps to 'day' in old model
@@ -99,3 +101,11 @@ export enum Session {
     T = 'T', // Taller
     L = 'L'  // Laboratorio
 }
+
+
+export const sessionLabels = {
+    [Session.C]: 'Cátedra',
+    [Session.A]: 'Ayudantía',
+    [Session.T]: 'Taller',
+    [Session.L]: 'Laboratorio',
+};
