@@ -37,7 +37,7 @@ async function fetchSections(): Promise<FlatSection[]> {
             date                    : session.date,
             dayId                   : session.dayId,
             dayModuleId             : session.dayModuleId,
-            
+
             // Section parent fields
             code                    : section.code,
             isClosed                : section.isClosed,
@@ -55,9 +55,9 @@ async function fetchSections(): Promise<FlatSection[]> {
             period                  : section.period,
             quota                   : section.quota,
             registered              : section.registered,
-            
+
             // Computed/mapped fields for backward compatibility
-            room                    : session.spaceId,
+            room                    : session.spaceId || '',
             professorName           : session.professor?.name || '',
             professorId             : session.professor?.id || '',
             day                     : session.dayId,
