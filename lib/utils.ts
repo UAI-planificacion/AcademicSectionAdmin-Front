@@ -1,8 +1,12 @@
-import { type ClassValue, clsx }    from "clsx"
-import { twMerge }                  from "tailwind-merge"
+import { type ClassValue, clsx }    from "clsx";
+import { format }                   from "@formkit/tempo";
+import { twMerge }                  from "tailwind-merge";
 
-import { BuildingEnum, SpaceType } from "@/models/section-session.model"
-import { Session } from "@/models/section.model";
+import {
+    BuildingEnum,
+    SpaceType
+}                   from "@/models/section-session.model";
+import { Session }  from "@/models/section.model";
 
 
 export const cn = ( ...inputs: ClassValue[] ): string => 
@@ -27,6 +31,12 @@ export function generateId( prefix: string ): string {
     return `${ prefix }${ timestamp }${ randomStr }`.toUpperCase().substring( 0, 8 );
 }
 
+
+export function tempoFormat( dateInput: Date | string | undefined ) {
+    if ( !dateInput ) return "-";
+
+    return format( dateInput, "ddd DD MMM YYYY" );
+}
 
 
 export const typeOptions: SpaceType[] = [
