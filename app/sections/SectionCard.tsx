@@ -16,6 +16,7 @@ import { cn }               from '@/lib/utils';
 import { Section }          from '@/models/section.model';
 import { getSpacesStorage } from '@/stores/local-storage-spaces';
 import { useModules }       from '@/hooks/use-modules';
+import { SessionForm } from './session-form';
 
 
 const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -38,6 +39,7 @@ interface SectionCardProps {
     onDrop                  : ( e: React.DragEvent, roomId: string, dayId: number, moduleId: string ) => void;
     onSaveSectionFromCard?  : ( section: Section ) => boolean;
 }
+
 
 export const SectionCard = memo(function SectionCard({
     section,
@@ -124,7 +126,7 @@ export const SectionCard = memo(function SectionCard({
                 isDragOver && hasSection && "bg-red-100 dark:bg-red-900 transition-colors",
             )}
         >
-            {!section && !isDragOver && (
+            { !section && !isDragOver && (
                 <button 
                     onClick={handleCreateSection}
                     className="w-full z-0 h-full flex items-center justify-center opacity-0 group-hover:opacity-100"
@@ -134,73 +136,80 @@ export const SectionCard = memo(function SectionCard({
                 </button>
             )}
 
-            {showCreateModal && (
-                <SectionModal
-                    rooms       = { getSpacesStorage() }
-                    onClose     = { handleCloseModal }
-                    onSave      = { handleSaveSection }
-                    onDelete    = { handleDeleteSection }
-                    isCreating  = { true }
-                    section     = {{
-                        // Session fields
-                        id                      : "",
-                        spaceId                 : roomId,
-                        isEnglish               : false,
-                        chairsAvailable         : 0,
-                        correctedRegistrants    : 0,
-                        realRegistrants         : 0,
-                        plannedBuilding         : "",
-                        professor               : null,
-                        module                  : {
-                            id          : moduleId,
-                            code        : "",
-                            name        : "",
-                            startHour   : "",
-                            endHour     : "",
-                            difference  : null,
-                        },
-                        date                    : new Date(),
-                        dayId                   : dayId,
-                        dayModuleId             : 0,
-                        
-                        // Section parent fields
-                        code                    : 1,
-                        isClosed                : false,
-                        groupId                 : "",
-                        startDate               : new Date(),
-                        endDate                 : new Date(),
-                        building                : null,
-                        spaceSizeId             : null,
-                        spaceType               : null,
-                        workshop                : 0,
-                        lecture                 : 0,
-                        tutoringSession         : 0,
-                        laboratory              : 0,
-                        subject                 : {
-                            id      : "",
-                            name    : "",
-                        },
-                        period                  : {
-                            id          : "",
-                            name        : "",
-                            startDate   : new Date(),
-                            endDate     : new Date(),
-                        },
-                        quota                   : 0,
-                        registered              : 0,
-
-                        // Computed/mapped fields for backward compatibility
-                        room                    : roomId,
-                        professorName           : "",
-                        professorId             : "",
-                        day                     : dayId,
-                        moduleId                : moduleId,
-                        subjectName             : "",
-                        subjectId               : "",
-                        size                    : "",
-                        session                 : "",
-                    }}
+            { showCreateModal && (
+                <SessionForm 
+                    isOpen = { showCreateModal }
+                    onClose = { handleCloseModal }
+                    session = { null }
+                    section = { null }
+                    onSave  = { () => {} }
                 />
+                // <SectionModal
+                //     rooms       = { getSpacesStorage() }
+                //     onClose     = { handleCloseModal }
+                //     onSave      = { handleSaveSection }
+                //     onDelete    = { handleDeleteSection }
+                //     isCreating  = { true }
+                //     section     = {{
+                //         // Session fields
+                //         id                      : "",
+                //         spaceId                 : roomId,
+                //         isEnglish               : false,
+                //         chairsAvailable         : 0,
+                //         correctedRegistrants    : 0,
+                //         realRegistrants         : 0,
+                //         plannedBuilding         : "",
+                //         professor               : null,
+                //         module                  : {
+                //             id          : moduleId,
+                //             code        : "",
+                //             name        : "",
+                //             startHour   : "",
+                //             endHour     : "",
+                //             difference  : null,
+                //         },
+                //         date                    : new Date(),
+                //         dayId                   : dayId,
+                //         dayModuleId             : 0,
+
+                //         // Section parent fields
+                //         code                    : 1,
+                //         isClosed                : false,
+                //         groupId                 : "",
+                //         startDate               : new Date(),
+                //         endDate                 : new Date(),
+                //         building                : null,
+                //         spaceSizeId             : null,
+                //         spaceType               : null,
+                //         workshop                : 0,
+                //         lecture                 : 0,
+                //         tutoringSession         : 0,
+                //         laboratory              : 0,
+                //         subject                 : {
+                //             id      : "",
+                //             name    : "",
+                //         },
+                //         period                  : {
+                //             id          : "",
+                //             name        : "",
+                //             startDate   : new Date(),
+                //             endDate     : new Date(),
+                //         },
+                //         quota                   : 0,
+                //         registered              : 0,
+
+                //         // Computed/mapped fields for backward compatibility
+                //         room                    : roomId,
+                //         professorName           : "",
+                //         professorId             : "",
+                //         day                     : dayId,
+                //         moduleId                : moduleId,
+                //         subjectName             : "",
+                //         subjectId               : "",
+                //         size                    : "",
+                //         session                 : "",
+                //     }}
+                // />
             )}
 
             {/* Placeholder text - only visible when cell is empty */}
@@ -220,12 +229,12 @@ export const SectionCard = memo(function SectionCard({
                                 onDoubleClick   = { handleSectionClick }
                                 title           = "Doble clic para editar, arrastrar para mover"
                                 className       = { cn(
-                                    "max-w-24 grid grid-rows-2 text-white h-full p-1 rounded cursor-move text-xs",
+                                    "max-w-24 grid grid-rows-2 h-full p-1 rounded cursor-move text-xs",
                                     draggedSection === section.id && "opacity-50",
-                                    section.lecture && "bg-[#1A9850]",
-                                    section.tutoringSession && "bg-[#F76C3B]",
-                                    section.laboratory && "bg-[#A6D96A]",
-                                    section.workshop && "bg-[#1A9850]"
+                                    section.lecture         && "bg-[#1A9850] text-white",
+                                    section.tutoringSession && "bg-[#F76C3B] text-white",
+                                    section.laboratory      && "bg-[#A6D96A] text-zinc-700",
+                                    section.workshop        && "bg-[#1A9850] text-white"
                                 )}
                             >
                                 <span className="truncate">
