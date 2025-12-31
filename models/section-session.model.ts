@@ -186,6 +186,8 @@ export interface Session {
     requestSession?         : RequestSession;
     planningChangeId        : string | null;
     // section                 : SectionSeccionPlanningChange;
+
+    sectionId? : string;
 }
 
 
