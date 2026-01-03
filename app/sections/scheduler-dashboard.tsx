@@ -497,14 +497,14 @@ export function SchedulerDashboard(): JSX.Element {
         );
     }
 
-    if ( showLoadExcel ) {
-        return (
-            <LoadExcel
-                onSuccess   = { handleLoadExcelSuccess }
-                onCancel    = { handleLoadExcelCancel }
-            />
-        );
-    }
+    // if ( showLoadExcel ) {
+    //     return (
+    //         <LoadExcel
+    //             onSuccess   = { handleLoadExcelSuccess }
+    //             onCancel    = { handleLoadExcelCancel }
+    //         />
+    //     );
+    // }
 
     return (
         <>
