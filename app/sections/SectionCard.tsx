@@ -11,10 +11,10 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-import { SectionModal }     from '@/app/sections/section-modal';
+// import { SectionModal }     from '@/app/sections/section-modal';
 import { cn }               from '@/lib/utils';
 import { Section }          from '@/models/section.model';
-import { getSpacesStorage } from '@/stores/local-storage-spaces';
+// import { getSpacesStorage } from '@/stores/local-storage-spaces';
 import { useModules }       from '@/hooks/use-modules';
 import { SessionForm } from './session-form';
 
@@ -37,11 +37,11 @@ interface SectionCardProps {
     onDragOver              : ( e: React.DragEvent, roomId: string, dayId: number, moduleId: string ) => void;
     onDragLeave             : () => void;
     onDrop                  : ( e: React.DragEvent, roomId: string, dayId: number, moduleId: string ) => void;
-    onSaveSectionFromCard?  : ( section: Section ) => boolean;
+    onCreateSession?        : ( dayId: number, moduleId: string ) => void;
 }
 
 
-export const SectionCard = memo(function SectionCard({
+export const SectionCard = memo( function SectionCard({
     section,
     dayId,
     moduleId,
@@ -56,41 +56,48 @@ export const SectionCard = memo(function SectionCard({
     onDragOver,
     onDragLeave,
     onDrop,
-    onSaveSectionFromCard
+    onCreateSession,
+    // onSaveSectionFromCard
 }: SectionCardProps): React.ReactElement {
-    const [isMoving, setIsMoving] = useState(false);
-    const [showCreateModal, setShowCreateModal] = useState(false);
+    console.log('🚀 ~ SectionCard ~ section:', section)
+    console.log('🚀 ~ SectionCard ~ moduleId:', moduleId)
+    const [isMoving, setIsMoving]               = useState<boolean>( false );
+    const [showCreateModal, setShowCreateModal] = useState<boolean>( false );
 
     const { modules } = useModules();
 
     const moduleHours = useMemo(() => {
-        const hours = modules.find(module => module.id.split('-')[0] === moduleId.split('-')[0]);
+        const hours = modules.find( module => module.id.split( '-' )[0] === moduleId.split( '-' )[0] );
+
         if ( !hours ) return '';
-        return `${hours.startHour} - ${hours.endHour}`;
+
+        return `${ hours.startHour } - ${ hours.endHour }`;
     }, [modules, moduleId]);
 
 
     const handleCreateSection = useCallback(() => {
-        setShowCreateModal(true);
-    }, []);
+        if ( onCreateSession ) {
+            onCreateSession( dayId, moduleId );
+        }
+    }, [onCreateSession, dayId, moduleId]);
 
     const handleCloseModal = useCallback(() => {
-        setShowCreateModal(false);
+        setShowCreateModal( false );
     }, []);
 
-    const handleSaveSection = useCallback(( newSection: Section ): boolean => {
-        if ( onSaveSectionFromCard ) {
-            return onSaveSectionFromCard( newSection );
-        }
-        return false;
-    }, [ onSaveSectionFromCard ] );
+    // const handleSaveSection = useCallback(( newSection: Section ): boolean => {
+    //     if ( onSaveSectionFromCard ) {
+    //         return onSaveSectionFromCard( newSection );
+    //     }
+    //     return false;
+    // }, [ onSaveSectionFromCard ] );
 
-    const handleDeleteSection = useCallback(() => {
-        setShowCreateModal(false);
-    }, []);
+    // const handleDeleteSection = useCallback(() => {
+    //     setShowCreateModal(false);
+    // }, []);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
-        setIsMoving(true);
+        setIsMoving( true );
         onDragOver(e, roomId, dayId, moduleId);
     }, [onDragOver, roomId, dayId, moduleId]);
 
@@ -136,81 +143,8 @@ export const SectionCard = memo(function SectionCard({
                 </button>
             )}
 
-            { showCreateModal && (
-                <SessionForm 
-                    isOpen = { showCreateModal }
-                    onClose = { handleCloseModal }
-                    session = { null }
-                    section = { null }
-                    onSave  = { () => {} }
-                />
-                // <SectionModal
-                //     rooms       = { getSpacesStorage() }
-                //     onClose     = { handleCloseModal }
-                //     onSave      = { handleSaveSection }
-                //     onDelete    = { handleDeleteSection }
-                //     isCreating  = { true }
-                //     section     = {{
-                //         // Session fields
-                //         id                      : "",
-                //         spaceId                 : roomId,
-                //         isEnglish               : false,
-                //         chairsAvailable         : 0,
-                //         correctedRegistrants    : 0,
-                //         realRegistrants         : 0,
-                //         plannedBuilding         : "",
-                //         professor               : null,
-                //         module                  : {
-                //             id          : moduleId,
-                //             code        : "",
-                //             name        : "",
-                //             startHour   : "",
-                //             endHour     : "",
-                //             difference  : null,
-                //         },
-                //         date                    : new Date(),
-                //         dayId                   : dayId,
-                //         dayModuleId             : 0,
+            {/* SessionForm has been moved to module-grid.tsx to prevent multiple instances */}
 
-                //         // Section parent fields
-                //         code                    : 1,
-                //         isClosed                : false,
-                //         groupId                 : "",
-                //         startDate               : new Date(),
-                //         endDate                 : new Date(),
-                //         building                : null,
-                //         spaceSizeId             : null,
-                //         spaceType               : null,
-                //         workshop                : 0,
-                //         lecture                 : 0,
-                //         tutoringSession         : 0,
-                //         laboratory              : 0,
-                //         subject                 : {
-                //             id      : "",
-                //             name    : "",
-                //         },
-                //         period                  : {
-                //             id          : "",
-                //             name        : "",
-                //             startDate   : new Date(),
-                //             endDate     : new Date(),
-                //         },
-                //         quota                   : 0,
-                //         registered              : 0,
-
-                //         // Computed/mapped fields for backward compatibility
-                //         room                    : roomId,
-                //         professorName           : "",
-                //         professorId             : "",
-                //         day                     : dayId,
-                //         moduleId                : moduleId,
-                //         subjectName             : "",
-                //         subjectId               : "",
-                //         size                    : "",
-                //         session                 : "",
-                //     }}
-                // />
-            )}
 
             {/* Placeholder text - only visible when cell is empty */}
             {!section && (
