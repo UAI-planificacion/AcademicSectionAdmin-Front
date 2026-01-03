@@ -8,13 +8,13 @@ import * as z           from 'zod';
 
 import {
     useMutation,
-    // useQuery,
+    useQuery,
     useQueryClient
 }                   from '@tanstack/react-query';
 import {
-    BookCopy,
+    // BookCopy,
     Calendar,
-    RefreshCcw
+    // RefreshCcw
 }                   from 'lucide-react';
 import { toast }    from 'sonner';
 
@@ -34,11 +34,11 @@ import {
     FormLabel,
     FormMessage
 }                               from '@/components/ui/form';
-import {
-    Card,
-    CardContent,
-    CardHeader
-}                               from '@/components/ui/card';
+// import {
+//     Card,
+//     CardContent,
+//     CardHeader
+// }                               from '@/components/ui/card';
 import { Button }               from '@/components/ui/button';
 // import { SpaceSelect }          from '@/components/shared/item-select/space-select';
 // import { ProfessorSelect }      from '@/components/shared/item-select/professor-select';
@@ -59,7 +59,7 @@ import { useAvailableDates } from '@/hooks/use-available-dates';
 import { Section, Session as SessionModel } from '@/models/section-session.model';
 import { KEY_QUERYS } from '@/lib/key-queries';
 import { CreateSessionRequest, UpdateSessionRequest } from '@/models/session-request.model';
-import { cn, tempoFormat } from '@/lib/utils';
+// import { cn, tempoFormat } from '@/lib/utils';
 import { SessionTypeSelector } from '@/components/session-type-selector';
 import { Switch } from '@/components/ui/switch';
 import { SessionModuleDays } from './session-module-days';
@@ -67,6 +67,7 @@ import { SpaceSelect } from '@/components/select/space-select';
 import { ProfessorSelect } from '@/components/select/professor-select';
 import { CalendarSelect } from '@/components/select/calendar-select';
 import { Session as SessionEnum } from '@/models/section.model';
+import { DayModule } from '@/models/module.model';
 import { SectionSelect } from '@/components/select/section-select';
 import { useSections } from '@/hooks/use-sections';
 // import { Session } from '@/models/section.model';
@@ -84,6 +85,8 @@ interface Props {
     section     : Section | null;
     onSave      : ( updatedSession: SessionModel ) => void;
     onSuccess?  : () => void;
+    dayId?      : number;
+    moduleId?   : string;
 }
 
 
@@ -106,7 +109,9 @@ export function SessionForm({
     session,
     section,
     onSave,
-    onSuccess
+    onSuccess,
+    dayId,
+    moduleId
 }: Props ) {
     const queryClient                                       = useQueryClient();
     const [ dayModuleRequired, setDayModuleRequired ]       = useState<boolean>( false );
@@ -114,12 +119,20 @@ export function SessionForm({
     const [ showCalendar, setShowCalendar ]                 = useState<boolean>( false );
     const [ shouldFetchDates, setShouldFetchDates ]         = useState<boolean>( false );
     const [ isUpdateDateSpace, setIsUpdateDateSpace  ]      = useState<boolean>( false );
-    const [ isPlanningChangeOpen, setIsPlanningChangeOpen ] = useState<boolean>( false );
+    // const [ isPlanningChangeOpen, setIsPlanningChangeOpen ] = useState<boolean>( false );
 
 	const [selectedSection, setSelectedSection] = useState<Section | null>( null );
+	const [selectedSectionId, setSelectedSectionId] = useState<string | null>( null );
 
 
     const { sections } = useSections();
+
+    // Fetch dayModules to calculate dayModuleId from dayId and moduleId
+    const { data: dayModules = [] } = useQuery({
+        queryKey: [KEY_QUERYS.MODULES, 'dayModule'],
+        queryFn: () => fetchApi<DayModule[]>({ url: 'modules/dayModule' }),
+        enabled: isOpen,
+    });
 
 
     const form = useForm<FormData>({
@@ -129,9 +142,8 @@ export function SessionForm({
             spaceId     : session?.spaceId          || null,
             isEnglish   : session?.isEnglish        || false,
             professorId : session?.professor?.id    || null,
-            date        : session?.date ? new Date( session.date ) : null,
-
             sectionId   : session?.sectionId        || null,
+            date        : session?.date ? new Date( session.date ) : null,
         }
     });
 
@@ -144,19 +156,43 @@ export function SessionForm({
                 isEnglish   : session.isEnglish,
                 professorId : session.professor?.id,
                 date        : session.date ? new Date( session.date ) : null,
-
-                sectionId   : session.sectionId        || null,
+                sectionId   : session.sectionId || null,
             });
 
-            // Marcar el módulo-día por defecto si existe
-            if ( session.dayModuleId ) {
-                setSelectedDayModuleId( session.dayModuleId );
+            // Update selected section ID for the combobox
+            setSelectedSectionId( session.sectionId || null );
+
+            setSelectedDayModuleId( session.dayModuleId ?? null );
+        } else {
+            // When creating a new session from SectionCard
+            if ( dayId && moduleId && dayModules.length > 0 ) {
+                // Parse moduleId to get the numeric part (e.g., "1-A" -> 1)
+                const numericModuleId = parseInt( moduleId.split('-')[0] );
+                
+                // Find the dayModuleId from dayModules
+                const dayModule = dayModules.find(
+                    dm => dm.dayId === dayId && dm.moduleId === numericModuleId
+                );
+                
+                if ( dayModule ) {
+                    setSelectedDayModuleId( dayModule.id );
+                } else {
+                    setSelectedDayModuleId( null );
+                }
             } else {
                 setSelectedDayModuleId( null );
             }
-        } else {
-            setSelectedDayModuleId( null );
-            form.reset();
+            
+            // Reset section selection when creating new session
+            if ( section ) {
+                setSelectedSectionId( section.id );
+                form.reset({
+                    sectionId: section.id
+                });
+            } else {
+                setSelectedSectionId( null );
+                form.reset();
+            }
         }
 
         // setSessionRequired( false );
@@ -166,7 +202,7 @@ export function SessionForm({
         const isShowDayModules = !session;
 
         setIsUpdateDateSpace( isShowDayModules );
-    }, [ session, form, isOpen ]);
+    }, [ session, form, isOpen, dayId, moduleId, dayModules.length, section ]);
 
 
     const {
@@ -178,9 +214,9 @@ export function SessionForm({
         sessionId   : session?.id || null,
         sectionId   : section?.id || null,
         dayModuleId : selectedDayModuleId,
-        spaceId     : form.watch( 'spaceId' ) || null,
+        spaceId     : form.watch( 'spaceId' )       || null,
+        professorId : form.watch( 'professorId' )   || null,
         enabled     : shouldFetchDates,
-        professorId : form.watch( 'professorId' ) || null
     });
 
     // Efecto para verificar caché cuando cambian spaceId, professorId o dayModuleId
@@ -210,6 +246,7 @@ export function SessionForm({
 
             // Verificar si la fecha actual está en las fechas disponibles
             const currentDate = form.watch( 'date' );
+
             if ( currentDate ) {
                 const isDateAvailable = cachedData.some( 
                     availableDate => availableDate.toDateString() === currentDate.toDateString()
@@ -516,6 +553,7 @@ export function SessionForm({
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit( onSubmit )} className="space-y-4">
+                        {/* Section selection field - always visible */}
                         <FormField
                             control = { form.control }
                             name    = "sectionId"
@@ -525,14 +563,15 @@ export function SessionForm({
                                         label               = "Sección"
                                         multiple            = { false }
                                         placeholder         = "Seleccionar sección"
-                                        defaultValues       = { field.value  || ''}
-                                        // disabled            = { !!propSection || !!request }
+                                        defaultValues       = { selectedSectionId || '' }
+                                        disabled            = { !!session } // Disable when editing an existing session
                                         onSelectionChange   = {( value ) => {
                                             const sectionId = typeof value === 'string' ? value : null;
                                             console.log('🚀 ~ SessionForm ~ sectionId:', sectionId)
 
                                             if ( !sectionId ) {
                                                 setSelectedSection( null );
+                                                setSelectedSectionId( null );
                                                 field.onChange( null );
                                                 return;
                                             }
@@ -544,6 +583,7 @@ export function SessionForm({
 
                                             if ( !flatSectionsForSection ) {
                                                 setSelectedSection( null );
+                                                setSelectedSectionId( null );
                                                 field.onChange( null );
                                                 return;
                                             }
@@ -578,6 +618,7 @@ export function SessionForm({
                                             }
 
                                             setSelectedSection( sectionWithSessions );
+                                            setSelectedSectionId( sectionId );
                                             field.onChange( sectionId );
                                         }}
                                     />
@@ -629,6 +670,22 @@ export function SessionForm({
                                 </FormItem>
                             )}
                         />
+
+                        {/* SessionModuleDays - Always visible */}
+                        <SessionModuleDays
+                            dayModuleIds            = { selectedDayModuleId ? [selectedDayModuleId] : [] }
+                            onDayModuleIdsChange    = { handleDayModuleIdsChange }
+                            enabled                 = { true }
+                            multiple                = { false }
+                            onDayModuleSelect       = { handleDayModuleSelect }
+                        />
+
+                        {/* Mostrar error de dayModuleId */}
+                        { dayModuleRequired && (
+                            <p className="text-sm font-medium text-destructive">
+                                Debe seleccionar un módulo y día de la tabla
+                            </p>
+                        )}
 
                         { isUpdateDateSpace && <>
                             <div className="space-y-2">
@@ -754,7 +811,7 @@ export function SessionForm({
                             </Button>
 
                             <div className="flex gap-2 items-center">
-                                { session && (
+                                {/* { session && (
                                     <Button
                                         onClick     = {() => setIsPlanningChangeOpen( true )}
                                         title       = "Abrir solicitud"
@@ -766,7 +823,7 @@ export function SessionForm({
 
                                         { `${session?.planningChangeId ? 'Ver' : 'Solicitar'} cambio de planificación` }
                                     </Button>
-                                )}
+                                )} */}
 
                                 <Button
                                     type        = "submit"
