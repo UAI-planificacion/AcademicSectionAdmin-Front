@@ -37,6 +37,7 @@ import {
 import MultiSelectCombobox  from "@/components/inputs/Combobox";
 import { Button }           from "@/components/ui/button";
 import { SectionCard }      from "@/app/sections/SectionCard";
+import { SessionForm }      from "@/app/sections/session-form";
 
 import { useDays }                      from "@/hooks/use-days";
 import { useModules, getModulesForDay } from "@/hooks/use-modules";
@@ -78,6 +79,10 @@ export function ModuleGrid({
     const [draggedSection, setDraggedSection]   = useState<string | null>( null );
     const [dragOverCell, setDragOverCell]       = useState<string | null>( null );
     const [errorMessage, setErrorMessage]       = useState<string | null>( null );
+    
+    // State for SessionForm modal
+    const [showSessionForm, setShowSessionForm] = useState<boolean>( false );
+    const [sessionFormData, setSessionFormData] = useState<{ dayId: number; moduleId: string } | null>( null );
 
     // Estados para los filtros
     const [localFilters, setLocalFilters] = useState<Filters & { rooms?: string[], types?: string[], capacities?: string[] }>({
@@ -220,7 +225,7 @@ export function ModuleGrid({
                 onDragOver              = { handleDragOver }
                 onDragLeave             = { handleDragLeave }
                 onDrop                  = { handleDrop }
-                onSaveSectionFromCard   = { onSectionSave }
+                onCreateSession         = { handleCreateSession }
             />
         );
     }, [isCalculating, getSectionsForCell, dragOverCell, draggedSection, onSectionClick, onSectionSave]);
@@ -270,6 +275,17 @@ export function ModuleGrid({
             setTimeout(() => setErrorMessage( null ), 3000 );
         }
     }
+    
+    // Handle session creation from SectionCard
+    const handleCreateSession = useCallback(( dayId: number, moduleId: string ) => {
+        setSessionFormData({ dayId, moduleId });
+        setShowSessionForm( true );
+    }, []);
+    
+    const handleCloseSessionForm = useCallback(() => {
+        setShowSessionForm( false );
+        setSessionFormData( null );
+    }, []);
 
     const fixedColumnsConfig = {
         name        : { widthClass: "w-[70px] max-w-[70px] truncate" },
@@ -723,6 +739,19 @@ export function ModuleGrid({
                     </tbody>
                 </table>
             </div>
+
+            {/* Single SessionForm instance for all cells */}
+            {showSessionForm && sessionFormData && (
+                <SessionForm
+                    isOpen      = { showSessionForm }
+                    onClose     = { handleCloseSessionForm }
+                    session     = { null }
+                    section     = { null }
+                    onSave      = { () => {} }
+                    dayId       = { sessionFormData.dayId }
+                    moduleId    = { sessionFormData.moduleId }
+                />
+            )}
         </div>
     );
 }
