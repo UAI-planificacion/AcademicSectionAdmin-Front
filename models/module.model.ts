@@ -52,4 +52,5 @@ export interface ModuleSession {
     updatedAt   : string;
     name        : string;
     days        : number[];
+    dayModules : { dayId: number }[];
 }
