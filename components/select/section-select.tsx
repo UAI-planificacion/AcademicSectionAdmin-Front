@@ -22,8 +22,8 @@ export function SectionSelect({
 	placeholder = 'Seleccionar Sección',
 	enabled     = true,
 	disabled    = false,
-	queryKey    = [ KEY_QUERYS.SECTIONS, 'not-planning' ],
-	url         = 'sections/not-planning'
+	queryKey    = [ KEY_QUERYS.SECTIONS ],
+	url         = 'sections'
 }: Props ): JSX.Element {
 	const {
 		data,
