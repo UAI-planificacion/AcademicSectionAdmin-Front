@@ -40,10 +40,12 @@ export function SessionModuleDays({
 		isLoading   : isLoadingModules,
 		isError     : isErrorModules,
 	} = useQuery({
-		queryKey    : [KEY_QUERYS.MODULES],
+		queryKey    : [KEY_QUERYS.MODULES, 'original'],
         queryFn     : () => fetchApi<ModuleSession[]>({ url: 'modules/original' }),
 		enabled,
 	});
+
+    console.log('🚀 ~ SessionModuleDays ~ modules:', modules)
 
 	const {
 		data        : dayModules = [],
