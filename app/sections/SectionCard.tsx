@@ -37,7 +37,7 @@ interface SectionCardProps {
     onDragOver              : ( e: React.DragEvent, roomId: string, dayId: number, moduleId: string ) => void;
     onDragLeave             : () => void;
     onDrop                  : ( e: React.DragEvent, roomId: string, dayId: number, moduleId: string ) => void;
-    onCreateSession?        : ( dayId: number, moduleId: string ) => void;
+    onCreateSession?        : ( dayId: number, moduleId: string, spaceId: string ) => void;
 }
 
 
@@ -77,9 +77,9 @@ export const SectionCard = memo( function SectionCard({
 
     const handleCreateSection = useCallback(() => {
         if ( onCreateSession ) {
-            onCreateSession( dayId, moduleId );
+            onCreateSession( dayId, moduleId, roomId );
         }
-    }, [onCreateSession, dayId, moduleId]);
+    }, [onCreateSession, dayId, moduleId, roomId]);
 
     const handleCloseModal = useCallback(() => {
         setShowCreateModal( false );
