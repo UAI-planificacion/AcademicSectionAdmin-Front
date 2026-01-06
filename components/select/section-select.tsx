@@ -22,7 +22,7 @@ export function SectionSelect({
 	placeholder = 'Seleccionar Sección',
 	enabled     = true,
 	disabled    = false,
-	queryKey    = [ KEY_QUERYS.SECTIONS ],
+	queryKey    = [ KEY_QUERYS.SECTIONS, 'find-all' ],
 	url         = 'sections'
 }: Props ): JSX.Element {
 	const {
@@ -53,7 +53,7 @@ export function SectionSelect({
 				<div className="space-y-1">
 					<Input
 						placeholder = "ID de la sección"
-						onChange    = {( event ) => onSelectionChange ? onSelectionChange( event.target.value ) : undefined}
+						onChange    = {( event ) => onSelectionChange ? onSelectionChange( event.target.value ) : undefined }
 						className   = "h-8"
 					/>
 
