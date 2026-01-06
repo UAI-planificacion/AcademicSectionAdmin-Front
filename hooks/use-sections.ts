@@ -23,7 +23,7 @@ async function fetchSections(): Promise<FlatSection[]> {
 
     // Transform: flatMap Section[] (with sessions) to FlatSection[]
     const flatSections: FlatSection[] = apiSections.flatMap(section => 
-        section.sessions.map(session => ({
+        section.sessions.map( session => ({
             // Session fields
             id                      : session.id,
             spaceId                 : session.spaceId,
@@ -39,6 +39,7 @@ async function fetchSections(): Promise<FlatSection[]> {
             dayModuleId             : session.dayModuleId,
 
             // Section parent fields
+            sectionId               : section.id,
             code                    : section.code,
             isClosed                : section.isClosed,
             groupId                 : section.groupId,

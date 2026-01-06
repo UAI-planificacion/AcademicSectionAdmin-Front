@@ -4,6 +4,7 @@ import { Difference } from "./module.model";
 export interface Section {
     // Session fields (from new model)
     id                      : string;
+    sectionId               : string; 
     spaceId                 : string | null;  // maps to 'room' in old model
     isEnglish               : boolean;
     chairsAvailable         : number;
