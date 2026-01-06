@@ -87,6 +87,7 @@ interface Props {
     onSuccess?  : () => void;
     dayId?      : number;
     moduleId?   : string;
+    spaceId?    : string;
 }
 
 
@@ -111,7 +112,8 @@ export function SessionForm({
     onSave,
     onSuccess,
     dayId,
-    moduleId
+    moduleId,
+    spaceId
 }: Props ) {
     const queryClient                                       = useQueryClient();
     const [ dayModuleRequired, setDayModuleRequired ]       = useState<boolean>( false );
@@ -187,11 +189,14 @@ export function SessionForm({
             if ( section ) {
                 setSelectedSectionId( section.id );
                 form.reset({
-                    sectionId: section.id
+                    sectionId: section.id,
+                    spaceId: spaceId || null
                 });
             } else {
                 setSelectedSectionId( null );
-                form.reset();
+                form.reset({
+                    spaceId: spaceId || null
+                });
             }
         }
 
@@ -202,7 +207,7 @@ export function SessionForm({
         const isShowDayModules = !session;
 
         setIsUpdateDateSpace( isShowDayModules );
-    }, [ session, form, isOpen, dayId, moduleId, dayModules.length, section ]);
+    }, [ session, form, isOpen, dayId, moduleId, dayModules.length, section, spaceId ]);
 
 
     const {
@@ -577,7 +582,7 @@ export function SessionForm({
                                             }
 
                                             // Find all flat sections that belong to this section
-                                            const flatSectionsForSection = sections?.find( s => s.groupId === sectionId ) || null;
+                                            const flatSectionsForSection = sections?.find( s => s.sectionId === sectionId ) || null;
                                             console.log('🚀 ~ SessionForm ~ sections:', sections)
                                             console.log('🚀 ~ SessionForm ~ flatSectionsForSection:', flatSectionsForSection)
 
@@ -590,7 +595,7 @@ export function SessionForm({
 
                                             // Transform FlatSection[] back to Section with nested sessions
                                             const sectionWithSessions: Section = {
-                                                id              : flatSectionsForSection.groupId,
+                                                id              : flatSectionsForSection.id,
                                                 code            : flatSectionsForSection.code,
                                                 isClosed        : flatSectionsForSection.isClosed,
                                                 groupId         : flatSectionsForSection.groupId,
@@ -605,6 +610,7 @@ export function SessionForm({
                                                 laboratory      : flatSectionsForSection.laboratory,
                                                 professor       : flatSectionsForSection.professor,
                                                 subject         : flatSectionsForSection.subject,
+                                                // sectionId       : flatSectionsForSection.sectionId,
                                                 period          : {
                                                     ...flatSectionsForSection.period,
                                                     openingDate : null,
