@@ -82,7 +82,7 @@ export function ModuleGrid({
     
     // State for SessionForm modal
     const [showSessionForm, setShowSessionForm] = useState<boolean>( false );
-    const [sessionFormData, setSessionFormData] = useState<{ dayId: number; moduleId: string } | null>( null );
+    const [sessionFormData, setSessionFormData] = useState<{ dayId: number; moduleId: string; spaceId: string } | null>( null );
 
     // Estados para los filtros
     const [localFilters, setLocalFilters] = useState<Filters & { rooms?: string[], types?: string[], capacities?: string[] }>({
@@ -277,8 +277,8 @@ export function ModuleGrid({
     }
     
     // Handle session creation from SectionCard
-    const handleCreateSession = useCallback(( dayId: number, moduleId: string ) => {
-        setSessionFormData({ dayId, moduleId });
+    const handleCreateSession = useCallback(( dayId: number, moduleId: string, spaceId: string ) => {
+        setSessionFormData({ dayId, moduleId, spaceId });
         setShowSessionForm( true );
     }, []);
     
@@ -750,6 +750,7 @@ export function ModuleGrid({
                     onSave      = { () => {} }
                     dayId       = { sessionFormData.dayId }
                     moduleId    = { sessionFormData.moduleId }
+                    spaceId     = { sessionFormData.spaceId }
                 />
             )}
         </div>
