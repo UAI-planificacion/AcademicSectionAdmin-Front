@@ -7,8 +7,9 @@ import {
     useMemo,
     useCallback,
     useRef
-}                       from 'react';
-import { useRouter }    from 'next/navigation';
+}                               from 'react';
+import { useRouter }            from 'next/navigation';
+import { useQueryClient }       from '@tanstack/react-query';
 
 import { toast } from 'sonner';
 
@@ -36,7 +37,8 @@ import {
     errorToast,
     successToast
 }               from '@/config/toast/toast.config';
-import { ENV }  from '@/config/envs/env';
+import { ENV }          from '@/config/envs/env';
+// import { KEY_QUERYS }   from '@/lib/key-queries';
 
 import { fetchApi } from '@/services/fetch';
 import { useSizes } from '@/hooks/use-sizes';
@@ -54,7 +56,8 @@ function orderSizes( sizeOrderMap: Map<string, number>, a: SpaceData, b: SpaceDa
 
 
 export function SchedulerDashboard(): JSX.Element {
-    const router = useRouter();
+    const router        = useRouter();
+    const queryClient   = useQueryClient();
 
     // Hooks de datos
     const {
@@ -84,7 +87,7 @@ export function SchedulerDashboard(): JSX.Element {
     const [filteredRooms, setFilteredRooms]         = useState<SpaceData[]>( [] );
     const [selectedSection, setSelectedSection]     = useState<Section | null>( null );
     const [isModalOpen, setIsModalOpen]             = useState<boolean>( false );
-    const [showLoadExcel, setShowLoadExcel]         = useState<boolean>( false );
+    // const [showLoadExcel, setShowLoadExcel]         = useState<boolean>( false );
     const [isInitialized, setIsInitialized]         = useState<boolean>( false );
     const [isCalculating, setIsCalculating]         = useState<boolean>( false );
     const [sortConfig, setSortConfig]               = useState<SortConfig>({
@@ -120,7 +123,7 @@ export function SchedulerDashboard(): JSX.Element {
     useEffect(() => {
         if ( !sectionsLoading && initialSections.length === 0 && !sectionsError ) {
             toast( 'No se encontraron secciones. Debes cargar un archivo Excel.', errorToast );
-            setShowLoadExcel( true );
+            // setShowLoadExcel( true );
 
             return;
         }
@@ -370,35 +373,47 @@ export function SchedulerDashboard(): JSX.Element {
     }, [sections]);
 
 
-    const getDayModuleId = useCallback(( section: Section ): number =>
+    const getDayModuleId = useCallback((
+        dayId       : number,
+        moduleId    : string
+    ): number | undefined =>
         modules.find( dayM =>
-            dayM.id === section.moduleId &&
-            dayM.dayId === section.day
-        )?.dayModuleId!,
+            dayM.id === moduleId &&
+            dayM.dayId === dayId
+        )?.dayModuleId,
     [modules]);
 
 
-    const onUpdateSection = useCallback( async ( updatedSection: Section ) => {
+    const onUpdateSection = useCallback( async (
+        sectionId   : string,
+        spaceId     : string,
+        dayModuleId : number
+    ) => {
         const saveSection: UpdateSection = {
-            roomId      : updatedSection.room ?? undefined,
-            dayModuleId : getDayModuleId( updatedSection )
+            roomId      : spaceId,
+            dayModuleId : dayModuleId
         }
 
-        const url = `${ENV.REQUEST_BACK_URL}sections/${updatedSection.id}`;
+        const url = `${ENV.REQUEST_BACK_URL}sessions/${sectionId}`;
 
         try {
             const data = await fetchApi<Section | null>( url, "PATCH", saveSection );
 
             if ( !data ) {
                 toast( 'No se pudo actualizar la sección', errorToast );
-                return;
+                return false;
             }
 
+            // Invalidate TanStack Query cache to refresh sections
+            // await queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
+
             toast( 'Sección actualizada correctamente', successToast );
+            return true;
         } catch ( error ) {
             toast( 'No se pudo actualizar la sección', errorToast );
+            return false;
         }
-    }, [modules, getDayModuleId]);
+    }, [queryClient]);
 
 
     const handleSectionMove = useCallback((
@@ -424,13 +439,25 @@ export function SchedulerDashboard(): JSX.Element {
 
         if ( !sectionToMove ) return false;
 
+        // Calculate dayModuleId from newDay and newModuleId
+        const dayModuleId = getDayModuleId( newDay, newModuleId );
+
+        if ( !dayModuleId ) {
+            toast( 'Error: No se pudo encontrar el módulo del día', errorToast );
+            return false;
+        }
+
         const updatedSection: Section = {
             ...sectionToMove,
             room        : newRoomId,
             day         : newDay,
             moduleId    : newModuleId,
+            dayModuleId : dayModuleId,
+            spaceId     : newRoomId,
+            dayId       : newDay,
         };
 
+        // Update local state optimistically
         setSections( prevSections =>
             prevSections.map( section =>
                 section.id === sectionId ? updatedSection : section
@@ -443,10 +470,11 @@ export function SchedulerDashboard(): JSX.Element {
             )
         );
 
-        onUpdateSection( updatedSection );
+        // Send update to backend
+        onUpdateSection( sectionId, newRoomId, dayModuleId );
 
         return true;
-    }, [sections, onUpdateSection]);
+    }, [sections, getDayModuleId, onUpdateSection]);
 
 
     const handleModalClose = useCallback(() => {
@@ -456,14 +484,14 @@ export function SchedulerDashboard(): JSX.Element {
 
 
     const handleLoadExcelSuccess = useCallback(() => {
-        setShowLoadExcel( false );
+        // setShowLoadExcel( false );
         toast( 'Archivo Excel cargado exitosamente. Recargando datos...', successToast );
         window.location.reload();
     }, []);
 
-    const handleLoadExcelCancel = useCallback(() => {
-        setShowLoadExcel( false );
-    }, []);
+    // const handleLoadExcelCancel = useCallback(() => {
+    //     // setShowLoadExcel( false );
+    // }, []);
 
 
     const getSectionsForCell = useCallback((roomId: string, day: number, moduleId: string) => {
@@ -476,26 +504,26 @@ export function SchedulerDashboard(): JSX.Element {
         return <TableSkeleton />;
     }
 
-    if ( sectionsError ) {
-        return (
-            <div className="flex items-center justify-center h-64">
-                <div className="text-center">
-                    <p className="text-destructive mb-2">Error al cargar secciones</p>
+    // if ( sectionsError ) {
+    //     return (
+    //         <div className="flex items-center justify-center h-64">
+    //             <div className="text-center">
+    //                 <p className="text-destructive mb-2">Error al cargar secciones</p>
 
-                    <p className="text-muted-foreground text-sm">{sectionsErrorMessage?.message}</p>
+    //                 <p className="text-muted-foreground text-sm">{sectionsErrorMessage?.message}</p>
 
-                    <div className="mt-4">
-                        <p className="text-sm text-muted-foreground mb-2">Debes cargar un archivo Excel con las secciones</p>
+    //                 <div className="mt-4">
+    //                     <p className="text-sm text-muted-foreground mb-2">Debes cargar un archivo Excel con las secciones</p>
 
-                        <LoadExcel
-                            onSuccess   = { handleLoadExcelSuccess }
-                            onCancel    = { handleLoadExcelCancel }
-                        />
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    //                     <LoadExcel
+    //                         onSuccess   = { handleLoadExcelSuccess }
+    //                         onCancel    = { handleLoadExcelCancel }
+    //                     />
+    //                 </div>
+    //             </div>
+    //         </div>
+    //     );
+    // }
 
     // if ( showLoadExcel ) {
     //     return (
