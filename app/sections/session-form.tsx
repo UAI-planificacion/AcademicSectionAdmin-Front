@@ -467,7 +467,7 @@ export function SessionForm({
 
             console.log("🚀 ~ file: session-form.tsx ~ createSession:", createSession)
 
-            // createSessionMutation.mutate( createSession );
+            createSessionMutation.mutate( createSession );
         }
     };
 
