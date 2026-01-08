@@ -16,7 +16,7 @@ import { cn }               from '@/lib/utils';
 import { Section }          from '@/models/section.model';
 // import { getSpacesStorage } from '@/stores/local-storage-spaces';
 import { useModules }       from '@/hooks/use-modules';
-import { SessionForm } from './session-form';
+// import { SessionForm } from './session-form';
 
 
 const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -59,10 +59,10 @@ export const SectionCard = memo( function SectionCard({
     onCreateSession,
     // onSaveSectionFromCard
 }: SectionCardProps): React.ReactElement {
-    console.log('🚀 ~ SectionCard ~ section:', section)
-    console.log('🚀 ~ SectionCard ~ moduleId:', moduleId)
+    // console.log('🚀 ~ SectionCard ~ section:', section)
+    // console.log('🚀 ~ SectionCard ~ moduleId:', moduleId)
     const [isMoving, setIsMoving]               = useState<boolean>( false );
-    const [showCreateModal, setShowCreateModal] = useState<boolean>( false );
+    // const [showCreateModal, setShowCreateModal] = useState<boolean>( false );
 
     const { modules } = useModules();
 
@@ -81,9 +81,9 @@ export const SectionCard = memo( function SectionCard({
         }
     }, [onCreateSession, dayId, moduleId, roomId]);
 
-    const handleCloseModal = useCallback(() => {
-        setShowCreateModal( false );
-    }, []);
+    // const handleCloseModal = useCallback(() => {
+    //     setShowCreateModal( false );
+    // }, []);
 
     // const handleSaveSection = useCallback(( newSection: Section ): boolean => {
     //     if ( onSaveSectionFromCard ) {
