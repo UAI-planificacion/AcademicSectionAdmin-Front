@@ -23,7 +23,7 @@ export function SectionSelect({
 	enabled     = true,
 	disabled    = false,
 	queryKey    = [ KEY_QUERYS.SECTIONS, 'find-all' ],
-	url         = 'sections'
+	url         = 'sections?onlyWithSessions=true'
 }: Props ): JSX.Element {
 	const {
 		data,
