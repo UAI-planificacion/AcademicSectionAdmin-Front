@@ -69,7 +69,6 @@ import { CalendarSelect } from '@/components/select/calendar-select';
 import { Session as SessionEnum } from '@/models/section.model';
 import { DayModule } from '@/models/module.model';
 import { SectionSelect } from '@/components/select/section-select';
-import { useSections } from '@/hooks/use-sections';
 // import { Session } from '@/models/section.model';
 // import { cn, tempoFormat }              from '@/lib/utils';
 // import { useAvailableDates }            from '@/hooks/use-available-dates';
@@ -123,11 +122,7 @@ export function SessionForm({
     const [ isUpdateDateSpace, setIsUpdateDateSpace  ]      = useState<boolean>( false );
     // const [ isPlanningChangeOpen, setIsPlanningChangeOpen ] = useState<boolean>( false );
 
-	const [selectedSection, setSelectedSection] = useState<Section | null>( null );
 	const [selectedSectionId, setSelectedSectionId] = useState<string | null>( null );
-
-
-    const { sections } = useSections();
 
     // Fetch dayModules to calculate dayModuleId from dayId and moduleId
     const { data: dayModules = [] } = useQuery({
@@ -217,7 +212,7 @@ export function SessionForm({
         error       : errorDates
     } = useAvailableDates({
         sessionId   : session?.id || null,
-        sectionId   : section?.id || null,
+        sectionId   : form.watch( 'sectionId' ) || section?.id || null,
         dayModuleId : selectedDayModuleId,
         spaceId     : form.watch( 'spaceId' )       || null,
         professorId : form.watch( 'professorId' )   || null,
@@ -268,6 +263,9 @@ export function SessionForm({
             form.setValue( 'date', null );
         }
     }, [ form.watch( 'spaceId' ), form.watch( 'professorId' ), selectedDayModuleId, isOpen, session?.id, queryClient, form ]);
+
+
+
 
 
     // Efecto para manejar el resultado de la query
@@ -379,6 +377,13 @@ export function SessionForm({
 
 
     const handleFetchAvailableDates = () => {
+        const currentSectionId = form.watch('sectionId') || section?.id;
+        
+        if ( !currentSectionId ) {
+            toast( 'Debe seleccionar una sección primero antes de buscar fechas disponibles.', errorToast );
+            return;
+        }
+        
         if ( !selectedDayModuleId ) {
             toast( 'Debe seleccionar un día/módulo de la tabla.', errorToast );
             return;
@@ -449,12 +454,12 @@ export function SessionForm({
 
             console.log("🚀 ~ file: session-form.tsx ~ updatedSession:", updatedSession)
 
-            updateSessionMutation.mutate( updatedSession );
+            // updateSessionMutation.mutate( updatedSession );
         } else {
             const createSession : CreateSessionRequest = {
                 ...sessionData,
                 name        : data.name!,
-                sectionId   : section?.id!,
+                sectionId   : data.sectionId || section?.id!,
                 ...(spaceId && { spaceId }),
                 dayModuleId : selectedDayModuleId,
                 ...( isEnglish !== null && isEnglish !== undefined && { isEnglish }),
@@ -462,7 +467,7 @@ export function SessionForm({
 
             console.log("🚀 ~ file: session-form.tsx ~ createSession:", createSession)
 
-            createSessionMutation.mutate( createSession );
+            // createSessionMutation.mutate( createSession );
         }
     };
 
@@ -571,59 +576,17 @@ export function SessionForm({
                                         defaultValues       = { selectedSectionId || '' }
                                         disabled            = { !!session } // Disable when editing an existing session
                                         onSelectionChange   = {( value ) => {
+                                            console.log('🔍 SectionSelect value received:', value, 'type:', typeof value);
                                             const sectionId = typeof value === 'string' ? value : null;
                                             console.log('🚀 ~ SessionForm ~ sectionId:', sectionId)
 
                                             if ( !sectionId ) {
-                                                setSelectedSection( null );
                                                 setSelectedSectionId( null );
                                                 field.onChange( null );
                                                 return;
                                             }
 
-                                            // Find all flat sections that belong to this section
-                                            const flatSectionsForSection = sections?.find( s => s.sectionId === sectionId ) || null;
-                                            console.log('🚀 ~ SessionForm ~ sections:', sections)
-                                            console.log('🚀 ~ SessionForm ~ flatSectionsForSection:', flatSectionsForSection)
-
-                                            if ( !flatSectionsForSection ) {
-                                                setSelectedSection( null );
-                                                setSelectedSectionId( null );
-                                                field.onChange( null );
-                                                return;
-                                            }
-
-                                            // Transform FlatSection[] back to Section with nested sessions
-                                            const sectionWithSessions: Section = {
-                                                id              : flatSectionsForSection.id,
-                                                code            : flatSectionsForSection.code,
-                                                isClosed        : flatSectionsForSection.isClosed,
-                                                groupId         : flatSectionsForSection.groupId,
-                                                startDate       : flatSectionsForSection.startDate,
-                                                building        : flatSectionsForSection.building as any, // Cast to BuildingEnum
-                                                endDate         : flatSectionsForSection.endDate,
-                                                spaceSizeId     : flatSectionsForSection.spaceSizeId as any, // Cast to Size enum
-                                                spaceType       : flatSectionsForSection.spaceType as any, // Cast to SpaceType enum
-                                                workshop        : flatSectionsForSection.workshop,
-                                                lecture         : flatSectionsForSection.lecture,
-                                                tutoringSession : flatSectionsForSection.tutoringSession,
-                                                laboratory      : flatSectionsForSection.laboratory,
-                                                professor       : flatSectionsForSection.professor,
-                                                subject         : flatSectionsForSection.subject,
-                                                // sectionId       : flatSectionsForSection.sectionId,
-                                                period          : {
-                                                    ...flatSectionsForSection.period,
-                                                    openingDate : null,
-                                                    closingDate : null,
-                                                },
-                                                quota           : flatSectionsForSection.quota,
-                                                registered      : flatSectionsForSection.registered,
-                                                sessionsCount   : 0,
-                                                haveRequest     : false, // You may need to determine this based on your logic
-                                                sessions        : [],
-                                            }
-
-                                            setSelectedSection( sectionWithSessions );
+                                            // Simply store the sectionId - no need to transform
                                             setSelectedSectionId( sectionId );
                                             field.onChange( sectionId );
                                         }}
