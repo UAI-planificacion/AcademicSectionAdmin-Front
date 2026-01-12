@@ -66,7 +66,7 @@ import { SessionModuleDays } from './session-module-days';
 import { SpaceSelect } from '@/components/select/space-select';
 import { ProfessorSelect } from '@/components/select/professor-select';
 import { CalendarSelect } from '@/components/select/calendar-select';
-import { Session as SessionEnum } from '@/models/section.model';
+import { SessionType, SectionSession } from '@/models/section.model';
 import { DayModule } from '@/models/module.model';
 import { SectionSelect } from '@/components/select/section-select';
 // import { Session } from '@/models/section.model';
@@ -78,20 +78,19 @@ import { SectionSelect } from '@/components/select/section-select';
 
 
 interface Props {
-    isOpen      : boolean;
-    onClose     : () => void;
-    session     : SessionModel | null;
-    section     : Section | null;
-    onSave      : ( updatedSession: SessionModel ) => void;
-    onSuccess?  : () => void;
-    dayId?      : number;
-    moduleId?   : string;
-    spaceId?    : string;
+    isOpen          : boolean;
+    onClose         : () => void;
+    sectionSession  : SectionSession | null;
+    onSave          : ( updatedSession: SessionModel ) => void;
+    onSuccess?      : () => void;
+    dayId?          : number;
+    moduleId?       : string;
+    spaceId?        : string;
 }
 
 
 const formSchema = z.object({
-    name        : z.nativeEnum( SessionEnum ),
+    name        : z.nativeEnum( SessionType ),
     spaceId     : z.string().nullable().optional(),
     isEnglish   : z.boolean().nullable().optional(),
     professorId : z.string().nullable().optional(),
@@ -106,8 +105,7 @@ type FormData = z.infer<typeof formSchema>;
 export function SessionForm({
     isOpen,
     onClose,
-    session,
-    section,
+    sectionSession,
     onSave,
     onSuccess,
     dayId,
@@ -119,7 +117,7 @@ export function SessionForm({
     const [ selectedDayModuleId, setSelectedDayModuleId ]   = useState<number | null>( null );
     const [ showCalendar, setShowCalendar ]                 = useState<boolean>( false );
     const [ shouldFetchDates, setShouldFetchDates ]         = useState<boolean>( false );
-    const [ isUpdateDateSpace, setIsUpdateDateSpace  ]      = useState<boolean>( false );
+    // const [ isUpdateDateSpace, setIsUpdateDateSpace  ]      = useState<boolean>( true );
     // const [ isPlanningChangeOpen, setIsPlanningChangeOpen ] = useState<boolean>( false );
 
 	const [selectedSectionId, setSelectedSectionId] = useState<string | null>( null );
@@ -135,42 +133,42 @@ export function SessionForm({
     const form = useForm<FormData>({
         resolver    : zodResolver( formSchema ),
         defaultValues: {
-            name        : session?.name,
-            spaceId     : session?.spaceId          || null,
-            isEnglish   : session?.isEnglish        || false,
-            professorId : session?.professor?.id    || null,
-            sectionId   : session?.sectionId        || null,
-            date        : session?.date ? new Date( session.date ) : null,
+            name        : sectionSession?.session.name,
+            spaceId     : sectionSession?.session.spaceId          || null,
+            isEnglish   : sectionSession?.session.isEnglish        || false,
+            professorId : sectionSession?.session.professor?.id    || null,
+            sectionId   : sectionSession?.id                       || null,
+            date        : sectionSession?.session.date ? new Date( sectionSession.session.date ) : null,
         }
     });
 
 
     useEffect(() => {
-        if ( session ) {
+        if ( sectionSession ) {
             form.reset({
-                name        : session.name,
-                spaceId     : session.spaceId,
-                isEnglish   : session.isEnglish,
-                professorId : session.professor?.id,
-                date        : session.date ? new Date( session.date ) : null,
-                sectionId   : session.sectionId || null,
+                name        : sectionSession.session.name,
+                spaceId     : sectionSession.session.spaceId,
+                isEnglish   : sectionSession.session.isEnglish,
+                professorId : sectionSession.session.professor?.id,
+                date        : sectionSession.session.date ? new Date( sectionSession.session.date ) : null,
+                sectionId   : sectionSession.id || null,
             });
 
             // Update selected section ID for the combobox
-            setSelectedSectionId( session.sectionId || null );
+            setSelectedSectionId( sectionSession.id || null );
 
-            setSelectedDayModuleId( session.dayModuleId ?? null );
+            setSelectedDayModuleId( sectionSession.session.dayModuleId ?? null );
         } else {
             // When creating a new session from SectionCard
             if ( dayId && moduleId && dayModules.length > 0 ) {
                 // Parse moduleId to get the numeric part (e.g., "1-A" -> 1)
                 const numericModuleId = parseInt( moduleId.split('-')[0] );
-                
+
                 // Find the dayModuleId from dayModules
                 const dayModule = dayModules.find(
                     dm => dm.dayId === dayId && dm.moduleId === numericModuleId
                 );
-                
+
                 if ( dayModule ) {
                     setSelectedDayModuleId( dayModule.id );
                 } else {
@@ -179,12 +177,12 @@ export function SessionForm({
             } else {
                 setSelectedDayModuleId( null );
             }
-            
+
             // Reset section selection when creating new session
-            if ( section ) {
-                setSelectedSectionId( section.id );
+            if ( sectionSession ) {
+                setSelectedSectionId( sectionSession as string );
                 form.reset({
-                    sectionId: section.id,
+                    sectionId: '',
                     spaceId: spaceId || null
                 });
             } else {
@@ -199,34 +197,48 @@ export function SessionForm({
         setShowCalendar( false );
         setShouldFetchDates( false );
 
-        const isShowDayModules = !session;
+        // const isShowDayModules = !sectionSession;
 
-        setIsUpdateDateSpace( isShowDayModules );
-    }, [ session, form, isOpen, dayId, moduleId, dayModules.length, section, spaceId ]);
+        // setIsUpdateDateSpace( isShowDayModules );
+
+        // When editing a session, show the calendar with the current date as the only available date
+        if ( sectionSession?.session.date ) {
+            setShowCalendar( true );
+        }
+    }, [ sectionSession, form, isOpen, dayId, moduleId, dayModules.length, spaceId ]);
 
 
+    // When editing, use the current session date as the only available date initially
+    // When creating or after fetching, use the fetched dates
     const {
-        data        : availableDates = [],
+        data        : fetchedDates = [],
         isLoading   : isLoadingDates,
         isError     : isErrorDates,
         error       : errorDates
     } = useAvailableDates({
-        sessionId   : session?.id || null,
-        sectionId   : form.watch( 'sectionId' ) || section?.id || null,
+        sessionId   : sectionSession?.session.id || null,
+        sectionId   : form.watch( 'sectionId' ) || sectionSession?.id || null,
         dayModuleId : selectedDayModuleId,
         spaceId     : form.watch( 'spaceId' )       || null,
         professorId : form.watch( 'professorId' )   || null,
         enabled     : shouldFetchDates,
     });
 
+    // Determine which dates to show
+    const availableDates = shouldFetchDates || !sectionSession
+        ? fetchedDates
+        : sectionSession?.session.date
+            ? [new Date(sectionSession.session.date)]  // Convert to Date object
+            : [];
+
     // Efecto para verificar caché cuando cambian spaceId, professorId o dayModuleId
     // Solo aplica cuando hay una sesión existente (modo edición)
     useEffect(() => {
-        if ( !isOpen || !session?.id ) return;
+        if ( !isOpen || !sectionSession?.session.id ) return;
 
         const currentSpaceId        = form.watch( 'spaceId' );
         const currentProfessorId    = form.watch( 'professorId' );
-        const currentSessionId      = session.id;
+        const currentSessionId      = sectionSession.session.id;
 
         // Si no hay día/módulo seleccionado, deshabilitar calendario
         if ( !selectedDayModuleId ) {
@@ -262,7 +274,7 @@ export function SessionForm({
             setShowCalendar( false );
             form.setValue( 'date', null );
         }
-    }, [ form.watch( 'spaceId' ), form.watch( 'professorId' ), selectedDayModuleId, isOpen, session?.id, queryClient, form ]);
+    }, [ form.watch( 'spaceId' ), form.watch( 'professorId' ), selectedDayModuleId, isOpen, sectionSession?.session.id, queryClient, form ]);
 
 
 
@@ -314,7 +326,7 @@ export function SessionForm({
         mutationFn: createSessionApi,
         onSuccess: ( createdSession ) => {
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SESSIONS, section?.id] });
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SESSIONS, sectionSession?.id] });
 
             onSave( createdSession );
             onClose();
@@ -329,7 +341,7 @@ export function SessionForm({
         mutationFn: updateSessionApi,
         onSuccess: ( updatedSession ) => {
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SESSIONS, section?.id] });
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SESSIONS, sectionSession?.id] });
 
             onSave( updatedSession );
             onClose();
@@ -377,7 +389,7 @@ export function SessionForm({
 
 
     const handleFetchAvailableDates = () => {
-        const currentSectionId = form.watch('sectionId') || section?.id;
+        const currentSectionId = form.watch('sectionId') || sectionSession?.id;
         
         if ( !currentSectionId ) {
             toast( 'Debe seleccionar una sección primero antes de buscar fechas disponibles.', errorToast );
@@ -442,14 +454,14 @@ export function SessionForm({
 
         console.log('🚀 ~ file: session-form.tsx:377 ~ sessionData:', sessionData)
 
-        if ( session ) {
+        if ( sectionSession ) {
             const updatedSession: UpdateSessionRequest = {
                 ...sessionData,
                 dayModuleId : selectedDayModuleId,
                 ...( spaceId && { spaceId }),
                 ...( name && { name }),
                 ...( isEnglish !== null && isEnglish !== undefined && { isEnglish }),
-                id: session.id,
+                id: sectionSession.session.id,
             };
 
             console.log("🚀 ~ file: session-form.tsx ~ updatedSession:", updatedSession)
@@ -459,7 +471,8 @@ export function SessionForm({
             const createSession : CreateSessionRequest = {
                 ...sessionData,
                 name        : data.name!,
-                sectionId   : data.sectionId || section?.id!,
+                // sectionId   : data.sectionId || sectionSession?.id!,
+                sectionId   : data.sectionId || '',
                 ...(spaceId && { spaceId }),
                 dayModuleId : selectedDayModuleId,
                 ...( isEnglish !== null && isEnglish !== undefined && { isEnglish }),
@@ -487,11 +500,11 @@ export function SessionForm({
             <DialogContent className="sm:max-w-3xl max-h-[100vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>
-                        { session ? 'Editar Sesión' : 'Crear Nueva Sesión' }
+                        { sectionSession ? 'Editar Sesión' : 'Crear Nueva Sesión' }
                     </DialogTitle>
 
                     <DialogDescription>
-                        { session
+                        { sectionSession
                             ? 'Modifica los datos de la sesión individual.'
                             : 'Completa los datos para crear una nueva sesión.'
                         }
@@ -564,38 +577,38 @@ export function SessionForm({
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit( onSubmit )} className="space-y-4">
                         {/* Section selection field - always visible */}
-                        <FormField
-                            control = { form.control }
-                            name    = "sectionId"
-                            render  = {({ field }) => (
-                                <FormItem>
-                                    <SectionSelect
-                                        label               = "Sección"
-                                        multiple            = { false }
-                                        placeholder         = "Seleccionar sección"
-                                        defaultValues       = { selectedSectionId || '' }
-                                        disabled            = { !!session } // Disable when editing an existing session
-                                        onSelectionChange   = {( value ) => {
-                                            console.log('🔍 SectionSelect value received:', value, 'type:', typeof value);
-                                            const sectionId = typeof value === 'string' ? value : null;
-                                            console.log('🚀 ~ SessionForm ~ sectionId:', sectionId)
+                        { !sectionSession &&
+                            <FormField
+                                control = { form.control }
+                                name    = "sectionId"
+                                render  = {({ field }) => (
+                                    <FormItem>
+                                        <SectionSelect
+                                            label               = "Sección"
+                                            multiple            = { false }
+                                            placeholder         = "Seleccionar sección"
+                                            defaultValues       = { selectedSectionId || '' }
+                                            // disabled            = { !!session } // Disable when editing an existing session
+                                            onSelectionChange   = {( value ) => {
+                                                const sectionId = typeof value === 'string' ? value : null;
 
-                                            if ( !sectionId ) {
-                                                setSelectedSectionId( null );
-                                                field.onChange( null );
-                                                return;
-                                            }
+                                                if ( !sectionId ) {
+                                                    setSelectedSectionId( null );
+                                                    field.onChange( null );
+                                                    return;
+                                                }
 
-                                            // Simply store the sectionId - no need to transform
-                                            setSelectedSectionId( sectionId );
-                                            field.onChange( sectionId );
-                                        }}
-                                    />
+                                                // Simply store the sectionId - no need to transform
+                                                setSelectedSectionId( sectionId );
+                                                field.onChange( sectionId );
+                                            }}
+                                        />
 
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        }
 
                         <FormField
                             control	= { form.control }
@@ -656,7 +669,7 @@ export function SessionForm({
                             </p>
                         )}
 
-                        { isUpdateDateSpace && <>
+                        {/* { isUpdateDateSpace && <> */}
                             <div className="space-y-2">
                                 {/* <SessionModuleDays
                                     dayModuleIds            = { selectedDayModuleId ? [selectedDayModuleId] : [] }
@@ -743,17 +756,17 @@ export function SessionForm({
                                 />
                             </div>
 
-                            <div className="flex gap-2">
-                                { !!session &&
-                                    <Button
+                            {/* <div className="flex gap-2"> */}
+                                {/* { !!session && */}
+                                    {/* <Button
                                         type        = "button"
                                         variant     = "outline"
-                                        onClick     = {() => setIsUpdateDateSpace( false )}
+                                        // onClick     = {() => setIsUpdateDateSpace( false )}
                                         className   = "w-full gap-2"
                                     >
                                         Cancelar
-                                    </Button>
-                                }
+                                    </Button> */}
+                                {/* } */}
 
                                 <Button
                                     type        = "button"
@@ -764,9 +777,9 @@ export function SessionForm({
                                     <Calendar className="h-4 w-4" />
                                     { isLoadingDates ? 'Buscando...' : 'Buscar fechas disponibles' }
                                 </Button>
-                            </div>
-                        </>
-                        }
+                            {/* </div> */}
+                        {/* </> */}
+                        {/* } */}
 
                         {/* Action Buttons */}
                         <DialogFooter className="flex items-center justify-between border-t pt-4">
@@ -804,7 +817,7 @@ export function SessionForm({
                                 >
                                     {( createSessionMutation.isPending || updateSessionMutation.isPending )
                                         ? 'Guardando...' 
-                                        : session
+                                        : sectionSession
                                             ? 'Guardar Cambios'
                                             : 'Crear Sesión'
                                     }
