@@ -11,38 +11,37 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-// import { SectionModal }     from '@/app/sections/section-modal';
-import { cn }               from '@/lib/utils';
-import { Section }          from '@/models/section.model';
-// import { getSpacesStorage } from '@/stores/local-storage-spaces';
-import { useModules }       from '@/hooks/use-modules';
-// import { SessionForm } from './session-form';
+import { cn, sessionColors }    from '@/lib/utils';
+import { SectionSession }       from '@/models/section.model';
+import { useModules }           from '@/hooks/use-modules';
 
 
 const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
 
-interface SectionCardProps {
-    section                 : Section | null;
-    dayId                   : number;
-    moduleId                : string;
-    roomId                  : string;
-    isLastModule            : boolean;
-    moduleIndex             : number;
-    isDragOver              : boolean;
-    hasSection              : boolean;
-    draggedSection          : string | null;
-    onSectionClick          : ( sectionId: string ) => void;
-    onDragStart             : ( e: React.DragEvent, sectionId: string ) => void;
-    onDragOver              : ( e: React.DragEvent, roomId: string, dayId: number, moduleId: string ) => void;
-    onDragLeave             : () => void;
-    onDrop                  : ( e: React.DragEvent, roomId: string, dayId: number, moduleId: string ) => void;
-    onCreateSession?        : ( dayId: number, moduleId: string, spaceId: string ) => void;
+interface Props {
+    section             : SectionSession | null;
+    dayModuleId         : number;
+    dayId               : number;
+    moduleId            : string;
+    roomId              : string;
+    isLastModule        : boolean;
+    moduleIndex         : number;
+    isDragOver          : boolean;
+    hasSection          : boolean;
+    draggedSection      : string | null;
+    onSectionClick      : ( sectionId: string ) => void;
+    onDragStart         : ( e: React.DragEvent, sectionId: string ) => void;
+    onDragOver          : ( e: React.DragEvent, roomId: string, dayModuleId: number ) => void;
+    onDragLeave         : () => void;
+    onDrop              : ( e: React.DragEvent, roomId: string, dayModuleId: number ) => void;
+    onCreateSession?    : ( dayId: number, moduleId: string, spaceId: string ) => void;
 }
 
 
 export const SectionCard = memo( function SectionCard({
     section,
+    dayModuleId,
     dayId,
     moduleId,
     roomId,
@@ -57,12 +56,8 @@ export const SectionCard = memo( function SectionCard({
     onDragLeave,
     onDrop,
     onCreateSession,
-    // onSaveSectionFromCard
-}: SectionCardProps): React.ReactElement {
-    // console.log('🚀 ~ SectionCard ~ section:', section)
-    // console.log('🚀 ~ SectionCard ~ moduleId:', moduleId)
-    const [isMoving, setIsMoving]               = useState<boolean>( false );
-    // const [showCreateModal, setShowCreateModal] = useState<boolean>( false );
+}: Props): React.ReactElement {
+    const [isMoving, setIsMoving] = useState<boolean>( false );
 
     const { modules } = useModules();
 
@@ -98,13 +93,15 @@ export const SectionCard = memo( function SectionCard({
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         setIsMoving( true );
-        onDragOver(e, roomId, dayId, moduleId);
-    }, [onDragOver, roomId, dayId, moduleId]);
+        onDragOver(e, roomId, dayModuleId);
+    }, [onDragOver, roomId, dayModuleId]);
+
 
     const handleDrop = useCallback((e: React.DragEvent) => {
         setIsMoving(false);
-        onDrop(e, roomId, dayId, moduleId);
-    }, [onDrop, roomId, dayId, moduleId]);
+        onDrop(e, roomId, dayModuleId);
+    }, [onDrop, roomId, dayModuleId]);
+
 
     const handleSectionClick = useCallback(() => {
         if (section) {
@@ -112,11 +109,13 @@ export const SectionCard = memo( function SectionCard({
         }
     }, [section, onSectionClick]);
 
+
     const handleDragStart = useCallback((e: React.DragEvent) => {
         if (section) {
             onDragStart(e, section.id);
         }
     }, [section, onDragStart]);
+
 
     return (
         <td
@@ -163,16 +162,13 @@ export const SectionCard = memo( function SectionCard({
                                 onDoubleClick   = { handleSectionClick }
                                 title           = "Doble clic para editar, arrastrar para mover"
                                 className       = { cn(
-                                    "max-w-24 grid grid-rows-2 h-full p-1 rounded cursor-move text-xs",
+                                    "max-w-24 grid grid-rows-2 h-full p-1 rounded cursor-move text-xs text-white",
                                     draggedSection === section.id && "opacity-50",
-                                    section.lecture         && "bg-[#1A9850] text-white",
-                                    section.tutoringSession && "bg-[#F76C3B] text-white",
-                                    section.laboratory      && "bg-[#A6D96A] text-zinc-700",
-                                    section.workshop        && "bg-[#1A9850] text-white"
+                                    sessionColors[section.session.name]
                                 )}
                             >
                                 <span className="truncate">
-                                    { section.subjectId }-{ section.code }
+                                    { section.subject.id }-{ section.code }
                                 </span>
 
                                 <span className="truncate">
@@ -180,15 +176,19 @@ export const SectionCard = memo( function SectionCard({
                                 </span>
 
                                 <span className="text-xs truncate">
-                                    { section.professorName }
+                                    { section.session?.professor?.name || 'Sin profesor' }
                                 </span>
                             </div>
                         </TooltipTrigger>
 
                         { !isMoving && <TooltipContent>
                             <div className="grid">
+                                {/* <span className="truncate">
+                                    ID: { section.id }
+                                </span> */}
+
                                 <span className="truncate">
-                                    SSEC: { section.subjectId }-{ section.code }
+                                    SSEC: { section.subject.id }-{ section.code }
                                 </span>
 
                                 <span className="truncate">
@@ -196,31 +196,31 @@ export const SectionCard = memo( function SectionCard({
                                 </span>
 
                                 <span className="truncate">
-                                    Espacio: { section.room }
+                                    Espacio: { section.session.spaceId }
                                 </span>
 
                                 <span className="truncate">
-                                    Fecha: { section.date.toString().split('T')[0] }
+                                    Fecha: { section.session.date.toString().split('T')[0] }
                                 </span>
 
                                 <span className="truncate">
-                                    Día: { dayNames[ section.day - 1 ]}
+                                    Día: { dayNames[ section.session.dayId - 1 ]}
                                 </span>
 
                                 <span className="truncate">
-                                    Módulo: { section.module.name }
+                                    Módulo: { section.session.module.name }
                                 </span>
 
-                                <span className="truncate">
+                                {/* <span className="truncate">
                                     Tamaño: { section.size }
+                                </span> */}
+
+                                <span className="truncate">
+                                    Sesión: { section.session.name }
                                 </span>
 
                                 <span className="truncate">
-                                    Sesión: { section.session }
-                                </span>
-
-                                <span className="truncate">
-                                    Idioma: { section.isEnglish ? 'Inglés' : 'Español' }
+                                    Idioma: { section.session.isEnglish ? 'Inglés' : 'Español' }
                                 </span>
 
                                 <span className="truncate">
@@ -232,13 +232,13 @@ export const SectionCard = memo( function SectionCard({
                                 </span>
 
                                 <span className="truncate">
-                                    Asientos disponibles: { section.chairsAvailable }
+                                    Asientos disponibles: { section.session.chairsAvailable }
                                 </span>
 
                                 <span className="truncate">
                                     Profesor: {
-                                        section.professorName !== 'Sin profesor'
-                                        ? section.professorId + '-' + section.professorName
+                                        section.session.professor?.name !== 'Sin profesor'
+                                        ? section.session.professor?.id + '-' + section.session.professor?.name
                                         : 'Sin profesor'
                                     }
                                 </span>
@@ -252,9 +252,9 @@ export const SectionCard = memo( function SectionCard({
 }, ( prevProps, nextProps ) => {
     // Comparar propiedades básicas
     if (
-        prevProps.isDragOver        !== nextProps.isDragOver    ||
-        prevProps.hasSection        !== nextProps.hasSection    ||
-        prevProps.draggedSection    !== nextProps.draggedSection
+        prevProps.isDragOver        !== nextProps.isDragOver
+        || prevProps.hasSection     !== nextProps.hasSection
+        || prevProps.draggedSection !== nextProps.draggedSection
     ) {
         return false;
     }
@@ -271,21 +271,17 @@ export const SectionCard = memo( function SectionCard({
     // En este punto, ambas secciones existen (no son null)
     // Comparar propiedades importantes de la sección
     return (
-        prevSection!.id                      === nextSection!.id                      &&
-        prevSection!.code                    === nextSection!.code                    &&
-        prevSection!.subjectId               === nextSection!.subjectId               &&
-        prevSection!.subjectName             === nextSection!.subjectName             &&
-        prevSection!.period.name             === nextSection!.period.name             &&
-        prevSection!.professorName           === nextSection!.professorName           &&
-        prevSection!.professorId             === nextSection!.professorId             &&
-        prevSection!.room                    === nextSection!.room                    &&
-        prevSection!.day                     === nextSection!.day                     &&
-        prevSection!.moduleId                === nextSection!.moduleId                &&
-        prevSection!.session                 === nextSection!.session                 &&
-        prevSection!.size                    === nextSection!.size                    &&
-        prevSection!.correctedRegistrants    === nextSection!.correctedRegistrants    &&
-        prevSection!.realRegistrants         === nextSection!.realRegistrants         &&
-        prevSection!.plannedBuilding         === nextSection!.plannedBuilding         &&
-        prevSection!.chairsAvailable         === nextSection!.chairsAvailable
+        prevSection!.id                         === nextSection!.id
+        && prevSection!.code                    === nextSection!.code
+        && prevSection!.subject.id              === nextSection!.subject.id
+        && prevSection!.subject.name            === nextSection!.subject.name
+        && prevSection!.period.name             === nextSection!.period.name
+        && prevSection!.session.professor?.name === nextSection!.session.professor?.name
+        && prevSection!.session.professor?.id   === nextSection!.session.professor?.id
+        && prevSection!.session.spaceId         === nextSection!.session.spaceId
+        && prevSection!.session.dayId           === nextSection!.session.dayId
+        && prevSection!.session.module.id       === nextSection!.session.module.id
+        && prevSection!.session.name            === nextSection!.session.name
+        && prevSection!.session.chairsAvailable === nextSection!.session.chairsAvailable
     );
 });
