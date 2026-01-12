@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { 
-    Section as FlatSection 
+    SectionSession,
+    SessionType
 } from '@/models/section.model';
 
 import { 
@@ -11,7 +12,7 @@ import {
 import { ENV } from '@/config/envs/env';
 
 
-async function fetchSections(): Promise<FlatSection[]> {
+async function fetchSections(): Promise<SectionSession[]> {
     const API_URL   = `${ENV.REQUEST_BACK_URL}sections/sessions`;
     const response  = await fetch( API_URL );
 
@@ -21,61 +22,42 @@ async function fetchSections(): Promise<FlatSection[]> {
 
     const apiSections: ApiSection[] = await response.json();
 
-    // Transform: flatMap Section[] (with sessions) to FlatSection[]
-    const flatSections: FlatSection[] = apiSections.flatMap(section => 
-        section.sessions.map( session => ({
-            // Session fields
-            id                      : session.id,
-            spaceId                 : session.spaceId,
-            isEnglish               : session.isEnglish,
-            chairsAvailable         : session.chairsAvailable,
-            correctedRegistrants    : session.correctedRegistrants,
-            realRegistrants         : session.realRegistrants,
-            plannedBuilding         : session.plannedBuilding,
-            professor               : session.professor,
-            module                  : session.module,
-            date                    : session.date,
-            dayId                   : session.dayId,
-            dayModuleId             : session.dayModuleId,
-
+    // Transform: flatMap Section[] (with sessions) to SectionSession[]
+    const sectionSessions: SectionSession[] = apiSections.flatMap(apiSection => 
+        apiSection.sessions.map( sessionItem => ({
             // Section parent fields
-            sectionId               : section.id,
-            code                    : section.code,
-            isClosed                : section.isClosed,
-            groupId                 : section.groupId,
-            startDate               : section.startDate,
-            endDate                 : section.endDate,
-            building                : section.building,
-            spaceSizeId             : section.spaceSizeId,
-            spaceType               : section.spaceType,
-            workshop                : section.workshop,
-            lecture                 : section.lecture,
-            tutoringSession         : section.tutoringSession,
-            laboratory              : section.laboratory,
-            subject                 : section.subject,
-            period                  : section.period,
-            quota                   : section.quota,
-            registered              : section.registered,
+            id          : apiSection.id,
+            code        : apiSection.code,
+            isClosed    : apiSection.isClosed,
+            startDate   : apiSection.startDate,
+            endDate     : apiSection.endDate,
+            subject     : apiSection.subject,
+            period      : apiSection.period,
+            quota       : apiSection.quota,
+            registered  : apiSection.registered,
 
-            // Computed/mapped fields for backward compatibility
-            room                    : session.spaceId || '',
-            professorName           : session.professor?.name || '',
-            professorId             : session.professor?.id || '',
-            day                     : session.dayId,
-            moduleId                : session.module.id,
-            subjectName             : section.subject.name,
-            subjectId               : section.subject.id,
-            size                    : section.spaceSizeId || '',
-            session                 : session.name?.toString() || session.id,
+            // Nested session object
+            session: {
+                id              : sessionItem.id,
+                name            : sessionItem.name as any as SessionType,
+                spaceId         : sessionItem.spaceId,
+                isEnglish       : sessionItem.isEnglish,
+                chairsAvailable : sessionItem.chairsAvailable,
+                professor       : sessionItem.professor,
+                module          : sessionItem.module,
+                date            : sessionItem.date,
+                dayId           : sessionItem.dayId,
+                dayModuleId     : sessionItem.dayModuleId,
+            }
         }))
     );
     
-    return flatSections;
+    return sectionSessions;
 }
 
 
 interface UseSectionsReturn {
-    sections        : FlatSection[];
+    sections        : SectionSession[];
     loading         : boolean;
     error           : Error | null;
     isLoading       : boolean;
