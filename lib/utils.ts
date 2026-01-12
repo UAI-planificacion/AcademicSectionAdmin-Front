@@ -5,8 +5,8 @@ import { twMerge }                  from "tailwind-merge";
 import {
     BuildingEnum,
     SpaceType
-}                   from "@/models/section-session.model";
-import { Session }  from "@/models/section.model";
+}                       from "@/models/section-session.model";
+import { SessionType }  from "@/models/section.model";
 
 
 export const cn = ( ...inputs: ClassValue[] ): string => 
@@ -88,9 +88,9 @@ export const getBuildingName = ( building: BuildingEnum ) => ({
 
 
 export const sessionColors = {
-    [Session.C]: 'bg-[#1A9850]',
-    [Session.A]: 'bg-[#F76C3B]',
-    [Session.T]: 'bg-[#1A9850]',
-    [Session.L]: 'bg-[#A6D96A]',
+    [SessionType.C]: 'bg-[#1A9850]',
+    [SessionType.A]: 'bg-[#F76C3B]',
+    [SessionType.T]: 'bg-[#1A9850]',
+    [SessionType.L]: 'bg-[#A6D96A]',
 };
 
