@@ -1,4 +1,4 @@
-import { Session } from './section.model';
+import { SessionType } from './section.model';
 
 
 export interface SessionBase {
@@ -15,18 +15,18 @@ export interface SessionBase {
 
 
 export interface CreateSessionRequest extends SessionBase {
-	name        : Session;
+	name        : SessionType;
     sectionId   : string;
 }
 
 
 export interface UpdateSessionRequest extends SessionBase {
 	id      : string;
-	name?   : Session | null;
+	name?   : SessionType | null;
 }
 
 
 export interface UpdateMassiveSessionRequest extends SessionBase {
-	name?   : Session | null;
+	name?   : SessionType | null;
     ids     : string[];
 }
