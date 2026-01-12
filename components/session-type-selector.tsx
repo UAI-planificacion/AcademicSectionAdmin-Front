@@ -7,16 +7,16 @@ import {
     ToggleGroupItem
 }                           from "@/components/ui/toggle-group";
 // import { Session as SessionType }			from "@/models/section-session.model";
-import { Session, sessionLabels } from "@/models/section.model";
+import { SessionType, sessionLabels } from "@/models/section.model";
 // import { sessionLabels }	from "@/components/section/section.config";
 
 
 
 interface Props {
 	multiple		: boolean;
-	value			: Session[] | Session | null;
-	onValueChange	: ( value: Session[] | Session | null ) => void;
-	defaultValue?	: Session[] | Session | null;
+	value			: SessionType[] | SessionType | null;
+	onValueChange	: ( value: SessionType[] | SessionType | null ) => void;
+	defaultValue?	: SessionType[] | SessionType | null;
 	allowDeselect?	: boolean;
 	className?		: string;
     isShort?        : boolean;
@@ -47,7 +47,7 @@ export function SessionTypeSelector({
 		if ( multiple ) {
 			return value as string[];
 		}
-		return ( value as Session | null ) || '';
+		return ( value as SessionType | null ) || '';
 	}, [ multiple, value ]);
 
 	// Memoizar el defaultValue del toggle group
@@ -55,7 +55,7 @@ export function SessionTypeSelector({
 		if ( multiple ) {
 			return defaultValue as string[] | undefined;
 		}
-		return ( defaultValue as Session | null ) || undefined;
+		return ( defaultValue as SessionType | null ) || undefined;
 	}, [ multiple, defaultValue ]);
 
 	// Handler para cambios de valor
@@ -66,7 +66,7 @@ export function SessionTypeSelector({
 			if ( !allowDeselect && arrayVal.length === 0 ) {
 				return;
 			}
-			( onValueChange as ( value: Session[] ) => void )( arrayVal as Session[] );
+			( onValueChange as ( value: SessionType[] ) => void )( arrayVal as SessionType[] );
 		} else {
 			const stringVal = val as string;
 			// Si allowDeselect es false y el valor es vacío, no hacer nada
@@ -75,9 +75,9 @@ export function SessionTypeSelector({
 			}
 
 			if ( stringVal === '' || !stringVal ) {
-				( onValueChange as ( value: Session | null ) => void )( null );
+				( onValueChange as ( value: SessionType | null ) => void )( null );
 			} else {
-				( onValueChange as ( value: Session | null ) => void )( stringVal as Session );
+				( onValueChange as ( value: SessionType | null ) => void )( stringVal as SessionType );
 			}
 		}
 	}, [ multiple, allowDeselect, onValueChange ]);
@@ -91,37 +91,37 @@ export function SessionTypeSelector({
 			defaultValue	= { toggleDefaultValue as any }
 		>
 			<ToggleGroupItem
-				value		= { Session.C }
-				aria-label	= { sessionLabels[Session.C] }
+				value		= { SessionType.C }
+				aria-label	= { sessionLabels[SessionType.C] }
 				className	= "flex-1 rounded-tl-lg rounded-bl-lg rounded-tr-none rounded-br-none border-t border-l border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-blue-500 data-[state=on]:dark:bg-blue-600 data-[state=on]:text-white data-[state=on]:hover:bg-blue-600 data-[state=on]:dark:hover:bg-blue-700"
-				title		= { sessionLabels[Session.C] }
+				title		= { sessionLabels[SessionType.C] }
 			>
 				{ isShort ? 'C' : 'Cátedra' }
 			</ToggleGroupItem>
 
 			<ToggleGroupItem
-				value		= { Session.A }
-				aria-label	= { sessionLabels[Session.A] }
+				value		= { SessionType.A }
+				aria-label	= { sessionLabels[SessionType.A] }
 				className	= "flex-1 rounded-none border-t border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-green-500 data-[state=on]:dark:bg-green-600 data-[state=on]:text-white data-[state=on]:hover:bg-green-600 data-[state=on]:dark:hover:bg-green-700"
-				title		= { sessionLabels[Session.A] }
+				title		= { sessionLabels[SessionType.A] }
 			>
 				{ isShort ? 'A' : 'Ayudantía' }
 			</ToggleGroupItem>
 
 			<ToggleGroupItem
-				value		= { Session.T }
-				aria-label	= { sessionLabels[Session.T] }
+				value		= { SessionType.T }
+				aria-label	= { sessionLabels[SessionType.T] }
 				className	= "flex-1 rounded-none border-t border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-orange-500 data-[state=on]:dark:bg-orange-600 data-[state=on]:text-white data-[state=on]:hover:bg-orange-600 data-[state=on]:dark:hover:bg-orange-700"
-				title		= { sessionLabels[Session.T] }
+				title		= { sessionLabels[SessionType.T] }
 			>
 				{ isShort ? 'T' : 'Taller' }
 			</ToggleGroupItem>
 
 			<ToggleGroupItem
-				value		= { Session.L }
-				aria-label	= { sessionLabels[Session.L] }
+				value		= { SessionType.L }
+				aria-label	= { sessionLabels[SessionType.L] }
 				className	= "flex-1 rounded-tl-none rounded-bl-none rounded-tr-lg rounded-br-lg border-t border-r border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-purple-500 data-[state=on]:dark:bg-purple-600 data-[state=on]:text-white data-[state=on]:hover:bg-purple-600 data-[state=on]:dark:hover:bg-purple-700"
-				title		= { sessionLabels[Session.L] }
+				title		= { sessionLabels[SessionType.L] }
 			>
 				{ isShort ? 'L' : 'Laboratorio' }
 			</ToggleGroupItem>
