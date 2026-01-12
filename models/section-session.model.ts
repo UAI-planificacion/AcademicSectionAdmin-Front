@@ -1,3 +1,5 @@
+import { Difference } from "./module.model";
+
 export enum BuildingEnum {
     PREGRADO_A    = 'PREGRADO_A',
     PREGRADO_B    = 'PREGRADO_B',
@@ -52,7 +54,7 @@ export enum Size {
 }
 
 
-interface Proffesor {
+export interface Proffesor {
     id  : string;
     name: string;
 }
@@ -74,13 +76,13 @@ export interface OfferSectionPeriod {
 }
 
 
-interface OfferModule {
+export interface OfferModule {
     id          : string;
     code        : string;
     name        : string;
     startHour   : string;
     endHour     : string;
-    difference   : 'A' | 'B' | null;
+    difference   : Difference;
 }
 
 
