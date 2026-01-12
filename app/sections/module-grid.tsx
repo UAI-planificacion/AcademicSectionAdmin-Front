@@ -28,6 +28,7 @@ import type {
     SortDirection,
     Filters
 } from "@/lib/types";
+import { SectionSession } from "@/models/section.model";
 
 import {
     Popover,
@@ -49,15 +50,15 @@ import { Section } from "@/models/section.model";
 
 
 interface ModuleGridProps {
-    sections            : Section[];
+    sections            : SectionSession[];
     rooms               : SpaceData[];
     onSectionClick      : ( sectionId: string ) => void;
     onSectionMove       : ( sectionId: string, newRoomId: string, newDay: number, newModuleId: string ) => boolean;
-    onSectionSave       : ( section: Section ) => boolean;
+    onSectionSave       : ( section: SectionSession ) => boolean;
     onSortChange        : ( field: SortField, direction: SortDirection ) => void;
     sortConfig          : SortConfig;
     onFilterChange?     : ( filters: Filters ) => void;
-    getSectionsForCell  : ( roomId: string, day: number, moduleId: string ) => Section[];
+    getSectionsForCell  : ( spaceId: string, dayModuleId: number ) => SectionSession[];
     isCalculating       : boolean;
 }
 
@@ -202,16 +203,17 @@ export function ModuleGrid({
             );
         }
 
-        const cellId        = `${room.name}-${day.id}-${module.id}`;
-        const cellSections  = getSectionsForCell(room.name, day.id, module.id);
+        const cellId        = `${room.name}-${module.dayModuleId}`;
+        const cellSections  = getSectionsForCell(room.name, module.dayModuleId);
         const isDragOver    = dragOverCell === cellId;
         const hasSection    = cellSections.length > 0;
         const section       = hasSection ? cellSections[0] : null;
 
         return (
             <SectionCard
-                key                     = { `section-${room.id}-${day.id}-${module.id}` }
+                key                     = { `section-${room.id}-${module.dayModuleId}` }
                 section                 = { section }
+                dayModuleId             = { module.dayModuleId }
                 dayId                   = { day.id }
                 moduleId                = { module.id }
                 roomId                  = { room.name }
@@ -238,12 +240,12 @@ export function ModuleGrid({
     }
 
 
-    function handleDragOver( e: React.DragEvent, roomId: string, day: number, moduleId: string ): void{
+    function handleDragOver( e: React.DragEvent, roomId: string, dayModuleId: number ): void{
         e.preventDefault();
-        const cellId = `${roomId}-${day}-${moduleId}`;
+        const cellId = `${roomId}-${dayModuleId}`;
         setDragOverCell( cellId );
 
-        const cellSections = getSectionsForCell( roomId, day, moduleId );
+        const cellSections = getSectionsForCell( roomId, dayModuleId );
 
         e.dataTransfer.dropEffect = cellSections.length > 0
             ? 'none'
@@ -254,13 +256,13 @@ export function ModuleGrid({
     const handleDragLeave = () => setDragOverCell( null );
 
 
-    function handleDrop( e: React.DragEvent, roomId: string, day: number, moduleId: string ): void {
+    function handleDrop( e: React.DragEvent, roomId: string, dayModuleId: number ): void {
         e.preventDefault();
         const sectionId = e.dataTransfer.getData( 'text/plain' );
         setDraggedSection( null );
         setDragOverCell( null );
 
-        const cellSections = getSectionsForCell( roomId, day, moduleId );
+        const cellSections = getSectionsForCell( roomId, dayModuleId );
 
         if ( cellSections.length > 0 ) {
             setErrorMessage( 'No se puede mover la sección porque el destino ya está ocupado' );
@@ -268,7 +270,16 @@ export function ModuleGrid({
             return;
         }
 
-        const success = onSectionMove( sectionId, roomId, day, moduleId );
+        // We need to find the day and moduleId from dayModuleId
+        const dayModule = modules.find(m => m.dayModuleId === dayModuleId);
+
+        if (!dayModule) {
+            setErrorMessage( 'Error: No se pudo encontrar el módulo' );
+            setTimeout(() => setErrorMessage( null ), 3000 );
+            return;
+        }
+
+        const success = onSectionMove( sectionId, roomId, dayModule.dayId, dayModule.id );
 
         if ( !success ) {
             setErrorMessage( 'No se pudo mover la sección' );
@@ -745,8 +756,7 @@ export function ModuleGrid({
                 <SessionForm
                     isOpen      = { showSessionForm }
                     onClose     = { handleCloseSessionForm }
-                    session     = { null }
-                    section     = { null }
+                    sectionSession     = { null }
                     onSave      = { () => {} }
                     dayId       = { sessionFormData.dayId }
                     moduleId    = { sessionFormData.moduleId }
