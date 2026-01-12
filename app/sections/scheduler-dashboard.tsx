@@ -24,20 +24,18 @@ import type {
 import { useSections }  from '@/hooks/use-sections';
 import { useSpace }     from '@/hooks/use-space';
 import { useModules }   from '@/hooks/use-modules';
-
-import { SectionModal } from '@/app/sections/section-modal';
-import { ModuleGrid }   from '@/app/sections/module-grid';
-import LoadExcel        from '@/app/sections/LoadExcel';
-import TableSkeleton    from '@/app/sections/TableSkeleton';
-
-import { Section, UpdateSection }   from '@/models/section.model';
-import { Sizes }                    from '@/models/size.model';
+import { SectionSession, UpdateSection }    from '@/models/section.model';
+import { Session as SessionModel }          from '@/models/section-session.model';
+import { SessionForm }                      from '@/app/sections/session-form';
+import { ModuleGrid }                       from '@/app/sections/module-grid';
+import TableSkeleton                        from '@/app/sections/TableSkeleton';
+import { Sizes }                            from '@/models/size.model';
 
 import {
     errorToast,
     successToast
 }               from '@/config/toast/toast.config';
-import { ENV }          from '@/config/envs/env';
+import { ENV }  from '@/config/envs/env';
 // import { KEY_QUERYS }   from '@/lib/key-queries';
 
 import { fetchApi } from '@/services/fetch';
@@ -81,11 +79,11 @@ export function SchedulerDashboard(): JSX.Element {
     const { sizes, loading: sizesLoading } = useSizes();
 
     // Estados locales
-    const [sections, setSections]                   = useState<Section[]>( [] );
-    const [filteredSections, setFilteredSections]   = useState<Section[]>( [] );
+    const [sections, setSections]                   = useState<SectionSession[]>( [] );
+    const [filteredSections, setFilteredSections]   = useState<SectionSession[]>( [] );
     const [rooms, setRooms]                         = useState<SpaceData[]>( [] );
     const [filteredRooms, setFilteredRooms]         = useState<SpaceData[]>( [] );
-    const [selectedSection, setSelectedSection]     = useState<Section | null>( null );
+    const [selectedSection, setSelectedSection]     = useState<SectionSession | null>( null );
     const [isModalOpen, setIsModalOpen]             = useState<boolean>( false );
     // const [showLoadExcel, setShowLoadExcel]         = useState<boolean>( false );
     const [isInitialized, setIsInitialized]         = useState<boolean>( false );
@@ -96,7 +94,7 @@ export function SchedulerDashboard(): JSX.Element {
     });
 
     // Ref para cache persistente de sectionsByCellMemo
-    const sectionsByCellRef     = useRef<Map<string, Section[]>>(new Map());
+    const sectionsByCellRef     = useRef<Map<string, SectionSession[]>>(new Map());
     const lastSectionsLengthRef = useRef<number>(0);
 
 
@@ -160,13 +158,13 @@ export function SchedulerDashboard(): JSX.Element {
 
             if ( lastLength === 0 ) {
                 const timeoutId = setTimeout(() => {
-                    const newMap = new Map<string, Section[]>();
+                    const newMap = new Map<string, SectionSession[]>();
 
                     sections.forEach(section => {
-                        // Skip sections without assigned room
-                        if (!section.room) return;
+                        // Skip sections without assigned spaceId or dayModuleId
+                        if (!section.session.spaceId || !section.session.dayModuleId) return;
 
-                        const key = `${section.room}-${section.day}-${section.moduleId}`;
+                        const key = `${section.session.spaceId}-${section.session.dayModuleId}`;
 
                         if (!newMap.has( key )) {
                             newMap.set( key, [] );
@@ -182,13 +180,13 @@ export function SchedulerDashboard(): JSX.Element {
 
                 return () => clearTimeout(timeoutId);
             } else {
-                const newMap = new Map<string, Section[]>();
+                const newMap = new Map<string, SectionSession[]>();
 
                 sections.forEach(section => {
-                    // Skip sections without assigned room
-                    if (!section.room) return;
+                    // Skip sections without assigned spaceId or dayModuleId
+                    if (!section.session.spaceId || !section.session.dayModuleId) return;
 
-                    const key = `${section.room}-${section.day}-${section.moduleId}`;
+                    const key = `${section.session.spaceId}-${section.session.dayModuleId}`;
 
                     if (!newMap.has(key)) {
                         newMap.set(key, []);
@@ -201,13 +199,13 @@ export function SchedulerDashboard(): JSX.Element {
                 lastSectionsLengthRef.current   = currentLength;
             }
         } else {
-            const newMap = new Map<string, Section[]>();
+            const newMap = new Map<string, SectionSession[]>();
 
             sections.forEach(section => {
-                // Skip sections without assigned room
-                if (!section.room) return;
+                // Skip sections without assigned spaceId or dayModuleId
+                if (!section.session.spaceId || !section.session.dayModuleId) return;
 
-                const key = `${section.room}-${section.day}-${section.moduleId}`;
+                const key = `${section.session.spaceId}-${section.session.dayModuleId}`;
 
                 if (!newMap.has(key)) {
                     newMap.set(key, []);
@@ -255,7 +253,7 @@ export function SchedulerDashboard(): JSX.Element {
 
         const filteredRoomIds = new Set(filteredRms.map( room => room.name ))
 
-        filteredSecs = filteredSecs.filter( section => section.room && filteredRoomIds.has( section.room ));
+        filteredSecs = filteredSecs.filter( section => section.session.spaceId && filteredRoomIds.has( section.session.spaceId ));
 
         console.log("************Secciones filtradas:", filteredSecs.length)
         console.log("**********Salas filtradas:", filteredRms.length)
@@ -288,12 +286,12 @@ export function SchedulerDashboard(): JSX.Element {
     }, []);
 
 
-    const handleUpdateSection = useCallback(( updatedSection: Section ) : boolean => {
-        const overlapping = sections.some(( section : Section ) => {
-            if ( section.id         === updatedSection.id )         return false;
-            if ( section.room       !== updatedSection.room )       return false;
-            if ( section.day        !== updatedSection.day )        return false;
-            if ( section.moduleId   !== updatedSection.moduleId )   return false;
+    const handleUpdateSection = useCallback(( updatedSection: SectionSession ) : boolean => {
+        const overlapping = sections.some(( section : SectionSession ) => {
+            if ( section.id                     === updatedSection.id )                     return false;
+            if ( section.session.spaceId        !== updatedSection.session.spaceId )        return false;
+            if ( section.session.dayId          !== updatedSection.session.dayId )          return false;
+            if ( section.session.module.id      !== updatedSection.session.module.id )      return false;
 
             return true;
         })
@@ -317,7 +315,7 @@ export function SchedulerDashboard(): JSX.Element {
     }, [sections]);
 
 
-    const handleSaveSection = useCallback(( section: Section ): boolean => {
+    const handleSaveSection = useCallback(( section: SectionSession ): boolean => {
         const existingSection = sections.find( s => s.id === section.id );
 
         if ( existingSection ) {
@@ -331,10 +329,10 @@ export function SchedulerDashboard(): JSX.Element {
 
             return result;
         } else {
-            const overlapping = sections.some(( existingSection : Section ) => {
-                if ( existingSection.room       !== section.room )       return false;
-                if ( existingSection.day        !== section.day )        return false;
-                if ( existingSection.moduleId   !== section.moduleId )   return false;
+            const overlapping = sections.some(( existingSection : SectionSession ) => {
+                if ( existingSection.session.spaceId    !== section.session.spaceId )      return false;
+                if ( existingSection.session.dayId      !== section.session.dayId )        return false;
+                if ( existingSection.session.module.id  !== section.session.module.id )    return false;
                 return true;
             });
 
@@ -345,7 +343,7 @@ export function SchedulerDashboard(): JSX.Element {
 
             setSections(prevSections => [ ...prevSections, section ]);
 
-            if ( section.room && filteredRoomIds.has( section.room )) {
+            if ( section.session.spaceId && filteredRoomIds.has( section.session.spaceId )) {
                 setFilteredSections(prevFiltered => [...prevFiltered, section]);
             }
 
@@ -364,11 +362,11 @@ export function SchedulerDashboard(): JSX.Element {
 
 
     const handleSectionClick = useCallback(( sectionId: string ) => {
-        const section = sections.find(( s : Section ) => s.id === sectionId );
+        const sectionSession = sections.find(( s : SectionSession ) => s.id === sectionId );
 
-        if ( !section ) return;
+        if ( !sectionSession ) return;
 
-        setSelectedSection( section );
+        setSelectedSection( sectionSession );
         setIsModalOpen( true );
     }, [sections]);
 
@@ -397,7 +395,7 @@ export function SchedulerDashboard(): JSX.Element {
         const url = `${ENV.REQUEST_BACK_URL}sessions/${sectionId}`;
 
         try {
-            const data = await fetchApi<Section | null>( url, "PATCH", saveSection );
+            const data = await fetchApi<SectionSession | null>( url, "PATCH", saveSection );
 
             if ( !data ) {
                 toast( 'No se pudo actualizar la sección', errorToast );
@@ -423,11 +421,11 @@ export function SchedulerDashboard(): JSX.Element {
         newModuleId : string
     ) : boolean => {
         const targetOccupied = sections
-            .some(( section : Section ) =>
-                section.id          !== sectionId   &&
-                section.room        === newRoomId   &&
-                section.day         === newDay      &&
-                section.moduleId    === newModuleId
+            .some(( section : SectionSession ) =>
+                section.id                      !== sectionId   &&
+                section.session.spaceId         === newRoomId   &&
+                section.session.dayId           === newDay      &&
+                section.session.module.id       === newModuleId
             );
 
         if ( targetOccupied ) {
@@ -447,14 +445,15 @@ export function SchedulerDashboard(): JSX.Element {
             return false;
         }
 
-        const updatedSection: Section = {
+        const updatedSection: SectionSession = {
             ...sectionToMove,
-            room        : newRoomId,
-            day         : newDay,
-            moduleId    : newModuleId,
-            dayModuleId : dayModuleId,
-            spaceId     : newRoomId,
-            dayId       : newDay,
+            session: {
+                ...sectionToMove.session,
+                dayId       : newDay,
+                module      : { ...sectionToMove.session.module, id: newModuleId },
+                dayModuleId : dayModuleId,
+                spaceId     : newRoomId,
+            }
         };
 
         // Update local state optimistically
@@ -494,8 +493,8 @@ export function SchedulerDashboard(): JSX.Element {
     // }, []);
 
 
-    const getSectionsForCell = useCallback((roomId: string, day: number, moduleId: string) => {
-        const key = `${roomId}-${day}-${moduleId}`;
+    const getSectionsForCell = useCallback((spaceId: string, dayModuleId: number) => {
+        const key = `${spaceId}-${dayModuleId}`;
         return sectionsByCellRef.current.get(key) || [];
     }, []);
 
@@ -549,12 +548,16 @@ export function SchedulerDashboard(): JSX.Element {
             />
 
             {isModalOpen && selectedSection && (
-                <SectionModal
-                    section     = { selectedSection }
-                    rooms       = { rooms }
-                    onClose     = { handleModalClose }
-                    onSave      = { handleUpdateSection }
-                    onDelete    = { handleDeleteSection }
+                <SessionForm
+                    isOpen          = { isModalOpen }
+                    onClose         = { handleModalClose }
+                    sectionSession  = { selectedSection }
+                    onSave          = {( updatedSession: SessionModel ) => {
+                        // Handle session update
+                        console.log('Session updated:', updatedSession);
+                        // TODO: Update the section with the new session data
+                        handleModalClose();
+                    }}
                 />
             )}
         </>
