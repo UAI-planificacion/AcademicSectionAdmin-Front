@@ -1,68 +1,84 @@
 import { Difference } from "./module.model";
+import { OfferModule, OfferSectionPeriod, OfferSectionSubject, Proffesor } from "./section-session.model";
 
-// Hybrid interface combining Section parent data with Session data
+
+export enum SessionType {
+    C = 'C', // Cátedra
+    A = 'A', // Ayudantía
+    T = 'T', // Taller
+    L = 'L'  // Laboratorio
+}
+
+export const sessionLabels = {
+    [SessionType.C]: 'Cátedra',
+    [SessionType.A]: 'Ayudantía',
+    [SessionType.T]: 'Taller',
+    [SessionType.L]: 'Laboratorio',
+};
+
+// Flattened interface from SectionSession for use in the application
 export interface Section {
-    // Session fields (from new model)
-    id                      : string;
-    sectionId               : string; 
-    spaceId                 : string | null;  // maps to 'room' in old model
-    isEnglish               : boolean;
-    chairsAvailable         : number;
-    correctedRegistrants    : number;
-    realRegistrants         : number;
-    plannedBuilding         : string;
-    professor               : {
-        id      : string;
-        name    : string;
-    } | null;
-    module                  : {
-        id          : string;
-        code        : string;
-        name        : string;
-        startHour   : string;
-        endHour     : string;
-        difference  : Difference;
-    };
-    date                    : Date;
-    dayId                   : number;  // maps to 'day' in old model
-    dayModuleId             : number;
+    // Session fields (from SessionSec)
+    id              : string;           // Session ID
+    spaceId         : string | null;
+    isEnglish       : boolean;
+    chairsAvailable : number;
+    professor       : Proffesor | null;
+    module          : OfferModule;
+    date            : Date;
+    dayId           : number;
+    dayModuleId     : number;
     
-    // Section parent fields
-    code                    : number;
-    isClosed                : boolean;
-    groupId                 : string;
-    startDate               : Date;
-    endDate                 : Date;
-    building                : string | null;
-    spaceSizeId             : string | null;
-    spaceType               : string | null;
-    workshop                : number;
-    lecture                 : number;
-    tutoringSession         : number;
-    laboratory              : number;
-    subject                 : {
-        id      : string;
-        name    : string;
-    };
-    period                  : {
-        id          : string;
-        name        : string;
-        startDate   : Date;
-        endDate     : Date;
-    };
-    quota                   : number;
-    registered              : number;
+    // Section parent fields (from SectionSession)
+    sectionId       : string;           // Parent section ID
+    code            : number;
+    isClosed        : boolean;
+    startDate       : Date;
+    endDate         : Date;
+    subject         : OfferSectionSubject;
+    period          : OfferSectionPeriod;
+    quota           : number;
+    registered      : number;
+    
+    // Session name/type
+    sessionName     : SessionType;      // The session enum value (C, A, T, L)
     
     // Computed/mapped fields for backward compatibility
-    room                    : string;  // = spaceId
-    professorName           : string;  // = professor?.name || ''
-    professorId             : string;  // = professor?.id || ''
-    day                     : number;  // = dayId
-    moduleId                : string;  // = module.id
-    subjectName             : string;  // = subject.name
-    subjectId               : string;  // = subject.id
-    size                    : string;  // = spaceSizeId || ''
-    session                 : string;  // session name/identifier
+    professorName   : string;           // = professor?.name || ''
+    professorId     : string;           // = professor?.id || ''
+    day             : number;           // = dayId
+    moduleId        : string;           // = module.id
+    subjectName     : string;           // = subject.name
+    subjectId       : string;           // = subject.id
+    session         : string;           // = sessionName.toString()
+}
+
+
+export interface SessionSec {
+    id              : string;
+    name            : SessionType;
+    spaceId         : string | null;
+    isEnglish       : boolean;
+    chairsAvailable : number;
+    professor       : Proffesor | null;
+    module          : OfferModule;
+    date            : Date;
+    dayId           : number;
+    dayModuleId     : number;
+}
+
+
+export interface SectionSession {
+    id          : string;
+    code        : number;
+    isClosed    : boolean;
+    startDate   : Date;
+    endDate     : Date;
+    subject     : OfferSectionSubject;
+    period      : OfferSectionPeriod;
+    quota       : number;
+    registered  : number;
+    session     : SessionSec;
 }
 
 
@@ -96,17 +112,3 @@ export interface UpdateSection {
 }
 
 
-export enum Session {
-    C = 'C', // Cátedra
-    A = 'A', // Ayudantía
-    T = 'T', // Taller
-    L = 'L'  // Laboratorio
-}
-
-
-export const sessionLabels = {
-    [Session.C]: 'Cátedra',
-    [Session.A]: 'Ayudantía',
-    [Session.T]: 'Taller',
-    [Session.L]: 'Laboratorio',
-};
