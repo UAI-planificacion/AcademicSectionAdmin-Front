@@ -60,6 +60,9 @@ interface ModuleGridProps {
     onFilterChange?     : ( filters: Filters ) => void;
     getSectionsForCell  : ( spaceId: string, dayModuleId: number ) => SectionSession[];
     isCalculating       : boolean;
+    selectedSections    : Set<string>;
+    onSectionSelect     : ( sectionId: string, spaceId: string ) => void;
+    onClearSelection    : () => void;
 }
 
 
@@ -74,6 +77,9 @@ export function ModuleGrid({
     onFilterChange,
     getSectionsForCell,
     isCalculating,
+    selectedSections,
+    onSectionSelect,
+    onClearSelection,
 }: ModuleGridProps ): React.JSX.Element{
     // Filtrar las salas localmente
     const [filteredRooms, setFilteredRooms]     = useState<SpaceData[]>(rooms);
@@ -228,9 +234,12 @@ export function ModuleGrid({
                 onDragLeave             = { handleDragLeave }
                 onDrop                  = { handleDrop }
                 onCreateSession         = { handleCreateSession }
+                isSelected              = { section ? selectedSections.has(section.session.id) : false }
+                onSelect                = { onSectionSelect }
+                onClearSelection        = { onClearSelection }
             />
         );
-    }, [isCalculating, getSectionsForCell, dragOverCell, draggedSection, onSectionClick, onSectionSave]);
+    }, [isCalculating, getSectionsForCell, dragOverCell, draggedSection, onSectionClick, onSectionSave, selectedSections, onSectionSelect, onClearSelection]);
 
 
     function handleDragStart( e: React.DragEvent, sectionId: string ): void {

@@ -85,6 +85,8 @@ export function SchedulerDashboard(): JSX.Element {
     const [filteredRooms, setFilteredRooms]         = useState<SpaceData[]>( [] );
     const [selectedSection, setSelectedSection]     = useState<SectionSession | null>( null );
     const [isModalOpen, setIsModalOpen]             = useState<boolean>( false );
+    const [selectedSections, setSelectedSections]   = useState<Set<string>>(new Set());
+    const [selectionSpaceId, setSelectionSpaceId]   = useState<string | null>(null);
     // const [showLoadExcel, setShowLoadExcel]         = useState<boolean>( false );
     const [isInitialized, setIsInitialized]         = useState<boolean>( false );
     const [isCalculating, setIsCalculating]         = useState<boolean>( false );
@@ -362,13 +364,83 @@ export function SchedulerDashboard(): JSX.Element {
 
 
     const handleSectionClick = useCallback(( sectionId: string ) => {
+        if ( selectedSections.size > 0 ) return; // Don't open if multi-selected
+
         const sectionSession = sections.find(( s : SectionSession ) => s.id === sectionId );
 
         if ( !sectionSession ) return;
 
         setSelectedSection( sectionSession );
         setIsModalOpen( true );
-    }, [sections]);
+    }, [sections, selectedSections.size]);
+
+
+    const handleSectionSelect = useCallback(( sectionId: string, spaceId: string ) => {
+        console.log('=== SELECTION ATTEMPT ===');
+        console.log('Section ID:', sectionId);
+        console.log('Space ID (from card):', spaceId);
+        console.log('Current Selection Space ID:', selectionSpaceId);
+        console.log('Current Selected Sections:', Array.from(selectedSections));
+
+        // Check if this is first selection or same space BEFORE updating state
+        if (selectionSpaceId !== null && selectionSpaceId !== spaceId) {
+            console.log('REJECTED: Different space', { selectionSpaceId, spaceId });
+            return;
+        }
+
+        console.log('ACCEPTED - Updating selection');
+
+        setSelectedSections( prev => {
+            const newSet = new Set( prev );
+
+            // Toggle selection
+            if ( newSet.has( sectionId ) ) {
+                console.log('Deselecting section');
+                newSet.delete( sectionId );
+            } else {
+                console.log('Selecting section');
+                newSet.add( sectionId );
+            }
+
+            console.log('New selection:', Array.from(newSet));
+            return newSet;
+        });
+
+        // Update space ID based on new selection state
+        setSelectionSpaceId( prevSpaceId => {
+            // If this was first selection, set the space
+            if (prevSpaceId === null) {
+                console.log('Setting selection space to:', spaceId);
+                return spaceId;
+            }
+            // If deselecting and no more selections, clear space
+            if (selectedSections.has(sectionId) && selectedSections.size === 1) {
+                console.log('Clearing selection space');
+                return null;
+            }
+            return prevSpaceId;
+        });
+    }, [selectionSpaceId, selectedSections]);
+
+
+    const handleClearSelection = useCallback(() => {
+        setSelectedSections( new Set() );
+        setSelectionSpaceId( null );
+    }, []);
+
+
+    useEffect(() => {
+        const handleKeyDown = ( e: KeyboardEvent ) => {
+            console.log('Key pressed:', e.key, 'Selected count:', selectedSections.size);
+            if ( e.key === 'Escape' && selectedSections.size > 0 ) {
+                console.log('Clearing selection via ESC');
+                handleClearSelection();
+            }
+        };
+
+        window.addEventListener( 'keydown', handleKeyDown );
+        return () => window.removeEventListener( 'keydown', handleKeyDown );
+    }, [selectedSections.size, handleClearSelection]);
 
 
     const getDayModuleId = useCallback((
@@ -545,6 +617,9 @@ export function SchedulerDashboard(): JSX.Element {
                 sortConfig          = { sortConfig }
                 getSectionsForCell  = { getSectionsForCell }
                 isCalculating       = { isCalculating }
+                selectedSections    = { selectedSections }
+                onSectionSelect     = { handleSectionSelect }
+                onClearSelection    = { handleClearSelection }
             />
 
             {isModalOpen && selectedSection && (

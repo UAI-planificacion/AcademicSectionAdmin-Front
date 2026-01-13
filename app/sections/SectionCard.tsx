@@ -36,6 +36,9 @@ interface Props {
     onDragLeave         : () => void;
     onDrop              : ( e: React.DragEvent, roomId: string, dayModuleId: number ) => void;
     onCreateSession?    : ( dayId: number, moduleId: string, spaceId: string ) => void;
+    isSelected          : boolean;
+    onSelect            : ( sectionId: string, spaceId: string ) => void;
+    onClearSelection    : () => void;
 }
 
 
@@ -56,6 +59,9 @@ export const SectionCard = memo( function SectionCard({
     onDragLeave,
     onDrop,
     onCreateSession,
+    isSelected,
+    onSelect,
+    onClearSelection,
 }: Props): React.ReactElement {
     const [isMoving, setIsMoving] = useState<boolean>( false );
 
@@ -134,7 +140,10 @@ export const SectionCard = memo( function SectionCard({
         >
             { !section && !isDragOver && (
                 <button 
-                    onClick={handleCreateSection}
+                    onClick={() => {
+                        handleCreateSection();
+                        onClearSelection();
+                    }}
                     className="w-full z-0 h-full flex items-center justify-center opacity-0 group-hover:opacity-100"
                     title="Crear nueva sección"
                 >
@@ -159,12 +168,20 @@ export const SectionCard = memo( function SectionCard({
                             <div
                                 draggable       
                                 onDragStart     = { handleDragStart }
+                                onClick         = {( e ) => {
+                                    if ( e.ctrlKey && section ) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        onSelect( section.session.id, roomId );
+                                    }
+                                }}
                                 onDoubleClick   = { handleSectionClick }
-                                title           = "Doble clic para editar, arrastrar para mover"
+                                title           = "Ctrl+clic para seleccionar, doble clic para editar, arrastrar para mover"
                                 className       = { cn(
                                     "max-w-24 grid grid-rows-2 h-full p-1 rounded cursor-move text-xs text-white",
                                     draggedSection === section.id && "opacity-50",
-                                    sessionColors[section.session.name]
+                                    sessionColors[section.session.name],
+                                    isSelected && "border-2 border-red-500"
                                 )}
                             >
                                 <span className="truncate">
@@ -255,6 +272,7 @@ export const SectionCard = memo( function SectionCard({
         prevProps.isDragOver        !== nextProps.isDragOver
         || prevProps.hasSection     !== nextProps.hasSection
         || prevProps.draggedSection !== nextProps.draggedSection
+        || prevProps.isSelected     !== nextProps.isSelected
     ) {
         return false;
     }
