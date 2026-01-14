@@ -45,7 +45,7 @@ import { useModules, getModulesForDay } from "@/hooks/use-modules";
 import { usePeriods }                   from "@/hooks/use-periods";
 import { useSizes }                     from "@/hooks/use-sizes";
 
-import { Section } from "@/models/section.model";
+// import { Section } from "@/models/section.model";
 // import { BuildingEnum } from "@/models/section-session.model";
 
 
@@ -60,8 +60,8 @@ interface ModuleGridProps {
     onFilterChange?     : ( filters: Filters ) => void;
     getSectionsForCell  : ( spaceId: string, dayModuleId: number ) => SectionSession[];
     isCalculating       : boolean;
-    selectedSections    : Set<string>;
-    onSectionSelect     : ( sectionId: string, spaceId: string ) => void;
+    selectedSections    : SectionSession[];
+    onSectionSelect     : ( section: SectionSession | null ) => void;
     onClearSelection    : () => void;
 }
 
@@ -234,7 +234,7 @@ export function ModuleGrid({
                 onDragLeave             = { handleDragLeave }
                 onDrop                  = { handleDrop }
                 onCreateSession         = { handleCreateSession }
-                isSelected              = { section ? selectedSections.has(section.session.id) : false }
+                isSelected              = { section ? selectedSections.some(s => s.session.id === section.session.id) : false }
                 onSelect                = { onSectionSelect }
                 onClearSelection        = { onClearSelection }
             />
