@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/tooltip';
 
 import { cn, sessionColors }    from '@/lib/utils';
-import { SectionSession }       from '@/models/section.model';
+import { SectionSession, SessionType }       from '@/models/section.model';
 import { useModules }           from '@/hooks/use-modules';
 
 
@@ -37,7 +37,7 @@ interface Props {
     onDrop              : ( e: React.DragEvent, roomId: string, dayModuleId: number ) => void;
     onCreateSession?    : ( dayId: number, moduleId: string, spaceId: string ) => void;
     isSelected          : boolean;
-    onSelect            : ( sectionId: string, spaceId: string ) => void;
+    onSelect            : ( section: SectionSession | null ) => void;
     onClearSelection    : () => void;
 }
 
@@ -135,7 +135,7 @@ export const SectionCard = memo( function SectionCard({
                 moduleIndex % 2 === 0 && "bg-white dark:bg-zinc-900 transition-colors",
                 moduleIndex % 2 !== 0 && "bg-zinc-100 dark:bg-zinc-900/60 transition-colors",
                 isDragOver && !hasSection && "bg-green-100 dark:bg-green-900 transition-colors",
-                isDragOver && hasSection && "bg-red-100 dark:bg-red-900 transition-colors",
+                isDragOver && hasSection && "bg-red-100 dark:bg-red-100 transition-colors",
             )}
         >
             { !section && !isDragOver && (
@@ -152,8 +152,6 @@ export const SectionCard = memo( function SectionCard({
             )}
 
             {/* SessionForm has been moved to module-grid.tsx to prevent multiple instances */}
-
-
             {/* Placeholder text - only visible when cell is empty */}
             {!section && (
                 <span className="absolute inset-0 flex items-center justify-center text-[14px] text-gray-600 dark:text-gray-400 opacity-30 pointer-events-none select-none">
@@ -172,7 +170,7 @@ export const SectionCard = memo( function SectionCard({
                                     if ( e.ctrlKey && section ) {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        onSelect( section.session.id, roomId );
+                                        onSelect( section );
                                     }
                                 }}
                                 onDoubleClick   = { handleSectionClick }
@@ -180,8 +178,11 @@ export const SectionCard = memo( function SectionCard({
                                 className       = { cn(
                                     "max-w-24 grid grid-rows-2 h-full p-1 rounded cursor-move text-xs text-white",
                                     draggedSection === section.id && "opacity-50",
-                                    sessionColors[section.session.name],
-                                    isSelected && "border-2 border-red-500"
+                                    section.session.name === SessionType.C && 'bg-[#1A9850]',
+                                    section.session.name === SessionType.A && 'bg-[#F76C3B]',
+                                    section.session.name === SessionType.T && 'bg-[#1A9850]',
+                                    section.session.name === SessionType.L && 'bg-[#A6D96A]',
+                                    isSelected && "border-2 border-white"
                                 )}
                             >
                                 <span className="truncate">
