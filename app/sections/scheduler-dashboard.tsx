@@ -19,27 +19,27 @@ import type {
     SortField,
     Filters,
     SortConfig,
-} from '@/lib/types';
-
-import { useSections }  from '@/hooks/use-sections';
-import { useSpace }     from '@/hooks/use-space';
-import { useModules }   from '@/hooks/use-modules';
-import { SectionSession, UpdateSection }    from '@/models/section.model';
-import { Session as SessionModel }          from '@/models/section-session.model';
-import { SessionForm }                      from '@/app/sections/session-form';
-import { ModuleGrid }                       from '@/app/sections/module-grid';
-import TableSkeleton                        from '@/app/sections/TableSkeleton';
-import { Sizes }                            from '@/models/size.model';
-
+}                                   from '@/lib/types';
+import {
+    SectionSession,
+    UpdateSection
+}                                   from '@/models/section.model';
 import {
     errorToast,
     successToast
-}               from '@/config/toast/toast.config';
-import { ENV }  from '@/config/envs/env';
+}                                   from '@/config/toast/toast.config';
+import { ENV }                      from '@/config/envs/env';
+import { useSections }              from '@/hooks/use-sections';
+import { useSpace }                 from '@/hooks/use-space';
+import { useModules }               from '@/hooks/use-modules';
+import { Session as SessionModel }  from '@/models/section-session.model';
+import { SessionForm }              from '@/app/sections/session-form';
+import { ModuleGrid }               from '@/app/sections/module-grid';
+import TableSkeleton                from '@/app/sections/TableSkeleton';
+import { Sizes }                    from '@/models/size.model';
+import { fetchApi }                 from '@/services/fetch';
+import { useSizes }                 from '@/hooks/use-sizes';
 // import { KEY_QUERYS }   from '@/lib/key-queries';
-
-import { fetchApi } from '@/services/fetch';
-import { useSizes } from '@/hooks/use-sizes';
 
 
 const createSizeOrderMap = ( sizes: Sizes[] ): Map<string, number> =>
@@ -85,8 +85,8 @@ export function SchedulerDashboard(): JSX.Element {
     const [filteredRooms, setFilteredRooms]         = useState<SpaceData[]>( [] );
     const [selectedSection, setSelectedSection]     = useState<SectionSession | null>( null );
     const [isModalOpen, setIsModalOpen]             = useState<boolean>( false );
-    const [selectedSections, setSelectedSections]   = useState<Set<string>>(new Set());
-    const [selectionSpaceId, setSelectionSpaceId]   = useState<string | null>(null);
+    const [selectedSections, setSelectedSections]   = useState<SectionSession[]>([]);
+    // const [selectionSpaceId, setSelectionSpaceId]   = useState<string | null>(null);
     // const [showLoadExcel, setShowLoadExcel]         = useState<boolean>( false );
     const [isInitialized, setIsInitialized]         = useState<boolean>( false );
     const [isCalculating, setIsCalculating]         = useState<boolean>( false );
@@ -364,7 +364,7 @@ export function SchedulerDashboard(): JSX.Element {
 
 
     const handleSectionClick = useCallback(( sectionId: string ) => {
-        if ( selectedSections.size > 0 ) return; // Don't open if multi-selected
+        if ( selectedSections.length > 0 ) return; // Don't open if multi-selected
 
         const sectionSession = sections.find(( s : SectionSession ) => s.id === sectionId );
 
@@ -372,67 +372,49 @@ export function SchedulerDashboard(): JSX.Element {
 
         setSelectedSection( sectionSession );
         setIsModalOpen( true );
-    }, [sections, selectedSections.size]);
+    }, [sections, selectedSections.length]);
 
 
-    const handleSectionSelect = useCallback(( sectionId: string, spaceId: string ) => {
-        console.log('=== SELECTION ATTEMPT ===');
-        console.log('Section ID:', sectionId);
-        console.log('Space ID (from card):', spaceId);
-        console.log('Current Selection Space ID:', selectionSpaceId);
-        console.log('Current Selected Sections:', Array.from(selectedSections));
-
-        // Check if this is first selection or same space BEFORE updating state
-        if (selectionSpaceId !== null && selectionSpaceId !== spaceId) {
-            console.log('REJECTED: Different space', { selectionSpaceId, spaceId });
-            return;
-        }
-
-        console.log('ACCEPTED - Updating selection');
-
+    const handleSectionSelect = useCallback(( section: SectionSession | null ) => {
+        if ( !section ) return;
+        // Use functional update to work with the latest state
         setSelectedSections( prev => {
-            const newSet = new Set( prev );
+            // Check if this section is already selected (to deselect it)
+            const isCurrentlySelected = prev.some(s => s.session.id === section.session.id);
 
-            // Toggle selection
-            if ( newSet.has( sectionId ) ) {
-                console.log('Deselecting section');
-                newSet.delete( sectionId );
-            } else {
-                console.log('Selecting section');
-                newSet.add( sectionId );
+            if ( isCurrentlySelected ) {
+                // Deselect
+                const newSelection = prev.filter( s => s.session.id !== section.session.id );
+                return newSelection;
             }
 
-            console.log('New selection:', Array.from(newSet));
-            return newSet;
+            // If we already have selections, check if this section is from the same space
+            if ( prev.length > 0 ) {
+                const firstSelectedSpace = prev[0].session.spaceId;
+
+                if ( section.session.spaceId !== firstSelectedSpace ) {
+                    return prev; // Return unchanged state - different space
+                }
+            }
+
+            // All validations passed, add to selection
+            const newSelection = [...prev, section];
+            return newSelection;
         });
-
-        // Update space ID based on new selection state
-        setSelectionSpaceId( prevSpaceId => {
-            // If this was first selection, set the space
-            if (prevSpaceId === null) {
-                console.log('Setting selection space to:', spaceId);
-                return spaceId;
-            }
-            // If deselecting and no more selections, clear space
-            if (selectedSections.has(sectionId) && selectedSections.size === 1) {
-                console.log('Clearing selection space');
-                return null;
-            }
-            return prevSpaceId;
-        });
-    }, [selectionSpaceId, selectedSections]);
+    }, []);
 
 
     const handleClearSelection = useCallback(() => {
-        setSelectedSections( new Set() );
-        setSelectionSpaceId( null );
+        console.log('Clearing all selections');
+        setSelectedSections( [] );
+        console.log('Selections cleared');
     }, []);
 
 
     useEffect(() => {
         const handleKeyDown = ( e: KeyboardEvent ) => {
-            console.log('Key pressed:', e.key, 'Selected count:', selectedSections.size);
-            if ( e.key === 'Escape' && selectedSections.size > 0 ) {
+            console.log('Key pressed:', e.key, 'Selected count:', selectedSections.length);
+            if ( e.key === 'Escape' && selectedSections.length > 0 ) {
                 console.log('Clearing selection via ESC');
                 handleClearSelection();
             }
@@ -440,7 +422,7 @@ export function SchedulerDashboard(): JSX.Element {
 
         window.addEventListener( 'keydown', handleKeyDown );
         return () => window.removeEventListener( 'keydown', handleKeyDown );
-    }, [selectedSections.size, handleClearSelection]);
+    }, [selectedSections.length, handleClearSelection]);
 
 
     const getDayModuleId = useCallback((
