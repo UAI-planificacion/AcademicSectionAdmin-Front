@@ -13,7 +13,7 @@ import { ENV } from '@/config/envs/env';
 
 
 async function fetchSections(): Promise<SectionSession[]> {
-    const API_URL   = `${ENV.REQUEST_BACK_URL}sections/sessions`;
+    const API_URL   = `${ENV.REQUEST_BACK_URL}sections/sessions?canConsecutiveId=true`;
     const response  = await fetch( API_URL );
 
     if ( !response.ok ) {
@@ -48,6 +48,7 @@ async function fetchSections(): Promise<SectionSession[]> {
                 date            : sessionItem.date,
                 dayId           : sessionItem.dayId,
                 dayModuleId     : sessionItem.dayModuleId,
+                consecutiveId   : sessionItem.consecutiveId
             }
         }))
     );
