@@ -354,13 +354,13 @@ export function SchedulerDashboard(): JSX.Element {
     }, [sections, filteredRoomIds, handleUpdateSection]);
 
 
-    const handleDeleteSection = useCallback(( sectionId: string ) => {
-        const updatedSections = sections.filter( section => section.id !== sectionId );
-        setSections( updatedSections );
-        setFilteredSections(prevFiltered =>
-            prevFiltered.filter( section => section.id !== sectionId )
-        );
-    }, [sections]);
+    // const handleDeleteSection = useCallback(( sectionId: string ) => {
+    //     const updatedSections = sections.filter( section => section.id !== sectionId );
+    //     setSections( updatedSections );
+    //     setFilteredSections(prevFiltered =>
+    //         prevFiltered.filter( section => section.id !== sectionId )
+    //     );
+    // }, [sections]);
 
 
     const handleSectionClick = useCallback(( sectionId: string ) => {
@@ -390,10 +390,17 @@ export function SchedulerDashboard(): JSX.Element {
 
             // If we already have selections, check if this section is from the same space
             if ( prev.length > 0 ) {
-                const firstSelectedSpace = prev[0].session.spaceId;
+                const firstSelectedSpace    = prev[0].session.spaceId;
+                const firstDaySelected      = prev[0].session.dayId;
 
+                // Only allow same space
                 if ( section.session.spaceId !== firstSelectedSpace ) {
                     return prev; // Return unchanged state - different space
+                }
+
+                // Only allow same day
+                if ( section.session.dayId !== firstDaySelected ) {
+                    return prev; // Return unchanged state - different day
                 }
             }
 
