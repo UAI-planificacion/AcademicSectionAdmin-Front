@@ -86,6 +86,7 @@ export function ModuleGrid({
     const [draggedSection, setDraggedSection]   = useState<string | null>( null );
     const [dragOverCell, setDragOverCell]       = useState<string | null>( null );
     const [errorMessage, setErrorMessage]       = useState<string | null>( null );
+    const [hoveredConsecutiveId, setHoveredConsecutiveId] = useState<string | null>( null );
     
     // State for SessionForm modal
     const [showSessionForm, setShowSessionForm] = useState<boolean>( false );
@@ -237,9 +238,11 @@ export function ModuleGrid({
                 isSelected              = { section ? selectedSections.some(s => s.session.id === section.session.id) : false }
                 onSelect                = { onSectionSelect }
                 onClearSelection        = { onClearSelection }
+                hoveredConsecutiveId    = { hoveredConsecutiveId }
+                onConsecutiveHover      = { setHoveredConsecutiveId }
             />
         );
-    }, [isCalculating, getSectionsForCell, dragOverCell, draggedSection, onSectionClick, onSectionSave, selectedSections, onSectionSelect, onClearSelection]);
+    }, [isCalculating, getSectionsForCell, dragOverCell, draggedSection, onSectionClick, onSectionSave, selectedSections, onSectionSelect, onClearSelection, hoveredConsecutiveId]);
 
 
     function handleDragStart( e: React.DragEvent, sectionId: string ): void {
@@ -280,7 +283,7 @@ export function ModuleGrid({
         }
 
         // We need to find the day and moduleId from dayModuleId
-        const dayModule = modules.find(m => m.dayModuleId === dayModuleId);
+        const dayModule = modules.find( m => m.dayModuleId === dayModuleId );
 
         if (!dayModule) {
             setErrorMessage( 'Error: No se pudo encontrar el módulo' );
