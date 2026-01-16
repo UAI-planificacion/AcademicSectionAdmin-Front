@@ -39,6 +39,8 @@ interface Props {
     isSelected          : boolean;
     onSelect            : ( section: SectionSession | null ) => void;
     onClearSelection    : () => void;
+    hoveredConsecutiveId: string | null;
+    onConsecutiveHover  : ( consecutiveId: string | null ) => void;
 }
 
 
@@ -62,6 +64,8 @@ export const SectionCard = memo( function SectionCard({
     isSelected,
     onSelect,
     onClearSelection,
+    hoveredConsecutiveId,
+    onConsecutiveHover,
 }: Props): React.ReactElement {
     const [isMoving, setIsMoving] = useState<boolean>( false );
 
@@ -121,6 +125,20 @@ export const SectionCard = memo( function SectionCard({
             onDragStart(e, section.id);
         }
     }, [section, onDragStart]);
+    
+    // Handle consecutive section hover
+    const handleMouseEnter = useCallback(() => {
+        if (section?.session.consecutiveId) {
+            onConsecutiveHover(section.session.consecutiveId);
+        }
+    }, [section, onConsecutiveHover]);
+    
+    const handleMouseLeave = useCallback(() => {
+        onConsecutiveHover(null);
+    }, [onConsecutiveHover]);
+    // Check if this section should be highlighted (same consecutiveId as hovered)
+    const isConsecutiveHighlighted = section?.session.consecutiveId 
+        && hoveredConsecutiveId === section.session.consecutiveId;
 
 
     return (
@@ -166,6 +184,8 @@ export const SectionCard = memo( function SectionCard({
                             <div
                                 draggable       
                                 onDragStart     = { handleDragStart }
+                                onMouseEnter    = { handleMouseEnter }
+                                onMouseLeave    = { handleMouseLeave }
                                 onClick         = {( e ) => {
                                     if ( e.ctrlKey && section ) {
                                         e.preventDefault();
@@ -176,13 +196,15 @@ export const SectionCard = memo( function SectionCard({
                                 onDoubleClick   = { handleSectionClick }
                                 title           = "Ctrl+clic para seleccionar, doble clic para editar, arrastrar para mover"
                                 className       = { cn(
-                                    "max-w-24 grid grid-rows-2 h-full p-1 rounded cursor-move text-xs text-white",
+                                    "max-w-24 grid grid-rows-2 h-full p-1 rounded cursor-move text-xs ",
                                     draggedSection === section.id && "opacity-50",
-                                    section.session.name === SessionType.C && 'bg-[#1A9850]',
-                                    section.session.name === SessionType.A && 'bg-[#F76C3B]',
-                                    section.session.name === SessionType.T && 'bg-[#1A9850]',
-                                    section.session.name === SessionType.L && 'bg-[#A6D96A]',
-                                    isSelected && "border-2 border-white"
+                                    section.session.name === SessionType.C && 'bg-[#1A9850] text-white',
+                                    section.session.name === SessionType.A && 'bg-[#F76C3B] text-white',
+                                    section.session.name === SessionType.T && 'bg-[#1A9850] text-white',
+                                    section.session.name === SessionType.L && 'bg-[#A6D96A] text-zinc-800',
+                                    // isSelected && "border-2 border-white",
+                                    isSelected && "ring-2 ring-white",
+                                    isConsecutiveHighlighted && "brightness-125 ring-2 ring-sky-600 transition-all duration-200" 
                                 )}
                             >
                                 <span className="truncate">
@@ -227,6 +249,10 @@ export const SectionCard = memo( function SectionCard({
 
                                 <span className="truncate">
                                     Módulo: { section.session.module.name }
+                                </span>
+
+                                <span className="truncate">
+                                    Consecutivo: { section.session.consecutiveId }
                                 </span>
 
                                 {/* <span className="truncate">
@@ -275,6 +301,11 @@ export const SectionCard = memo( function SectionCard({
         || prevProps.draggedSection !== nextProps.draggedSection
         || prevProps.isSelected     !== nextProps.isSelected
     ) {
+        return false;
+    }
+    
+    // Compare hoveredConsecutiveId to allow re-renders on hover
+    if (prevProps.hoveredConsecutiveId !== nextProps.hoveredConsecutiveId) {
         return false;
     }
 
