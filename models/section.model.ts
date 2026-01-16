@@ -65,6 +65,7 @@ export interface SessionSec {
     date            : Date;
     dayId           : number;
     dayModuleId     : number;
+    consecutiveId   : string | null;
 }
 
 

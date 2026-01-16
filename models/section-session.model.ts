@@ -185,6 +185,7 @@ export interface Session {
     date                    : Date;
     dayId                   : number;
     dayModuleId             : number;
+    consecutiveId           : string | null;
     requestSession?         : RequestSession;
     planningChangeId        : string | null;
     // section                 : SectionSeccionPlanningChange;
