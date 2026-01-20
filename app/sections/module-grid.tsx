@@ -54,6 +54,7 @@ interface ModuleGridProps {
     rooms               : SpaceData[];
     onSectionClick      : ( sectionId: string ) => void;
     onSectionMove       : ( sectionId: string, newRoomId: string, newDay: number, newModuleId: string ) => boolean;
+    onMultipleSectionMove : ( targetRoomId: string, targetDayModuleId: number ) => boolean;
     onSectionSave       : ( section: SectionSession ) => boolean;
     onSortChange        : ( field: SortField, direction: SortDirection ) => void;
     sortConfig          : SortConfig;
@@ -71,6 +72,7 @@ export function ModuleGrid({
     rooms,
     onSectionClick,
     onSectionMove,
+    onMultipleSectionMove,
     onSectionSave,
     onSortChange,
     sortConfig,
@@ -85,6 +87,7 @@ export function ModuleGrid({
     const [filteredRooms, setFilteredRooms]     = useState<SpaceData[]>(rooms);
     const [draggedSection, setDraggedSection]   = useState<string | null>( null );
     const [dragOverCell, setDragOverCell]       = useState<string | null>( null );
+    const [dragOverCells, setDragOverCells]     = useState<Map<string, boolean>>(new Map()); // Map<cellId, isOccupied>
     const [errorMessage, setErrorMessage]       = useState<string | null>( null );
     const [hoveredConsecutiveId, setHoveredConsecutiveId] = useState<string | null>( null );
     
@@ -212,7 +215,13 @@ export function ModuleGrid({
 
         const cellId        = `${room.name}-${module.dayModuleId}`;
         const cellSections  = getSectionsForCell(room.name, module.dayModuleId);
-        const isDragOver    = dragOverCell === cellId;
+        
+        // Check if this cell is in the multi-drag state
+        const isInMultiDrag = dragOverCells.has(cellId);
+        const isOccupiedInMultiDrag = dragOverCells.get(cellId) || false;
+        
+        // Determine drag over state
+        const isDragOver = isInMultiDrag || dragOverCell === cellId;
         const hasSection    = cellSections.length > 0;
         const section       = hasSection ? cellSections[0] : null;
 
@@ -227,6 +236,7 @@ export function ModuleGrid({
                 isLastModule            = { isLastModule }
                 moduleIndex             = { moduleIndex }
                 isDragOver              = { isDragOver }
+                isOccupiedDuringDrag    = { isInMultiDrag ? isOccupiedInMultiDrag : hasSection }
                 hasSection              = { hasSection }
                 draggedSection          = { draggedSection }
                 onSectionClick          = { onSectionClick }
@@ -242,7 +252,7 @@ export function ModuleGrid({
                 onConsecutiveHover      = { setHoveredConsecutiveId }
             />
         );
-    }, [isCalculating, getSectionsForCell, dragOverCell, draggedSection, onSectionClick, onSectionSave, selectedSections, onSectionSelect, onClearSelection, hoveredConsecutiveId]);
+    }, [isCalculating, getSectionsForCell, dragOverCell, dragOverCells, draggedSection, onSectionClick, onSectionSave, selectedSections, onSectionSelect, onClearSelection, hoveredConsecutiveId]);
 
 
     function handleDragStart( e: React.DragEvent, sectionId: string ): void {
@@ -255,17 +265,141 @@ export function ModuleGrid({
     function handleDragOver( e: React.DragEvent, roomId: string, dayModuleId: number ): void{
         e.preventDefault();
         const cellId = `${roomId}-${dayModuleId}`;
+        
+        // Optimization: Only recalculate if the target cell has changed
+        if (dragOverCell === cellId) {
+            return;
+        }
+        
         setDragOverCell( cellId );
 
-        const cellSections = getSectionsForCell( roomId, dayModuleId );
-
-        e.dataTransfer.dropEffect = cellSections.length > 0
-            ? 'none'
-            : 'move';
+        // Check if we have multiple selections
+        if ( selectedSections.length > 1 ) {
+            // Verify all selected sections are from the same room
+            const firstRoomId = selectedSections[0].session.spaceId;
+            const allSameRoom = selectedSections.every(s => s.session.spaceId === firstRoomId);
+            
+            if (!allSameRoom) {
+                // If selections are from different rooms, don't show multi-drag feedback
+                setDragOverCells(new Map());
+                e.dataTransfer.dropEffect = 'none';
+                return;
+            }
+            
+            // Find the dragged section to use as reference point
+            const draggedSectionData = selectedSections.find(s => s.id === draggedSection);
+            
+            if (!draggedSectionData) {
+                // If dragged section is not in selection, fall back to single drag
+                setDragOverCells(new Map());
+                const cellSections = getSectionsForCell( roomId, dayModuleId );
+                e.dataTransfer.dropEffect = cellSections.length > 0 ? 'none' : 'move';
+                return;
+            }
+            
+            // Find the module info for the dragged section and target cell
+            const draggedModule = modules.find(m => m.dayModuleId === draggedSectionData.session.dayModuleId);
+            const targetModule = modules.find(m => m.dayModuleId === dayModuleId);
+            
+            if (!draggedModule || !targetModule) {
+                // Fallback if modules not found
+                setDragOverCells(new Map());
+                e.dataTransfer.dropEffect = 'none';
+                return;
+            }
+            
+            // Calculate all target cells based on relative positions using MODULE ORDER
+            const newDragOverCells = new Map<string, boolean>();
+            
+            // Calculate offset based on module order (grid position), not dayModuleId
+            const baseModuleOrder = draggedModule.order;
+            const baseDayId = draggedModule.dayId;
+            
+            // Calculate target cells for all selected sections
+            selectedSections.forEach(section => {
+                // Find the module for this section
+                const sectionModule = modules.find(m => m.dayModuleId === section.session.dayModuleId);
+                
+                if (!sectionModule) return;
+                
+                // Calculate offset using module order
+                const orderOffset = sectionModule.order - baseModuleOrder;
+                const dayOffset = sectionModule.dayId - baseDayId;
+                
+                // Calculate target position
+                const targetDayId = targetModule.dayId + dayOffset;
+                const targetModuleOrder = targetModule.order + orderOffset;
+                
+                // Find the module with this order on the target day
+                // If the order exceeds the day's modules, it might wrap to the next day
+                let targetModuleForSection = modules.find(m => 
+                    m.dayId === targetDayId && m.order === targetModuleOrder
+                );
+                
+                // If not found on the target day, try to find by absolute position
+                // This handles cases where sessions span across days
+                if (!targetModuleForSection) {
+                    // Get all modules for the target day sorted by order
+                    const targetDayModules = modules
+                        .filter(m => m.dayId === targetDayId)
+                        .sort((a, b) => a.order - b.order);
+                    
+                    // If targetModuleOrder is beyond this day, look in next day
+                    if (targetModuleOrder >= targetDayModules.length) {
+                        const nextDayId = targetDayId + 1;
+                        const nextDayOrder = targetModuleOrder - targetDayModules.length;
+                        
+                        targetModuleForSection = modules.find(m => 
+                            m.dayId === nextDayId && m.order === nextDayOrder
+                        );
+                    }
+                    // If targetModuleOrder is negative, look in previous day
+                    else if (targetModuleOrder < 0) {
+                        const prevDayId = targetDayId - 1;
+                        const prevDayModules = modules
+                            .filter(m => m.dayId === prevDayId)
+                            .sort((a, b) => a.order - b.order);
+                        const prevDayOrder = prevDayModules.length + targetModuleOrder;
+                        
+                        targetModuleForSection = modules.find(m => 
+                            m.dayId === prevDayId && m.order === prevDayOrder
+                        );
+                    }
+                }
+                
+                if (!targetModuleForSection) return;
+                
+                const targetDayModuleId = targetModuleForSection.dayModuleId;
+                const targetCellId = `${roomId}-${targetDayModuleId}`;
+                
+                // Check if this cell is occupied
+                const cellSections = getSectionsForCell( roomId, targetDayModuleId );
+                // A cell is occupied if it has sections that are NOT in our selection
+                const isOccupied = cellSections.some(s => 
+                    !selectedSections.some(selected => selected.id === s.id)
+                );
+                
+                newDragOverCells.set(targetCellId, isOccupied);
+            });
+            
+            setDragOverCells(newDragOverCells);
+            
+            // Set dropEffect based on whether ANY cell is occupied
+            const anyOccupied = Array.from(newDragOverCells.values()).some(occupied => occupied);
+            e.dataTransfer.dropEffect = anyOccupied ? 'none' : 'move';
+        } else {
+            // Single section drag (original behavior)
+            setDragOverCells(new Map()); // Clear multi-cell state
+            const cellSections = getSectionsForCell( roomId, dayModuleId );
+            e.dataTransfer.dropEffect = cellSections.length > 0 ? 'none' : 'move';
+        }
     }
 
 
-    const handleDragLeave = () => setDragOverCell( null );
+    const handleDragLeave = () => {
+        setDragOverCell( null );
+        setDragOverCells(new Map()); // Clear multi-cell state
+    };
 
 
     function handleDrop( e: React.DragEvent, roomId: string, dayModuleId: number ): void {
@@ -273,7 +407,21 @@ export function ModuleGrid({
         const sectionId = e.dataTransfer.getData( 'text/plain' );
         setDraggedSection( null );
         setDragOverCell( null );
+        setDragOverCells(new Map()); // Clear multi-cell state
 
+        // Check if we have multiple selections
+        if ( selectedSections.length > 1 ) {
+            // Multi-section move
+            const success = onMultipleSectionMove( roomId, dayModuleId );
+            
+            if ( !success ) {
+                setErrorMessage( 'No se pudieron mover las secciones' );
+                setTimeout(() => setErrorMessage( null ), 3000 );
+            }
+            return;
+        }
+
+        // Single section move (original behavior)
         const cellSections = getSectionsForCell( roomId, dayModuleId );
 
         if ( cellSections.length > 0 ) {

@@ -28,6 +28,7 @@ interface Props {
     isLastModule        : boolean;
     moduleIndex         : number;
     isDragOver          : boolean;
+    isOccupiedDuringDrag: boolean;
     hasSection          : boolean;
     draggedSection      : string | null;
     onSectionClick      : ( sectionId: string ) => void;
@@ -53,6 +54,7 @@ export const SectionCard = memo( function SectionCard({
     isLastModule,
     moduleIndex,
     isDragOver,
+    isOccupiedDuringDrag,
     hasSection,
     draggedSection,
     onSectionClick,
@@ -152,8 +154,8 @@ export const SectionCard = memo( function SectionCard({
                 !isLastModule && "border-r-zinc-200 dark:border-r-zinc-800 transition-colors",
                 moduleIndex % 2 === 0 && "bg-white dark:bg-zinc-900 transition-colors",
                 moduleIndex % 2 !== 0 && "bg-zinc-100 dark:bg-zinc-900/60 transition-colors",
-                isDragOver && !hasSection && "bg-green-100 dark:bg-green-900 transition-colors",
-                isDragOver && hasSection && "bg-red-100 dark:bg-red-100 transition-colors",
+                isDragOver && !isOccupiedDuringDrag && "bg-green-100 dark:bg-green-900 transition-colors",
+                isDragOver && isOccupiedDuringDrag && "bg-red-100 dark:bg-red-900 transition-colors",
             )}
         >
             { !section && !isDragOver && (
@@ -252,7 +254,7 @@ export const SectionCard = memo( function SectionCard({
                                 </span>
 
                                 <span className="truncate">
-                                    Consecutivo: { section.session.consecutiveId }
+                                    Consecutivo: { section.session.consecutiveId ? 'Si': 'No' }
                                 </span>
 
                                 {/* <span className="truncate">
@@ -281,7 +283,7 @@ export const SectionCard = memo( function SectionCard({
 
                                 <span className="truncate">
                                     Profesor: {
-                                        section.session.professor?.name !== 'Sin profesor'
+                                        section.session.professor !== null
                                         ? section.session.professor?.id + '-' + section.session.professor?.name
                                         : 'Sin profesor'
                                     }

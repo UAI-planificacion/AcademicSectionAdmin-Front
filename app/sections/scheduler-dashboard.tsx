@@ -475,6 +475,31 @@ export function SchedulerDashboard(): JSX.Element {
     }, [queryClient]);
 
 
+    const onUpdateSectionMultiple = useCallback( async (
+        updates: Array<{ sectionId: string; spaceId: string; dayModuleId: number }>
+    ) => {
+        const url = `${ENV.REQUEST_BACK_URL}sessions/bulk-update`;
+
+        try {
+            const data = await fetchApi<SectionSession[] | null>( url, "PATCH", { updates } );
+
+            if ( !data ) {
+                toast( 'No se pudieron actualizar las secciones', errorToast );
+                return false;
+            }
+
+            // Invalidate TanStack Query cache to refresh sections
+            // await queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
+
+            toast( 'Secciones actualizadas correctamente', successToast );
+            return true;
+        } catch ( error ) {
+            toast( 'No se pudieron actualizar las secciones', errorToast );
+            return false;
+        }
+    }, [queryClient]);
+
+
     const handleSectionMove = useCallback((
         sectionId   : string,
         newRoomId   : string,
@@ -537,6 +562,131 @@ export function SchedulerDashboard(): JSX.Element {
     }, [sections, getDayModuleId, onUpdateSection]);
 
 
+    const getSectionsForCell = useCallback((spaceId: string, dayModuleId: number) => {
+        const key = `${spaceId}-${dayModuleId}`;
+        return sectionsByCellRef.current.get(key) || [];
+    }, []);
+
+
+    const handleMultipleSectionMove = useCallback((
+        targetRoomId: string,
+        targetDayModuleId: number
+    ): boolean => {
+        if ( selectedSections.length === 0 ) return false;
+
+        // Calculate relative positions based on the first selected section
+        const baseSection = selectedSections[0];
+        const baseDayModuleId = baseSection.session.dayModuleId;
+
+        // Calculate all target positions
+        const updates = selectedSections.map(section => {
+            const offset = section.session.dayModuleId - baseDayModuleId;
+            const newDayModuleId = targetDayModuleId + offset;
+
+            return {
+                section,
+                sectionId: section.id,
+                newDayModuleId,
+                newRoomId: targetRoomId
+            };
+        });
+
+        // Validate that ALL target positions are available
+        for (const update of updates) {
+            const cellSections = getSectionsForCell(update.newRoomId, update.newDayModuleId);
+            // A cell is occupied if it has sections that are NOT in our selection
+            const isOccupied = cellSections.some(s => 
+                !selectedSections.some(selected => selected.id === s.id)
+            );
+
+            if (isOccupied) {
+                toast('Una o más sesiones no se pueden mover porque el destino está ocupado', errorToast);
+                return false;
+            }
+        }
+
+        // Find day and module info for each update
+        const updatesWithDayInfo = updates.map(update => {
+            const dayModule = modules.find(m => m.dayModuleId === update.newDayModuleId);
+
+            if (!dayModule) {
+                toast('Error: No se pudo encontrar el módulo', errorToast);
+                return null;
+            }
+
+            return {
+                ...update,
+                dayId: dayModule.dayId,
+                moduleId: dayModule.id
+            };
+        });
+
+        // Check if any update failed to find dayModule
+        if (updatesWithDayInfo.some(u => u === null)) {
+            return false;
+        }
+
+        // Update local state optimistically
+        const updatedSections = sections.map(section => {
+            const updateInfo = updatesWithDayInfo.find(u => u?.sectionId === section.id);
+
+            if (updateInfo) {
+                return {
+                    ...section,
+                    session: {
+                        ...section.session,
+                        dayId: updateInfo.dayId,
+                        module: { ...section.session.module, id: updateInfo.moduleId },
+                        dayModuleId: updateInfo.newDayModuleId,
+                        spaceId: updateInfo.newRoomId,
+                    }
+                };
+            }
+
+            return section;
+        });
+
+        setSections(updatedSections);
+
+        setFilteredSections(prevFiltered =>
+            prevFiltered.map(section => {
+                const updateInfo = updatesWithDayInfo.find(u => u?.sectionId === section.id);
+
+                if (updateInfo) {
+                    return {
+                        ...section,
+                        session: {
+                            ...section.session,
+                            dayId: updateInfo.dayId,
+                            module: { ...section.session.module, id: updateInfo.moduleId },
+                            dayModuleId: updateInfo.newDayModuleId,
+                            spaceId: updateInfo.newRoomId,
+                        }
+                    };
+                }
+
+                return section;
+            })
+        );
+
+        // Send update to backend
+        const backendUpdates = updatesWithDayInfo
+            .filter((u): u is NonNullable<typeof u> => u !== null)
+            .map(u => ({
+                sectionId: u.sectionId,
+                spaceId: u.newRoomId,
+                dayModuleId: u.newDayModuleId
+            }));
+
+        onUpdateSectionMultiple(backendUpdates);
+
+        // Clear selection after successful move
+        handleClearSelection();
+
+        return true;
+    }, [selectedSections, getSectionsForCell, modules, sections, onUpdateSectionMultiple, handleClearSelection]);
+
+
     const handleModalClose = useCallback(() => {
         setIsModalOpen( false );
         setSelectedSection( null );
@@ -552,12 +702,6 @@ export function SchedulerDashboard(): JSX.Element {
     // const handleLoadExcelCancel = useCallback(() => {
     //     // setShowLoadExcel( false );
     // }, []);
-
-
-    const getSectionsForCell = useCallback((spaceId: string, dayModuleId: number) => {
-        const key = `${spaceId}-${dayModuleId}`;
-        return sectionsByCellRef.current.get(key) || [];
-    }, []);
 
 
     if (modulesLoading || sectionsLoading || spacesLoading || sizesLoading || !isInitialized) {
@@ -601,6 +745,7 @@ export function SchedulerDashboard(): JSX.Element {
                 rooms               = { sortedRooms }
                 onSectionClick      = { handleSectionClick }
                 onSectionMove       = { handleSectionMove }
+                onMultipleSectionMove = { handleMultipleSectionMove }
                 onSectionSave       = { handleSaveSection }
                 onSortChange        = { handleSortChange }
                 sortConfig          = { sortConfig }
