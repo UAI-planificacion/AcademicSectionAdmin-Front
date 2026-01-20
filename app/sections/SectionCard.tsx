@@ -124,7 +124,8 @@ export const SectionCard = memo( function SectionCard({
 
     const handleDragStart = useCallback((e: React.DragEvent) => {
         if (section) {
-            onDragStart(e, section.id);
+            // Use session.id for unique identification (not section.id which can be shared)
+            onDragStart(e, section.session.id);
         }
     }, [section, onDragStart]);
     
@@ -158,7 +159,7 @@ export const SectionCard = memo( function SectionCard({
                 isDragOver && isOccupiedDuringDrag && "bg-red-100 dark:bg-red-900 transition-colors",
             )}
         >
-            { !section && !isDragOver && (
+            { !section && !isDragOver && !draggedSection && (
                 <button 
                     onClick={() => {
                         handleCreateSection();
@@ -199,7 +200,8 @@ export const SectionCard = memo( function SectionCard({
                                 title           = "Ctrl+clic para seleccionar, doble clic para editar, arrastrar para mover"
                                 className       = { cn(
                                     "max-w-24 grid grid-rows-2 h-full p-1 rounded cursor-move text-xs ",
-                                    draggedSection === section.id && "opacity-50",
+                                    // Use session.id for comparison (not section.id which can be shared)
+                                    draggedSection === section.session.id && "opacity-50",
                                     section.session.name === SessionType.C && 'bg-[#1A9850] text-white',
                                     section.session.name === SessionType.A && 'bg-[#F76C3B] text-white',
                                     section.session.name === SessionType.T && 'bg-[#1A9850] text-white',

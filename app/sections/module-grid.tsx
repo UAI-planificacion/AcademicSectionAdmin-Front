@@ -50,8 +50,8 @@ import { useSizes }                     from "@/hooks/use-sizes";
 
 
 interface ModuleGridProps {
-    sections            : SectionSession[];
-    rooms               : SpaceData[];
+    // sections            : SectionSession[];
+    spaces               : SpaceData[];
     onSectionClick      : ( sectionId: string ) => void;
     onSectionMove       : ( sectionId: string, newRoomId: string, newDay: number, newModuleId: string ) => boolean;
     onMultipleSectionMove : ( targetRoomId: string, targetDayModuleId: number ) => boolean;
@@ -68,8 +68,8 @@ interface ModuleGridProps {
 
 
 export function ModuleGrid({
-    sections,
-    rooms,
+    // sections,
+    spaces,
     onSectionClick,
     onSectionMove,
     onMultipleSectionMove,
@@ -84,13 +84,13 @@ export function ModuleGrid({
     onClearSelection,
 }: ModuleGridProps ): React.JSX.Element{
     // Filtrar las salas localmente
-    const [filteredRooms, setFilteredRooms]     = useState<SpaceData[]>(rooms);
+    const [filteredRooms, setFilteredRooms]     = useState<SpaceData[]>( spaces );
     const [draggedSection, setDraggedSection]   = useState<string | null>( null );
     const [dragOverCell, setDragOverCell]       = useState<string | null>( null );
-    const [dragOverCells, setDragOverCells]     = useState<Map<string, boolean>>(new Map()); // Map<cellId, isOccupied>
+    const [dragOverCells, setDragOverCells]     = useState<Map<string, boolean>>( new Map() ); // Map<cellId, isOccupied>
     const [errorMessage, setErrorMessage]       = useState<string | null>( null );
     const [hoveredConsecutiveId, setHoveredConsecutiveId] = useState<string | null>( null );
-    
+
     // State for SessionForm modal
     const [showSessionForm, setShowSessionForm] = useState<boolean>( false );
     const [sessionFormData, setSessionFormData] = useState<{ dayId: number; moduleId: string; spaceId: string } | null>( null );
@@ -115,13 +115,13 @@ export function ModuleGrid({
     const { sizes }     = useSizes();
 
     // Extraer valores únicos para los filtros
-    const uniqueRoomIds     = useMemo(() => Array.from( new Set( rooms.map( room => room.name ))), [rooms]);
-    const uniqueTypes       = useMemo(() => Array.from( new Set( rooms.map( room => room.type ))), [rooms]);
-    const uniqueBuildings   = useMemo(() => Array.from( new Set( rooms.map( room => room.building ))), [rooms]);
+    const uniqueRoomIds     = useMemo(() => Array.from( new Set( spaces.map( room => room.name ))), [spaces]);
+    const uniqueTypes       = useMemo(() => Array.from( new Set( spaces.map( room => room.type ))), [spaces]);
+    const uniqueBuildings   = useMemo(() => Array.from( new Set( spaces.map( room => room.building ))), [spaces]);
 
     // Función para aplicar filtros localmente
     const applyFilters = useCallback(( filters: Filters ) => {
-        let filtered = [...rooms];
+        let filtered = [...spaces];
 
         // Filtrar por sala (ID)
         if (filters.rooms && filters.rooms.length > 0) {
@@ -149,7 +149,7 @@ export function ModuleGrid({
         }
 
         setFilteredRooms(filtered);
-    }, [rooms]);
+    }, [spaces]);
 
     // Manejar cambios en los filtros
     const handleFilterChange = useCallback((filterType: keyof Filters, values: string[]) => {
@@ -168,9 +168,9 @@ export function ModuleGrid({
 
 
     useEffect(() => {
-        setFilteredRooms( rooms );
+        setFilteredRooms( spaces );
         applyFilters( localFilters );
-    }, [rooms, applyFilters, localFilters]);
+    }, [spaces, applyFilters, localFilters]);
 
 
     useEffect(() => {
@@ -215,16 +215,20 @@ export function ModuleGrid({
 
         const cellId        = `${room.name}-${module.dayModuleId}`;
         const cellSections  = getSectionsForCell(room.name, module.dayModuleId);
-        
+
         // Check if this cell is in the multi-drag state
-        const isInMultiDrag = dragOverCells.has(cellId);
-        const isOccupiedInMultiDrag = dragOverCells.get(cellId) || false;
-        
+        const isInMultiDrag         = dragOverCells.has( cellId );
+        const isOccupiedInMultiDrag = dragOverCells.get( cellId ) || false;
+
         // Determine drag over state
         const isDragOver = isInMultiDrag || dragOverCell === cellId;
         const hasSection    = cellSections.length > 0;
         const section       = hasSection ? cellSections[0] : null;
 
+        // For single drag: check if occupied by a DIFFERENT session
+        // Use session.id for unique identification (not section.id which can be shared)
+        const isOccupiedBySingleDrag = !isInMultiDrag && cellSections.some(s => s.session.id !== draggedSection);
+        
         return (
             <SectionCard
                 key                     = { `section-${room.id}-${module.dayModuleId}` }
@@ -236,7 +240,7 @@ export function ModuleGrid({
                 isLastModule            = { isLastModule }
                 moduleIndex             = { moduleIndex }
                 isDragOver              = { isDragOver }
-                isOccupiedDuringDrag    = { isInMultiDrag ? isOccupiedInMultiDrag : hasSection }
+                isOccupiedDuringDrag    = { isInMultiDrag ? isOccupiedInMultiDrag : isOccupiedBySingleDrag }
                 hasSection              = { hasSection }
                 draggedSection          = { draggedSection }
                 onSectionClick          = { onSectionClick }
@@ -265,90 +269,93 @@ export function ModuleGrid({
     function handleDragOver( e: React.DragEvent, roomId: string, dayModuleId: number ): void{
         e.preventDefault();
         const cellId = `${roomId}-${dayModuleId}`;
-        
+
         // Optimization: Only recalculate if the target cell has changed
-        if (dragOverCell === cellId) {
+        if ( dragOverCell === cellId ) {
             return;
         }
-        
+
         setDragOverCell( cellId );
 
         // Check if we have multiple selections
         if ( selectedSections.length > 1 ) {
             // Verify all selected sections are from the same room
             const firstRoomId = selectedSections[0].session.spaceId;
-            const allSameRoom = selectedSections.every(s => s.session.spaceId === firstRoomId);
-            
-            if (!allSameRoom) {
+            const allSameRoom = selectedSections.every( s => s.session.spaceId === firstRoomId );
+
+            if ( !allSameRoom ) {
                 // If selections are from different rooms, don't show multi-drag feedback
                 setDragOverCells(new Map());
                 e.dataTransfer.dropEffect = 'none';
+
                 return;
             }
-            
+
             // Find the dragged section to use as reference point
-            const draggedSectionData = selectedSections.find(s => s.id === draggedSection);
-            
-            if (!draggedSectionData) {
+            // Use session.id for comparison (draggedSection contains session.id)
+            const draggedSectionData = selectedSections.find( s => s.session.id === draggedSection );
+
+            if ( !draggedSectionData ) {
                 // If dragged section is not in selection, fall back to single drag
                 setDragOverCells(new Map());
                 const cellSections = getSectionsForCell( roomId, dayModuleId );
                 e.dataTransfer.dropEffect = cellSections.length > 0 ? 'none' : 'move';
                 return;
             }
-            
+
             // Find the module info for the dragged section and target cell
-            const draggedModule = modules.find(m => m.dayModuleId === draggedSectionData.session.dayModuleId);
-            const targetModule = modules.find(m => m.dayModuleId === dayModuleId);
-            
-            if (!draggedModule || !targetModule) {
+            const draggedModule = modules.find( m => m.dayModuleId === draggedSectionData.session.dayModuleId );
+            const targetModule  = modules.find( m => m.dayModuleId === dayModuleId );
+
+            if ( !draggedModule || !targetModule ) {
                 // Fallback if modules not found
                 setDragOverCells(new Map());
                 e.dataTransfer.dropEffect = 'none';
+
                 return;
             }
-            
+
             // Calculate all target cells based on relative positions using MODULE ORDER
             const newDragOverCells = new Map<string, boolean>();
-            
+
             // Calculate offset based on module order (grid position), not dayModuleId
             const baseModuleOrder = draggedModule.order;
             const baseDayId = draggedModule.dayId;
-            
+
             // Calculate target cells for all selected sections
-            selectedSections.forEach(section => {
+            selectedSections.forEach( section => {
                 // Find the module for this section
-                const sectionModule = modules.find(m => m.dayModuleId === section.session.dayModuleId);
-                
-                if (!sectionModule) return;
-                
+                const sectionModule = modules.find( m => m.dayModuleId === section.session.dayModuleId );
+
+                if ( !sectionModule ) return;
+
                 // Calculate offset using module order
                 const orderOffset = sectionModule.order - baseModuleOrder;
                 const dayOffset = sectionModule.dayId - baseDayId;
-                
+
                 // Calculate target position
                 const targetDayId = targetModule.dayId + dayOffset;
                 const targetModuleOrder = targetModule.order + orderOffset;
-                
+
                 // Find the module with this order on the target day
                 // If the order exceeds the day's modules, it might wrap to the next day
                 let targetModuleForSection = modules.find(m => 
                     m.dayId === targetDayId && m.order === targetModuleOrder
                 );
-                
+
                 // If not found on the target day, try to find by absolute position
                 // This handles cases where sessions span across days
-                if (!targetModuleForSection) {
+                if ( !targetModuleForSection ) {
                     // Get all modules for the target day sorted by order
                     const targetDayModules = modules
                         .filter(m => m.dayId === targetDayId)
                         .sort((a, b) => a.order - b.order);
-                    
+
                     // If targetModuleOrder is beyond this day, look in next day
                     if (targetModuleOrder >= targetDayModules.length) {
                         const nextDayId = targetDayId + 1;
                         const nextDayOrder = targetModuleOrder - targetDayModules.length;
-                        
+
                         targetModuleForSection = modules.find(m => 
                             m.dayId === nextDayId && m.order === nextDayOrder
                         );
@@ -360,30 +367,31 @@ export function ModuleGrid({
                             .filter(m => m.dayId === prevDayId)
                             .sort((a, b) => a.order - b.order);
                         const prevDayOrder = prevDayModules.length + targetModuleOrder;
-                        
+
                         targetModuleForSection = modules.find(m => 
                             m.dayId === prevDayId && m.order === prevDayOrder
                         );
                     }
                 }
-                
+
                 if (!targetModuleForSection) return;
-                
+
                 const targetDayModuleId = targetModuleForSection.dayModuleId;
                 const targetCellId = `${roomId}-${targetDayModuleId}`;
-                
+
                 // Check if this cell is occupied
                 const cellSections = getSectionsForCell( roomId, targetDayModuleId );
                 // A cell is occupied if it has sections that are NOT in our selection
-                const isOccupied = cellSections.some(s => 
-                    !selectedSections.some(selected => selected.id === s.id)
+                // Use session.id for unique identification
+                const isOccupied = cellSections.some( s => 
+                    !selectedSections.some( selected => selected.session.id === s.session.id )
                 );
-                
-                newDragOverCells.set(targetCellId, isOccupied);
+
+                newDragOverCells.set( targetCellId, isOccupied );
             });
-            
-            setDragOverCells(newDragOverCells);
-            
+
+            setDragOverCells( newDragOverCells );
+
             // Set dropEffect based on whether ANY cell is occupied
             const anyOccupied = Array.from(newDragOverCells.values()).some(occupied => occupied);
             e.dataTransfer.dropEffect = anyOccupied ? 'none' : 'move';
@@ -391,7 +399,12 @@ export function ModuleGrid({
             // Single section drag (original behavior)
             setDragOverCells(new Map()); // Clear multi-cell state
             const cellSections = getSectionsForCell( roomId, dayModuleId );
-            e.dataTransfer.dropEffect = cellSections.length > 0 ? 'none' : 'move';
+
+            // Check if the cell is occupied by a DIFFERENT session (not the one being dragged)
+            // Use session.id for unique identification (not section.id which can be shared)
+            const isOccupiedByOther = cellSections.some(s => s.session.id !== draggedSection);
+
+            e.dataTransfer.dropEffect = isOccupiedByOther ? 'none' : 'move';
         }
     }
 
@@ -407,13 +420,13 @@ export function ModuleGrid({
         const sectionId = e.dataTransfer.getData( 'text/plain' );
         setDraggedSection( null );
         setDragOverCell( null );
-        setDragOverCells(new Map()); // Clear multi-cell state
+        setDragOverCells( new Map() ); // Clear multi-cell state
 
         // Check if we have multiple selections
         if ( selectedSections.length > 1 ) {
             // Multi-section move
             const success = onMultipleSectionMove( roomId, dayModuleId );
-            
+
             if ( !success ) {
                 setErrorMessage( 'No se pudieron mover las secciones' );
                 setTimeout(() => setErrorMessage( null ), 3000 );
@@ -433,7 +446,7 @@ export function ModuleGrid({
         // We need to find the day and moduleId from dayModuleId
         const dayModule = modules.find( m => m.dayModuleId === dayModuleId );
 
-        if (!dayModule) {
+        if ( !dayModule ) {
             setErrorMessage( 'Error: No se pudo encontrar el módulo' );
             setTimeout(() => setErrorMessage( null ), 3000 );
             return;
@@ -446,17 +459,19 @@ export function ModuleGrid({
             setTimeout(() => setErrorMessage( null ), 3000 );
         }
     }
-    
+
     // Handle session creation from SectionCard
     const handleCreateSession = useCallback(( dayId: number, moduleId: string, spaceId: string ) => {
         setSessionFormData({ dayId, moduleId, spaceId });
         setShowSessionForm( true );
     }, []);
-    
+
+
     const handleCloseSessionForm = useCallback(() => {
         setShowSessionForm( false );
         setSessionFormData( null );
     }, []);
+
 
     const fixedColumnsConfig = {
         name        : { widthClass: "w-[70px] max-w-[70px] truncate" },
@@ -465,6 +480,7 @@ export function ModuleGrid({
         size        : { widthClass: "w-[50px] max-w-[50px] truncate text-center" },
         capacity    : { widthClass: "w-[50px] max-w-[50px] truncate text-center" },
     };
+
 
     return (
         <div className="flex max-h-screen border rounded-lg">
@@ -755,7 +771,7 @@ export function ModuleGrid({
                                                         onSelectionChange   = {( values ) => handleFilterChange( 'capacities', values as string[] )}
                                                         defaultValues       = { localFilters.capacities || [] }
                                                         isOpen              = { true }
-                                                        options             = { Array.from( new Set( rooms.map( room => room.capacity )))
+                                                        options             = { Array.from( new Set( spaces.map( room => room.capacity )))
                                                             .sort(( a, b ) => a - b)
                                                             .map(capacity => ({
                                                                 value: capacity.toString(),

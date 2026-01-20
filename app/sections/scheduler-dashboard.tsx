@@ -142,65 +142,20 @@ export function SchedulerDashboard(): JSX.Element {
         }
     }, [initialSections, initialRooms, modules, modulesLoading, sectionsLoading, spacesLoading, sizesLoading, sectionsError]);
 
-    // TODO! Aquí revisar el método de cálculo de secciones por celda
+    // Calculate sections by cell - always recalculate to ensure consistency
     useEffect(() => {
         if ( !isInitialized ) {
             return;
         }
 
-        const currentLength     = sections.length;
-        const lastLength        = lastSectionsLengthRef.current;
-        const lengthDifference  = Math.abs( currentLength - lastLength );
-        const shouldRecalculate = lastLength === 0 || lengthDifference > 5;
+        const currentLength = sections.length;
+        
+        // Show loading indicator for initial large dataset
+        if ( currentLength > 100 && lastSectionsLengthRef.current === 0 ) {
+            setIsCalculating( true );
+        }
 
-        if ( shouldRecalculate ) {
-            if ( currentLength > 100 && lastLength === 0 ) {
-                setIsCalculating( true );
-            }
-
-            if ( lastLength === 0 ) {
-                const timeoutId = setTimeout(() => {
-                    const newMap = new Map<string, SectionSession[]>();
-
-                    sections.forEach(section => {
-                        // Skip sections without assigned spaceId or dayModuleId
-                        if (!section.session.spaceId || !section.session.dayModuleId) return;
-
-                        const key = `${section.session.spaceId}-${section.session.dayModuleId}`;
-
-                        if (!newMap.has( key )) {
-                            newMap.set( key, [] );
-                        }
-
-                        newMap.get( key )!.push( section );
-                    });
-
-                    sectionsByCellRef.current       = newMap;
-                    lastSectionsLengthRef.current   = currentLength;
-                    setIsCalculating(false);
-                }, 0);
-
-                return () => clearTimeout(timeoutId);
-            } else {
-                const newMap = new Map<string, SectionSession[]>();
-
-                sections.forEach(section => {
-                    // Skip sections without assigned spaceId or dayModuleId
-                    if (!section.session.spaceId || !section.session.dayModuleId) return;
-
-                    const key = `${section.session.spaceId}-${section.session.dayModuleId}`;
-
-                    if (!newMap.has(key)) {
-                        newMap.set(key, []);
-                    }
-
-                    newMap.get(key)!.push(section);
-                });
-
-                sectionsByCellRef.current       = newMap;
-                lastSectionsLengthRef.current   = currentLength;
-            }
-        } else {
+        const recalculate = () => {
             const newMap = new Map<string, SectionSession[]>();
 
             sections.forEach(section => {
@@ -216,8 +171,18 @@ export function SchedulerDashboard(): JSX.Element {
                 newMap.get(key)!.push(section);
             });
 
-            sectionsByCellRef.current       = newMap;
-            lastSectionsLengthRef.current   = currentLength;
+            sectionsByCellRef.current = newMap;
+            lastSectionsLengthRef.current = currentLength;
+            setIsCalculating(false);
+        };
+
+        // For initial load with large dataset, defer to avoid blocking UI
+        if ( currentLength > 100 && lastSectionsLengthRef.current === 0 ) {
+            const timeoutId = setTimeout(recalculate, 0);
+            return () => clearTimeout(timeoutId);
+        } else {
+            // For all other cases, recalculate immediately
+            recalculate();
         }
     }, [sections, isInitialized]);
 
@@ -595,8 +560,9 @@ export function SchedulerDashboard(): JSX.Element {
         for (const update of updates) {
             const cellSections = getSectionsForCell(update.newRoomId, update.newDayModuleId);
             // A cell is occupied if it has sections that are NOT in our selection
+            // Use session.id for unique identification
             const isOccupied = cellSections.some(s => 
-                !selectedSections.some(selected => selected.id === s.id)
+                !selectedSections.some(selected => selected.session.id === s.session.id)
             );
 
             if (isOccupied) {
@@ -741,8 +707,8 @@ export function SchedulerDashboard(): JSX.Element {
     return (
         <>
             <ModuleGrid
-                sections            = { filteredSections }
-                rooms               = { sortedRooms }
+                // sections            = { filteredSections }
+                spaces               = { sortedRooms }
                 onSectionClick      = { handleSectionClick }
                 onSectionMove       = { handleSectionMove }
                 onMultipleSectionMove = { handleMultipleSectionMove }
