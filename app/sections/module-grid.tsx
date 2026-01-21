@@ -418,45 +418,68 @@ export function ModuleGrid({
     function handleDrop( e: React.DragEvent, roomId: string, dayModuleId: number ): void {
         e.preventDefault();
         const sectionId = e.dataTransfer.getData( 'text/plain' );
+        
+        // console.log('🔍 DEBUG handleDrop - START');
+        // console.log('  roomId:', roomId);
+        // console.log('  dayModuleId:', dayModuleId);
+        // console.log('  dayModuleId type:', typeof dayModuleId);
+        // console.log('  sectionId:', sectionId);
+        // console.log('  modules array length:', modules.length);
+        // console.log('  modules sample:', modules.slice(0, 3));
+        
         setDraggedSection( null );
         setDragOverCell( null );
         setDragOverCells( new Map() ); // Clear multi-cell state
 
         // Check if we have multiple selections
         if ( selectedSections.length > 1 ) {
+            // console.log('  Multi-section move detected');
             // Multi-section move
             const success = onMultipleSectionMove( roomId, dayModuleId );
 
             if ( !success ) {
                 setErrorMessage( 'No se pudieron mover las secciones' );
-                setTimeout(() => setErrorMessage( null ), 3000 );
+                // setTimeout(() => setErrorMessage( null ), 3000 );
             }
             return;
         }
 
         // Single section move (original behavior)
         const cellSections = getSectionsForCell( roomId, dayModuleId );
+        // console.log('  cellSections found:', cellSections.length);
 
         if ( cellSections.length > 0 ) {
+            // console.log('  Cell is occupied, aborting');
             setErrorMessage( 'No se puede mover la sección porque el destino ya está ocupado' );
-            setTimeout(() => setErrorMessage( null ), 3000 );
+            // setTimeout(() => setErrorMessage( null ), 3000 );
             return;
         }
 
-        // We need to find the day and moduleId from dayModuleId
+        // // We need to find the day and moduleId from dayModuleId
+        // console.log('  Searching for dayModule with dayModuleId:', dayModuleId);
+        // console.log('  All dayModuleIds in modules:', modules.map(m => ({ id: m.id, dayModuleId: m.dayModuleId, type: typeof m.dayModuleId })));
+        
         const dayModule = modules.find( m => m.dayModuleId === dayModuleId );
+        // console.log('  dayModule found:', dayModule);
 
         if ( !dayModule ) {
+            // console.error('❌ ERROR: dayModule not found!');
+            // console.error('  Looking for dayModuleId:', dayModuleId, 'type:', typeof dayModuleId);
+            // console.error('  Available dayModuleIds:', modules.map(m => m.dayModuleId));
             setErrorMessage( 'Error: No se pudo encontrar el módulo' );
-            setTimeout(() => setErrorMessage( null ), 3000 );
+            // setTimeout(() => setErrorMessage( null ), 3000 );
             return;
         }
 
+        // console.log('  Calling onSectionMove with:', { sectionId, roomId, dayId: dayModule.dayId, moduleId: dayModule.id });
         const success = onSectionMove( sectionId, roomId, dayModule.dayId, dayModule.id );
 
         if ( !success ) {
+            // console.log('  onSectionMove failed');
             setErrorMessage( 'No se pudo mover la sección' );
-            setTimeout(() => setErrorMessage( null ), 3000 );
+            // setTimeout(() => setErrorMessage( null ), 3000 );
+        } else {
+            // console.log('✅ handleDrop - SUCCESS');
         }
     }
 

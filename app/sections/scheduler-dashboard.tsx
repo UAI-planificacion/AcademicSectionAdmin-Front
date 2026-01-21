@@ -441,27 +441,30 @@ export function SchedulerDashboard(): JSX.Element {
 
 
     const onUpdateSectionMultiple = useCallback( async (
-        updates: Array<{ sectionId: string; spaceId: string; dayModuleId: number }>
+        updates: Array<{ sessionId: string; spaceId: string; dayModuleId: number }>
     ) => {
         const url = `${ENV.REQUEST_BACK_URL}sessions/bulk-update`;
+        
+        console.log('🚀 ~ SchedulerDashboard ~ url:', url)
+        console.log( 'Updating sections:', updates );
+        // try {
+        //     const data = await fetchApi<SectionSession[] | null>( url, "PATCH", { updates } );
 
-        try {
-            const data = await fetchApi<SectionSession[] | null>( url, "PATCH", { updates } );
+        //     if ( !data ) {
+        //         toast( 'No se pudieron actualizar las secciones', errorToast );
+        //         return false;
+        //     }
 
-            if ( !data ) {
-                toast( 'No se pudieron actualizar las secciones', errorToast );
-                return false;
-            }
+        //     // Invalidate TanStack Query cache to refresh sections
+        //     // await queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
 
-            // Invalidate TanStack Query cache to refresh sections
-            // await queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
-
-            toast( 'Secciones actualizadas correctamente', successToast );
-            return true;
-        } catch ( error ) {
-            toast( 'No se pudieron actualizar las secciones', errorToast );
-            return false;
-        }
+        //     toast( 'Secciones actualizadas correctamente', successToast );
+        //     return true;
+        // } catch ( error ) {
+        //     toast( 'No se pudieron actualizar las secciones', errorToast );
+        //     return false;
+        // }
+        return false;
     }, [queryClient]);
 
 
@@ -508,11 +511,11 @@ export function SchedulerDashboard(): JSX.Element {
         };
 
         // Update local state optimistically
-        setSections( prevSections =>
-            prevSections.map( section =>
-                section.id === sectionId ? updatedSection : section
-            )
-        );
+        // setSections( prevSections =>
+        //     prevSections.map( section =>
+        //         section.id === sectionId ? updatedSection : section
+        //     )
+        // );
 
         setFilteredSections( prevFiltered =>
             prevFiltered.map( section =>
@@ -539,25 +542,124 @@ export function SchedulerDashboard(): JSX.Element {
     ): boolean => {
         if ( selectedSections.length === 0 ) return false;
 
+        // console.log('🔍 DEBUG handleMultipleSectionMove - START');
+        // console.log('  targetRoomId:', targetRoomId);
+        // console.log('  targetDayModuleId:', targetDayModuleId);
+        // console.log('  selectedSections count:', selectedSections.length);
+
+        // Find the target module info
+        const targetModule = modules.find(m => m.dayModuleId === targetDayModuleId);
+        
+        if (!targetModule) {
+            // console.error('❌ ERROR: Target module not found!');
+            // console.error('  Looking for targetDayModuleId:', targetDayModuleId);
+            // console.error('  Available dayModuleIds:', modules.map(m => m.dayModuleId));
+            toast('Error: No se pudo encontrar el módulo de destino', errorToast);
+            return false;
+        }
+
+        // console.log('  targetModule found:', targetModule);
+
         // Calculate relative positions based on the first selected section
         const baseSection = selectedSections[0];
         const baseDayModuleId = baseSection.session.dayModuleId;
+        
+        // Find the base module info
+        const baseModule = modules.find(m => m.dayModuleId === baseDayModuleId);
+        
+        if (!baseModule) {
+            // console.error('❌ ERROR: Base module not found!');
+            // console.error('  Looking for baseDayModuleId:', baseDayModuleId);
+            toast('Error: No se pudo encontrar el módulo base', errorToast);
+            return false;
+        }
 
-        // Calculate all target positions
+        // console.log('  baseModule found:', baseModule);
+
+        // Calculate all target positions using module ORDER instead of dayModuleId
         const updates = selectedSections.map(section => {
-            const offset = section.session.dayModuleId - baseDayModuleId;
-            const newDayModuleId = targetDayModuleId + offset;
+            // Find the module for this section
+            const sectionModule = modules.find(m => m.dayModuleId === section.session.dayModuleId);
+            
+            if (!sectionModule) {
+                // console.error('❌ ERROR: Section module not found for section:', section.id);
+                return null;
+            }
+
+            // Calculate offset using module order and day
+            const orderOffset = sectionModule.order - baseModule.order;
+            const dayOffset = sectionModule.dayId - baseModule.dayId;
+
+            // Calculate target position
+            const targetDayId = targetModule.dayId + dayOffset;
+            const targetModuleOrder = targetModule.order + orderOffset;
+
+            // Find the module with this order on the target day
+            let targetModuleForSection = modules.find(m => 
+                m.dayId === targetDayId && m.order === targetModuleOrder
+            );
+
+            // If not found on the target day, try to handle day wrapping
+            if (!targetModuleForSection) {
+                // Get all modules for the target day sorted by order
+                const targetDayModules = modules
+                    .filter(m => m.dayId === targetDayId)
+                    .sort((a, b) => a.order - b.order);
+
+                // If targetModuleOrder is beyond this day, look in next day
+                if (targetModuleOrder >= targetDayModules.length) {
+                    const nextDayId = targetDayId + 1;
+                    const nextDayOrder = targetModuleOrder - targetDayModules.length;
+
+                    targetModuleForSection = modules.find(m => 
+                        m.dayId === nextDayId && m.order === nextDayOrder
+                    );
+                }
+                // If targetModuleOrder is negative, look in previous day
+                else if (targetModuleOrder < 0) {
+                    const prevDayId = targetDayId - 1;
+                    const prevDayModules = modules
+                        .filter(m => m.dayId === prevDayId)
+                        .sort((a, b) => a.order - b.order);
+                    const prevDayOrder = prevDayModules.length + targetModuleOrder;
+
+                    targetModuleForSection = modules.find(m => 
+                        m.dayId === prevDayId && m.order === prevDayOrder
+                    );
+                }
+            }
+
+            if (!targetModuleForSection) {
+                // console.error('❌ ERROR: Target module for section not found!');
+                // console.error('  Section:', section.id);
+                // console.error('  Calculated targetDayId:', targetDayId);
+                // console.error('  Calculated targetModuleOrder:', targetModuleOrder);
+                return null;
+            }
 
             return {
                 section,
-                sectionId: section.id,
-                newDayModuleId,
-                newRoomId: targetRoomId
+                sessionId: section.session.id,
+                newDayModuleId: targetModuleForSection.dayModuleId,
+                newRoomId: targetRoomId,
+                dayId: targetModuleForSection.dayId,
+                moduleId: targetModuleForSection.id
             };
         });
 
+        // Check if any update failed to calculate
+        if (updates.some(u => u === null)) {
+            // console.error('❌ ERROR: Some updates failed to calculate');
+            toast('Error: No se pudieron calcular todas las posiciones', errorToast);
+            return false;
+        }
+
+        // console.log('  All updates calculated:', updates);
+
         // Validate that ALL target positions are available
         for (const update of updates) {
+            if (!update) continue;
+            
             const cellSections = getSectionsForCell(update.newRoomId, update.newDayModuleId);
             // A cell is occupied if it has sections that are NOT in our selection
             // Use session.id for unique identification
@@ -566,37 +668,24 @@ export function SchedulerDashboard(): JSX.Element {
             );
 
             if (isOccupied) {
+                // console.log('  Cell is occupied:', update.newRoomId, update.newDayModuleId);
                 toast('Una o más sesiones no se pueden mover porque el destino está ocupado', errorToast);
                 return false;
             }
         }
 
-        // Find day and module info for each update
-        const updatesWithDayInfo = updates.map(update => {
-            const dayModule = modules.find(m => m.dayModuleId === update.newDayModuleId);
-
-            if (!dayModule) {
-                toast('Error: No se pudo encontrar el módulo', errorToast);
-                return null;
-            }
-
-            return {
-                ...update,
-                dayId: dayModule.dayId,
-                moduleId: dayModule.id
-            };
-        });
-
-        // Check if any update failed to find dayModule
-        if (updatesWithDayInfo.some(u => u === null)) {
-            return false;
-        }
+        // console.log('  All target positions are available');
 
         // Update local state optimistically
+        // console.log('🔍 DEBUG: Starting section updates');
+        // console.log('  Total sections before update:', sections.length);
+        // console.log('  Updates to apply:', updates.map(u => ({ sessionId: u?.sessionId, newDayModuleId: u?.newDayModuleId })));
+        
         const updatedSections = sections.map(section => {
-            const updateInfo = updatesWithDayInfo.find(u => u?.sectionId === section.id);
+            const updateInfo = updates.find(u => u?.sessionId === section.session.id);
 
             if (updateInfo) {
+                // console.log(`  ✅ Updating session ${section.session.id} to dayModuleId ${updateInfo.newDayModuleId}`);
                 return {
                     ...section,
                     session: {
@@ -611,44 +700,51 @@ export function SchedulerDashboard(): JSX.Element {
 
             return section;
         });
+        
+        // console.log('  Total sections after update:', updatedSections.length);
+        // console.log('  Sessions that were updated:', updatedSections.filter(s => 
+            // updates.some(u => u?.sessionId === s.session.id)
+        // ).length);
 
-        setSections(updatedSections);
+        // setSections(updatedSections);
 
-        setFilteredSections(prevFiltered =>
-            prevFiltered.map(section => {
-                const updateInfo = updatesWithDayInfo.find(u => u?.sectionId === section.id);
+        // setFilteredSections(prevFiltered =>
+        //     prevFiltered.map(section => {
+        //         const updateInfo = updates.find(u => u?.sectionId === section.id);
 
-                if (updateInfo) {
-                    return {
-                        ...section,
-                        session: {
-                            ...section.session,
-                            dayId: updateInfo.dayId,
-                            module: { ...section.session.module, id: updateInfo.moduleId },
-                            dayModuleId: updateInfo.newDayModuleId,
-                            spaceId: updateInfo.newRoomId,
-                        }
-                    };
-                }
+        //         if (updateInfo) {
+        //             return {
+        //                 ...section,
+        //                 session: {
+        //                     ...section.session,
+        //                     dayId: updateInfo.dayId,
+        //                     module: { ...section.session.module, id: updateInfo.moduleId },
+        //                     dayModuleId: updateInfo.newDayModuleId,
+        //                     spaceId: updateInfo.newRoomId,
+        //                 }
+        //             };
+        //         }
 
-                return section;
-            })
-        );
+        //         return section;
+        //     })
+        // );
 
         // Send update to backend
-        const backendUpdates = updatesWithDayInfo
+        const backendUpdates = updates
             .filter((u): u is NonNullable<typeof u> => u !== null)
             .map(u => ({
-                sectionId: u.sectionId,
+                sessionId: u.sessionId,
                 spaceId: u.newRoomId,
                 dayModuleId: u.newDayModuleId
             }));
 
+        // console.log('  Sending backend updates:', backendUpdates);
         onUpdateSectionMultiple(backendUpdates);
 
         // Clear selection after successful move
         handleClearSelection();
 
+        // console.log('✅ handleMultipleSectionMove - SUCCESS');
         return true;
     }, [selectedSections, getSectionsForCell, modules, sections, onUpdateSectionMultiple, handleClearSelection]);
 
