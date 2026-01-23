@@ -40,6 +40,7 @@ import { Sizes }                    from '@/models/size.model';
 import { fetchApi }                 from '@/services/fetch';
 import { useSizes }                 from '@/hooks/use-sizes';
 import { useUpdateSessionsMultiple } from '@/hooks/use-update-sessions-multiple';
+import { CapacityWarningDialog }    from '@/app/sections/capacity-warning-dialog';
 // import { KEY_QUERYS }   from '@/lib/key-queries';
 
 interface SessionMove {
@@ -82,7 +83,7 @@ export function SchedulerDashboard(): JSX.Element {
     } = useSections();
 
     const {
-        spacesData  : initialRooms,
+        spacesData,
         isLoading   : spacesLoading
     } = useSpace();
 
@@ -99,6 +100,30 @@ export function SchedulerDashboard(): JSX.Element {
     const [sortConfig, setSortConfig]               = useState<SortConfig>({
         field       : "name",
         direction   : "asc",
+    });
+
+    // Capacity warning dialog state
+    const [capacityWarning, setCapacityWarning] = useState<{
+        show: boolean;
+        spaceName: string;
+        spaceCapacity: number;
+        affectedSessions: Array<{
+            ssec: string;
+            registered: number | null;
+            quota: number;
+            chairsAvailable: number;
+        }>;
+        pendingUpdate: {
+            spaceId: string;
+            updates: SessionMove[];
+            updatedSections: SectionSession[];
+        } | null;
+    }>({
+        show: false,
+        spaceName: '',
+        spaceCapacity: 0,
+        affectedSessions: [],
+        pendingUpdate: null
     });
 
     // Ref para cache persistente de sectionsByCellMemo
@@ -142,11 +167,11 @@ export function SchedulerDashboard(): JSX.Element {
                 setSections( initialSections );
                 // setFilteredSections( initialSections );
                 // setRooms( initialRooms );
-                setFilteredRooms( initialRooms );
+                setFilteredRooms( spacesData );
                 setIsInitialized( true );
             }
         }
-    }, [initialSections, initialRooms, modules, modulesLoading, sectionsLoading, spacesLoading, sizesLoading, sectionsError]);
+    }, [initialSections, spacesData, modules, modulesLoading, sectionsLoading, spacesLoading, sizesLoading, sectionsError]);
 
     // Calculate sections by cell - always recalculate to ensure consistency
     useEffect(() => {
@@ -448,19 +473,74 @@ export function SchedulerDashboard(): JSX.Element {
         updates: SessionMove[],
         updatedSections: SectionSession[]
     ): void => {
-        // Transform updates to remove spaceId (it goes in the URL)
+        // Find the target space
+        const targetSpace = sortedSpaces.find(space => space.name === spaceId);
+        
+        if (!targetSpace) {
+            toast('No se pudo encontrar el espacio destino', errorToast);
+            return;
+        }
+
+        // Check for capacity issues only for sessions changing spaces
+        const affectedSessions: Array<{
+            ssec: string;
+            registered: number | null;
+            quota: number;
+            chairsAvailable: number;
+        }> = [];
+
+        updates.forEach(update => {
+            // Find the session in the current sections
+            const section = sections.find(s => s.session.id === update.sessionId);
+            
+            if (!section) return;
+
+            // Only validate if the space is changing
+            if (section.session.spaceId !== spaceId) {
+                // Calculate students: use registered if not null, otherwise use quota
+                const students = section.registered || section.quota;
+                const chairsAvailable = targetSpace.capacity - students;
+
+                // If capacity would be negative, add to affected sessions
+                if (chairsAvailable < 0) {
+                    affectedSessions.push({
+                        ssec: `${section.subject.id}-${section.code}`,
+                        registered: section.registered,
+                        quota: section.quota,
+                        chairsAvailable
+                    });
+                }
+            }
+        });
+
+        // If there are affected sessions, show warning dialog
+        if (affectedSessions.length > 0) {
+            setCapacityWarning({
+                show: true,
+                spaceName: targetSpace.name,
+                spaceCapacity: targetSpace.capacity,
+                affectedSessions,
+                pendingUpdate: {
+                    spaceId,
+                    updates,
+                    updatedSections
+                }
+            });
+            return;
+        }
+
+        // No capacity issues, proceed with update
         const payload = updates.map( u => ({
             sessionId   : u.sessionId,
             dayModuleId : u.dayModuleId
         }));
 
-        // Call the mutation with optimistic update
         updateSessionsMultiple({
             spaceId,
             updates         : payload,
             updatedSections
         });
-    }, [updateSessionsMultiple]);
+    }, [sections, sortedSpaces, updateSessionsMultiple]);
 
 
     const handleSectionMove = useCallback((
@@ -750,6 +830,48 @@ export function SchedulerDashboard(): JSX.Element {
     }, []);
 
 
+    const handleCapacityWarningConfirm = useCallback(() => {
+        if (capacityWarning.pendingUpdate) {
+            const { spaceId, updates, updatedSections } = capacityWarning.pendingUpdate;
+            
+            // Transform updates to remove spaceId (it goes in the URL)
+            const payload = updates.map( u => ({
+                sessionId   : u.sessionId,
+                dayModuleId : u.dayModuleId
+            }));
+
+            // Call the mutation with optimistic update and force flag
+            updateSessionsMultiple({
+                spaceId,
+                updates         : payload,
+                updatedSections,
+                isNegativeChairs: true  // Force update despite negative capacity
+            });
+        }
+        
+        // Reset capacity warning state
+        setCapacityWarning({
+            show: false,
+            spaceName: '',
+            spaceCapacity: 0,
+            affectedSessions: [],
+            pendingUpdate: null
+        });
+    }, [capacityWarning.pendingUpdate, updateSessionsMultiple]);
+
+
+    const handleCapacityWarningCancel = useCallback(() => {
+        // Just close the dialog, don't send the update
+        setCapacityWarning({
+            show: false,
+            spaceName: '',
+            spaceCapacity: 0,
+            affectedSessions: [],
+            pendingUpdate: null
+        });
+    }, []);
+
+
     // const handleLoadExcelSuccess = useCallback(() => {
     //     // setShowLoadExcel( false );
     //     toast( 'Archivo Excel cargado exitosamente. Recargando datos...', successToast );
@@ -826,6 +948,21 @@ export function SchedulerDashboard(): JSX.Element {
                     }}
                 />
             )}
+
+            {/* Capacity Warning Dialog */}
+            <CapacityWarningDialog
+                open={capacityWarning.show}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        handleCapacityWarningCancel();
+                    }
+                }}
+                spaceName={capacityWarning.spaceName}
+                spaceCapacity={capacityWarning.spaceCapacity}
+                affectedSessions={capacityWarning.affectedSessions}
+                onConfirm={handleCapacityWarningConfirm}
+                onCancel={handleCapacityWarningCancel}
+            />
         </>
     );
 }
