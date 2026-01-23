@@ -8,7 +8,7 @@ import {
     useCallback,
     useRef
 }                               from 'react';
-import { useRouter }            from 'next/navigation';
+// import { useRouter }            from 'next/navigation';
 import { useQueryClient }       from '@tanstack/react-query';
 
 import { toast } from 'sonner';
@@ -17,7 +17,7 @@ import type {
     SpaceData,
     SortDirection,
     SortField,
-    Filters,
+    // Filters,
     SortConfig,
 }                                   from '@/lib/types';
 import {
@@ -39,7 +39,14 @@ import TableSkeleton                from '@/app/sections/TableSkeleton';
 import { Sizes }                    from '@/models/size.model';
 import { fetchApi }                 from '@/services/fetch';
 import { useSizes }                 from '@/hooks/use-sizes';
+import { useUpdateSessionsMultiple } from '@/hooks/use-update-sessions-multiple';
 // import { KEY_QUERYS }   from '@/lib/key-queries';
+
+interface SessionMove {
+    sessionId   : string;
+    spaceId     : string;
+    dayModuleId : number;
+}
 
 
 const createSizeOrderMap = ( sizes: Sizes[] ): Map<string, number> =>
@@ -54,8 +61,11 @@ function orderSizes( sizeOrderMap: Map<string, number>, a: SpaceData, b: SpaceDa
 
 
 export function SchedulerDashboard(): JSX.Element {
-    const router        = useRouter();
+    // const router        = useRouter();
     const queryClient   = useQueryClient();
+
+    // Estados locales
+    const [sections, setSections]                   = useState<SectionSession[]>( [] );
 
     // Hooks de datos
     const {
@@ -78,16 +88,12 @@ export function SchedulerDashboard(): JSX.Element {
 
     const { sizes, loading: sizesLoading } = useSizes();
 
-    // Estados locales
-    const [sections, setSections]                   = useState<SectionSession[]>( [] );
-    const [filteredSections, setFilteredSections]   = useState<SectionSession[]>( [] );
-    const [rooms, setRooms]                         = useState<SpaceData[]>( [] );
+    // TanStack Query mutation for updating multiple sessions
+    const { mutate: updateSessionsMultiple } = useUpdateSessionsMultiple( sections, setSections );
     const [filteredRooms, setFilteredRooms]         = useState<SpaceData[]>( [] );
     const [selectedSection, setSelectedSection]     = useState<SectionSession | null>( null );
     const [isModalOpen, setIsModalOpen]             = useState<boolean>( false );
     const [selectedSections, setSelectedSections]   = useState<SectionSession[]>([]);
-    // const [selectionSpaceId, setSelectionSpaceId]   = useState<string | null>(null);
-    // const [showLoadExcel, setShowLoadExcel]         = useState<boolean>( false );
     const [isInitialized, setIsInitialized]         = useState<boolean>( false );
     const [isCalculating, setIsCalculating]         = useState<boolean>( false );
     const [sortConfig, setSortConfig]               = useState<SortConfig>({
@@ -100,42 +106,42 @@ export function SchedulerDashboard(): JSX.Element {
     const lastSectionsLengthRef = useRef<number>(0);
 
 
-    const filters: Filters = {
-        periods     : [],
-        buildings   : [],
-        sizes       : [],
-        rooms       : [],
-        types       : [],
-        capacities  : [],
-    }
+    // const filters: Filters = {
+    //     periods     : [],
+    //     buildings   : [],
+    //     sizes       : [],
+    //     rooms       : [],
+    //     types       : [],
+    //     capacities  : [],
+    // }
 
 
-    useEffect(() => {
-        if ( !modulesLoading && !modulesError && modules.length === 0 ) {
-            toast( 'No se encontraron los módulos, debes cargarlos manualmente.', errorToast );
-            router.push( '/modules' );
+    // useEffect(() => {
+    //     if ( !modulesLoading && !modulesError && modules.length === 0 ) {
+    //         toast( 'No se encontraron los módulos, debes cargarlos manualmente.', errorToast );
+    //         router.push( '/modules' );
 
-            return;
-        }
-    }, [modules, modulesLoading, modulesError, router]);
+    //         return;
+    //     }
+    // }, [modules, modulesLoading, modulesError, router]);
 
 
-    useEffect(() => {
-        if ( !sectionsLoading && initialSections.length === 0 && !sectionsError ) {
-            toast( 'No se encontraron secciones. Debes cargar un archivo Excel.', errorToast );
-            // setShowLoadExcel( true );
+    // useEffect(() => {
+    //     if ( !sectionsLoading && initialSections.length === 0 && !sectionsError ) {
+    //         toast( 'No se encontraron secciones. Debes cargar un archivo Excel.', errorToast );
+    //         // setShowLoadExcel( true );
 
-            return;
-        }
-    }, [sectionsLoading, initialSections, sectionsError]);
+    //         return;
+    //     }
+    // }, [sectionsLoading, initialSections, sectionsError]);
 
 
     useEffect(() => {
         if ( !modulesLoading && !sectionsLoading && !spacesLoading && !sizesLoading ) {
             if ( modules.length > 0 && !sectionsError ) {
                 setSections( initialSections );
-                setFilteredSections( initialSections );
-                setRooms( initialRooms );
+                // setFilteredSections( initialSections );
+                // setRooms( initialRooms );
                 setFilteredRooms( initialRooms );
                 setIsInitialized( true );
             }
@@ -144,12 +150,10 @@ export function SchedulerDashboard(): JSX.Element {
 
     // Calculate sections by cell - always recalculate to ensure consistency
     useEffect(() => {
-        if ( !isInitialized ) {
-            return;
-        }
+        if ( !isInitialized ) return;
 
         const currentLength = sections.length;
-        
+
         // Show loading indicator for initial large dataset
         if ( currentLength > 100 && lastSectionsLengthRef.current === 0 ) {
             setIsCalculating( true );
@@ -158,28 +162,28 @@ export function SchedulerDashboard(): JSX.Element {
         const recalculate = () => {
             const newMap = new Map<string, SectionSession[]>();
 
-            sections.forEach(section => {
+            sections.forEach( section => {
                 // Skip sections without assigned spaceId or dayModuleId
-                if (!section.session.spaceId || !section.session.dayModuleId) return;
+                if ( !section.session.spaceId || !section.session.dayModuleId ) return;
 
                 const key = `${section.session.spaceId}-${section.session.dayModuleId}`;
 
-                if (!newMap.has(key)) {
-                    newMap.set(key, []);
+                if ( !newMap.has( key )) {
+                    newMap.set( key, [] );
                 }
 
-                newMap.get(key)!.push(section);
+                newMap.get( key )!.push( section );
             });
 
-            sectionsByCellRef.current = newMap;
-            lastSectionsLengthRef.current = currentLength;
-            setIsCalculating(false);
+            sectionsByCellRef.current       = newMap;
+            lastSectionsLengthRef.current   = currentLength;
+            setIsCalculating( false );
         };
 
         // For initial load with large dataset, defer to avoid blocking UI
         if ( currentLength > 100 && lastSectionsLengthRef.current === 0 ) {
-            const timeoutId = setTimeout(recalculate, 0);
-            return () => clearTimeout(timeoutId);
+            const timeoutId = setTimeout( recalculate, 0 );
+            return () => clearTimeout( timeoutId );
         } else {
             // For all other cases, recalculate immediately
             recalculate();
@@ -187,51 +191,51 @@ export function SchedulerDashboard(): JSX.Element {
     }, [sections, isInitialized]);
 
 
-    useEffect(() => {
-        if ( !isInitialized ) return;
+    // useEffect(() => {
+    //     if ( !isInitialized ) return;
 
-        let filteredSecs = [...sections];
+    //     let filteredSecs = [...sections];
 
-        if ( filters.periods.length > 0 ) {
-            filteredSecs = filteredSecs.filter( section => filters.periods.includes( section.period.name ));
-        }
+    //     if ( filters.periods.length > 0 ) {
+    //         filteredSecs = filteredSecs.filter( section => filters.periods.includes( section.period.name ));
+    //     }
 
-        let filteredRms = [...rooms];
+    //     let filteredRms = [...rooms];
 
-        if ( filters.buildings && filters.buildings.length > 0 ) {
-            filteredRms = filteredRms.filter( room => filters.buildings.includes( room.building ));
-        }
+    //     if ( filters.buildings && filters.buildings.length > 0 ) {
+    //         filteredRms = filteredRms.filter( room => filters.buildings.includes( room.building ));
+    //     }
 
-        if ( filters.sizes && filters.sizes.length > 0 ) {
-            filteredRms = filteredRms.filter( room => filters.sizes.includes( room.size ));
-        }
+    //     if ( filters.sizes && filters.sizes.length > 0 ) {
+    //         filteredRms = filteredRms.filter( room => filters.sizes.includes( room.size ));
+    //     }
 
-        if ( filters.rooms && filters.rooms.length > 0 ) {
-            filteredRms = filteredRms.filter( room => filters.rooms.includes( room.name ));
-        }
+    //     if ( filters.rooms && filters.rooms.length > 0 ) {
+    //         filteredRms = filteredRms.filter( room => filters.rooms.includes( room.name ));
+    //     }
 
-        if ( filters.types && filters.types.length > 0 ) {
-            filteredRms = filteredRms.filter( room => filters.types.includes( room.type ));
-        }
+    //     if ( filters.types && filters.types.length > 0 ) {
+    //         filteredRms = filteredRms.filter( room => filters.types.includes( room.type ));
+    //     }
 
-        if ( filters.capacities && filters.capacities.length > 0 ) {
-            filteredRms = filteredRms.filter( room => filters.capacities.includes( room.capacity.toString() ));
-        }
+    //     if ( filters.capacities && filters.capacities.length > 0 ) {
+    //         filteredRms = filteredRms.filter( room => filters.capacities.includes( room.capacity.toString() ));
+    //     }
 
-        const filteredRoomIds = new Set(filteredRms.map( room => room.name ))
+    //     const filteredRoomIds = new Set(filteredRms.map( room => room.name ))
 
-        filteredSecs = filteredSecs.filter( section => section.session.spaceId && filteredRoomIds.has( section.session.spaceId ));
+    //     filteredSecs = filteredSecs.filter( section => section.session.spaceId && filteredRoomIds.has( section.session.spaceId ));
 
-        console.log("************Secciones filtradas:", filteredSecs.length)
-        console.log("**********Salas filtradas:", filteredRms.length)
+    //     console.log("************Secciones filtradas:", filteredSecs.length)
+    //     console.log("**********Salas filtradas:", filteredRms.length)
 
-        setFilteredSections( filteredSecs );
-        setFilteredRooms( filteredRms );
-    }, [ sections, rooms, isInitialized ]);
+    //     // setFilteredSections( filteredSecs );
+    //     setFilteredRooms( filteredRms );
+    // }, [ sections, rooms, isInitialized ]);
 
     const sizeOrderMap      = useMemo(() => createSizeOrderMap( sizes ), [ sizes ]);
     const filteredRoomIds   = useMemo(() => new Set( filteredRooms.map( room => room.name )), [ filteredRooms ]);
-    const sortedRooms       = useMemo(() => {
+    const sortedSpaces      = useMemo(() => {
         if ( !filteredRooms.length ) return [];
 
         return [...filteredRooms].sort(( a, b ) => {
@@ -274,9 +278,9 @@ export function SchedulerDashboard(): JSX.Element {
 
         setSections( updatedSections );
 
-        setFilteredSections( prevFiltered =>
-            prevFiltered.map( s => s.id === updatedSection.id ? updatedSection : s )
-        );
+        // setFilteredSections( prevFiltered =>
+        //     prevFiltered.map( s => s.id === updatedSection.id ? updatedSection : s )
+        // );
 
         return true;
     }, [sections]);
@@ -288,11 +292,11 @@ export function SchedulerDashboard(): JSX.Element {
         if ( existingSection ) {
             const result = handleUpdateSection( section );
 
-            if ( result ) {
-                setFilteredSections(prevFiltered =>
-                    prevFiltered.map(s => s.id === section.id ? section : s)
-                );
-            }
+            // if ( result ) {
+            //     setFilteredSections(prevFiltered =>
+            //         prevFiltered.map(s => s.id === section.id ? section : s)
+            //     );
+            // }
 
             return result;
         } else {
@@ -310,9 +314,9 @@ export function SchedulerDashboard(): JSX.Element {
 
             setSections(prevSections => [ ...prevSections, section ]);
 
-            if ( section.session.spaceId && filteredRoomIds.has( section.session.spaceId )) {
-                setFilteredSections(prevFiltered => [...prevFiltered, section]);
-            }
+            // if ( section.session.spaceId && filteredRoomIds.has( section.session.spaceId )) {
+            //     setFilteredSections(prevFiltered => [...prevFiltered, section]);
+            // }
 
             return true;
         }
@@ -370,24 +374,23 @@ export function SchedulerDashboard(): JSX.Element {
             }
 
             // All validations passed, add to selection
-            const newSelection = [...prev, section];
-            return newSelection;
+            return [...prev, section];
         });
     }, []);
 
 
     const handleClearSelection = useCallback(() => {
-        console.log('Clearing all selections');
+        // console.log('Clearing all selections');
         setSelectedSections( [] );
-        console.log('Selections cleared');
+        // console.log('Selections cleared');
     }, []);
 
 
     useEffect(() => {
         const handleKeyDown = ( e: KeyboardEvent ) => {
-            console.log('Key pressed:', e.key, 'Selected count:', selectedSections.length);
+            // console.log('Key pressed:', e.key, 'Selected count:', selectedSections.length);
             if ( e.key === 'Escape' && selectedSections.length > 0 ) {
-                console.log('Clearing selection via ESC');
+                // console.log('Clearing selection via ESC');
                 handleClearSelection();
             }
         };
@@ -440,32 +443,24 @@ export function SchedulerDashboard(): JSX.Element {
     }, [queryClient]);
 
 
-    const onUpdateSectionMultiple = useCallback( async (
-        updates: Array<{ sessionId: string; spaceId: string; dayModuleId: number }>
-    ) => {
-        const url = `${ENV.REQUEST_BACK_URL}sessions/bulk-update`;
-        
-        console.log('🚀 ~ SchedulerDashboard ~ url:', url)
-        console.log( 'Updating sections:', updates );
-        // try {
-        //     const data = await fetchApi<SectionSession[] | null>( url, "PATCH", { updates } );
+    const onUpdateSectionMultiple = useCallback((
+        spaceId: string,
+        updates: SessionMove[],
+        updatedSections: SectionSession[]
+    ): void => {
+        // Transform updates to remove spaceId (it goes in the URL)
+        const payload = updates.map( u => ({
+            sessionId   : u.sessionId,
+            dayModuleId : u.dayModuleId
+        }));
 
-        //     if ( !data ) {
-        //         toast( 'No se pudieron actualizar las secciones', errorToast );
-        //         return false;
-        //     }
-
-        //     // Invalidate TanStack Query cache to refresh sections
-        //     // await queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
-
-        //     toast( 'Secciones actualizadas correctamente', successToast );
-        //     return true;
-        // } catch ( error ) {
-        //     toast( 'No se pudieron actualizar las secciones', errorToast );
-        //     return false;
-        // }
-        return false;
-    }, [queryClient]);
+        // Call the mutation with optimistic update
+        updateSessionsMultiple({
+            spaceId,
+            updates         : payload,
+            updatedSections
+        });
+    }, [updateSessionsMultiple]);
 
 
     const handleSectionMove = useCallback((
@@ -476,10 +471,10 @@ export function SchedulerDashboard(): JSX.Element {
     ) : boolean => {
         const targetOccupied = sections
             .some(( section : SectionSession ) =>
-                section.id                      !== sectionId   &&
-                section.session.spaceId         === newRoomId   &&
-                section.session.dayId           === newDay      &&
-                section.session.module.id       === newModuleId
+                section.id                      !== sectionId
+                && section.session.spaceId      === newRoomId
+                && section.session.dayId        === newDay
+                && section.session.module.id    === newModuleId
             );
 
         if ( targetOccupied ) {
@@ -495,20 +490,20 @@ export function SchedulerDashboard(): JSX.Element {
         const dayModuleId = getDayModuleId( newDay, newModuleId );
 
         if ( !dayModuleId ) {
-            toast( 'Error: No se pudo encontrar el módulo del día', errorToast );
+            toast( 'No se pudo encontrar el módulo del día', errorToast );
             return false;
         }
 
-        const updatedSection: SectionSession = {
-            ...sectionToMove,
-            session: {
-                ...sectionToMove.session,
-                dayId       : newDay,
-                module      : { ...sectionToMove.session.module, id: newModuleId },
-                dayModuleId : dayModuleId,
-                spaceId     : newRoomId,
-            }
-        };
+        // const updatedSection: SectionSession = {
+        //     ...sectionToMove,
+        //     session: {
+        //         ...sectionToMove.session,
+        //         dayId       : newDay,
+        //         module      : { ...sectionToMove.session.module, id: newModuleId },
+        //         dayModuleId : dayModuleId,
+        //         spaceId     : newRoomId,
+        //     }
+        // };
 
         // Update local state optimistically
         // setSections( prevSections =>
@@ -517,11 +512,11 @@ export function SchedulerDashboard(): JSX.Element {
         //     )
         // );
 
-        setFilteredSections( prevFiltered =>
-            prevFiltered.map( section =>
-                section.id === sectionId ? updatedSection : section
-            )
-        );
+        // setFilteredSections( prevFiltered =>
+        //     prevFiltered.map( section =>
+        //         section.id === sectionId ? updatedSection : section
+        //     )
+        // );
 
         // Send update to backend
         onUpdateSection( sectionId, newRoomId, dayModuleId );
@@ -554,7 +549,7 @@ export function SchedulerDashboard(): JSX.Element {
             // console.error('❌ ERROR: Target module not found!');
             // console.error('  Looking for targetDayModuleId:', targetDayModuleId);
             // console.error('  Available dayModuleIds:', modules.map(m => m.dayModuleId));
-            toast('Error: No se pudo encontrar el módulo de destino', errorToast);
+            toast('No se pudo encontrar el módulo de destino', errorToast);
             return false;
         }
 
@@ -567,31 +562,32 @@ export function SchedulerDashboard(): JSX.Element {
         // Find the base module info
         const baseModule = modules.find(m => m.dayModuleId === baseDayModuleId);
         
-        if (!baseModule) {
+        if ( !baseModule ) {
             // console.error('❌ ERROR: Base module not found!');
             // console.error('  Looking for baseDayModuleId:', baseDayModuleId);
-            toast('Error: No se pudo encontrar el módulo base', errorToast);
+            toast( 'No se pudo encontrar el módulo base', errorToast );
             return false;
         }
 
         // console.log('  baseModule found:', baseModule);
 
         // Calculate all target positions using module ORDER instead of dayModuleId
-        const updates = selectedSections.map(section => {
+        const updates = selectedSections.map( section => {
             // Find the module for this section
-            const sectionModule = modules.find(m => m.dayModuleId === section.session.dayModuleId);
+            const sectionModule = modules.find( m => m.dayModuleId === section.session.dayModuleId );
             
-            if (!sectionModule) {
+            if ( !sectionModule ) {
                 // console.error('❌ ERROR: Section module not found for section:', section.id);
+                toast( 'No se pudo encontrar el módulo de la sección', errorToast );
                 return null;
             }
 
             // Calculate offset using module order and day
-            const orderOffset = sectionModule.order - baseModule.order;
-            const dayOffset = sectionModule.dayId - baseModule.dayId;
+            const orderOffset   = sectionModule.order - baseModule.order;
+            const dayOffset     = sectionModule.dayId - baseModule.dayId;
 
             // Calculate target position
-            const targetDayId = targetModule.dayId + dayOffset;
+            const targetDayId       = targetModule.dayId + dayOffset;
             const targetModuleOrder = targetModule.order + orderOffset;
 
             // Find the module with this order on the target day
@@ -600,23 +596,23 @@ export function SchedulerDashboard(): JSX.Element {
             );
 
             // If not found on the target day, try to handle day wrapping
-            if (!targetModuleForSection) {
+            if ( !targetModuleForSection ) {
                 // Get all modules for the target day sorted by order
                 const targetDayModules = modules
-                    .filter(m => m.dayId === targetDayId)
-                    .sort((a, b) => a.order - b.order);
+                    .filter( m => m.dayId === targetDayId )
+                    .sort(( a, b ) => a.order - b.order );
 
                 // If targetModuleOrder is beyond this day, look in next day
-                if (targetModuleOrder >= targetDayModules.length) {
-                    const nextDayId = targetDayId + 1;
-                    const nextDayOrder = targetModuleOrder - targetDayModules.length;
+                if ( targetModuleOrder >= targetDayModules.length ) {
+                    const nextDayId     = targetDayId + 1;
+                    const nextDayOrder  = targetModuleOrder - targetDayModules.length;
 
                     targetModuleForSection = modules.find(m => 
                         m.dayId === nextDayId && m.order === nextDayOrder
                     );
                 }
                 // If targetModuleOrder is negative, look in previous day
-                else if (targetModuleOrder < 0) {
+                else if ( targetModuleOrder < 0 ) {
                     const prevDayId = targetDayId - 1;
                     const prevDayModules = modules
                         .filter(m => m.dayId === prevDayId)
@@ -629,47 +625,43 @@ export function SchedulerDashboard(): JSX.Element {
                 }
             }
 
-            if (!targetModuleForSection) {
-                // console.error('❌ ERROR: Target module for section not found!');
-                // console.error('  Section:', section.id);
-                // console.error('  Calculated targetDayId:', targetDayId);
-                // console.error('  Calculated targetModuleOrder:', targetModuleOrder);
+            if ( !targetModuleForSection ) {
                 return null;
             }
 
             return {
                 section,
-                sessionId: section.session.id,
-                newDayModuleId: targetModuleForSection.dayModuleId,
-                newRoomId: targetRoomId,
-                dayId: targetModuleForSection.dayId,
-                moduleId: targetModuleForSection.id
+                sessionId       : section.session.id,
+                newDayModuleId  : targetModuleForSection.dayModuleId,
+                newRoomId       : targetRoomId,
+                dayId           : targetModuleForSection.dayId,
+                moduleId        : targetModuleForSection.id
             };
         });
 
         // Check if any update failed to calculate
-        if (updates.some(u => u === null)) {
+        if ( updates.some( u => u === null )) {
             // console.error('❌ ERROR: Some updates failed to calculate');
-            toast('Error: No se pudieron calcular todas las posiciones', errorToast);
+            toast( 'No se pudieron calcular todas las posiciones', errorToast );
             return false;
         }
 
         // console.log('  All updates calculated:', updates);
 
         // Validate that ALL target positions are available
-        for (const update of updates) {
-            if (!update) continue;
-            
-            const cellSections = getSectionsForCell(update.newRoomId, update.newDayModuleId);
+        for ( const update of updates ) {
+            if ( !update ) continue;
+
+            const cellSections = getSectionsForCell( update.newRoomId, update.newDayModuleId );
             // A cell is occupied if it has sections that are NOT in our selection
             // Use session.id for unique identification
-            const isOccupied = cellSections.some(s => 
-                !selectedSections.some(selected => selected.session.id === s.session.id)
+            const isOccupied = cellSections.some( s => 
+                !selectedSections.some( selected => selected.session.id === s.session.id )
             );
 
-            if (isOccupied) {
+            if ( isOccupied ) {
                 // console.log('  Cell is occupied:', update.newRoomId, update.newDayModuleId);
-                toast('Una o más sesiones no se pueden mover porque el destino está ocupado', errorToast);
+                toast( 'Una o más sesiones no se pueden mover porque el destino está ocupado', errorToast );
                 return false;
             }
         }
@@ -681,19 +673,19 @@ export function SchedulerDashboard(): JSX.Element {
         // console.log('  Total sections before update:', sections.length);
         // console.log('  Updates to apply:', updates.map(u => ({ sessionId: u?.sessionId, newDayModuleId: u?.newDayModuleId })));
         
-        const updatedSections = sections.map(section => {
-            const updateInfo = updates.find(u => u?.sessionId === section.session.id);
+        const updatedSections = sections.map( section => {
+            const updateInfo = updates.find( u => u?.sessionId === section.session.id );
 
-            if (updateInfo) {
+            if ( updateInfo ) {
                 // console.log(`  ✅ Updating session ${section.session.id} to dayModuleId ${updateInfo.newDayModuleId}`);
                 return {
                     ...section,
                     session: {
                         ...section.session,
-                        dayId: updateInfo.dayId,
-                        module: { ...section.session.module, id: updateInfo.moduleId },
-                        dayModuleId: updateInfo.newDayModuleId,
-                        spaceId: updateInfo.newRoomId,
+                        dayId       : updateInfo.dayId,
+                        module      : { ...section.session.module, id: updateInfo.moduleId },
+                        dayModuleId : updateInfo.newDayModuleId,
+                        spaceId     : updateInfo.newRoomId,
                     }
                 };
             }
@@ -706,7 +698,7 @@ export function SchedulerDashboard(): JSX.Element {
             // updates.some(u => u?.sessionId === s.session.id)
         // ).length);
 
-        // setSections(updatedSections);
+        // setSections( updatedSections );
 
         // setFilteredSections(prevFiltered =>
         //     prevFiltered.map(section => {
@@ -731,15 +723,18 @@ export function SchedulerDashboard(): JSX.Element {
 
         // Send update to backend
         const backendUpdates = updates
-            .filter((u): u is NonNullable<typeof u> => u !== null)
-            .map(u => ({
-                sessionId: u.sessionId,
-                spaceId: u.newRoomId,
-                dayModuleId: u.newDayModuleId
+            .filter(( u ): u is NonNullable<typeof u> => u !== null )
+            .map( u => ({
+                sessionId   : u.sessionId,
+                spaceId     : u.newRoomId,
+                dayModuleId : u.newDayModuleId
             }));
 
+        // Extract the common spaceId (all sessions go to the same room)
+        const spaceId = targetRoomId;
+
         // console.log('  Sending backend updates:', backendUpdates);
-        onUpdateSectionMultiple(backendUpdates);
+        onUpdateSectionMultiple( spaceId, backendUpdates, updatedSections );
 
         // Clear selection after successful move
         handleClearSelection();
@@ -755,18 +750,18 @@ export function SchedulerDashboard(): JSX.Element {
     }, []);
 
 
-    const handleLoadExcelSuccess = useCallback(() => {
-        // setShowLoadExcel( false );
-        toast( 'Archivo Excel cargado exitosamente. Recargando datos...', successToast );
-        window.location.reload();
-    }, []);
+    // const handleLoadExcelSuccess = useCallback(() => {
+    //     // setShowLoadExcel( false );
+    //     toast( 'Archivo Excel cargado exitosamente. Recargando datos...', successToast );
+    //     window.location.reload();
+    // }, []);
 
     // const handleLoadExcelCancel = useCallback(() => {
     //     // setShowLoadExcel( false );
     // }, []);
 
 
-    if (modulesLoading || sectionsLoading || spacesLoading || sizesLoading || !isInitialized) {
+    if ( modulesLoading || sectionsLoading || spacesLoading || sizesLoading || !isInitialized ) {
         return <TableSkeleton />;
     }
 
@@ -803,22 +798,22 @@ export function SchedulerDashboard(): JSX.Element {
     return (
         <>
             <ModuleGrid
-                // sections            = { filteredSections }
-                spaces               = { sortedRooms }
-                onSectionClick      = { handleSectionClick }
-                onSectionMove       = { handleSectionMove }
-                onMultipleSectionMove = { handleMultipleSectionMove }
-                onSectionSave       = { handleSaveSection }
-                onSortChange        = { handleSortChange }
-                sortConfig          = { sortConfig }
-                getSectionsForCell  = { getSectionsForCell }
-                isCalculating       = { isCalculating }
-                selectedSections    = { selectedSections }
-                onSectionSelect     = { handleSectionSelect }
-                onClearSelection    = { handleClearSelection }
+                spaces                  = { sortedSpaces }
+                onSectionClick          = { handleSectionClick }
+                onSectionMove           = { handleSectionMove }
+                onMultipleSectionMove   = { handleMultipleSectionMove }
+                onSectionSave           = { handleSaveSection }
+                onSortChange            = { handleSortChange }
+                sortConfig              = { sortConfig }
+                getSectionsForCell      = { getSectionsForCell }
+                isCalculating           = { isCalculating }
+                selectedSections        = { selectedSections }
+                onSectionSelect         = { handleSectionSelect }
+                onClearSelection        = { handleClearSelection }
             />
 
-            {isModalOpen && selectedSection && (
+            {/* To Update */}
+            { isModalOpen && selectedSection && (
                 <SessionForm
                     isOpen          = { isModalOpen }
                     onClose         = { handleModalClose }
