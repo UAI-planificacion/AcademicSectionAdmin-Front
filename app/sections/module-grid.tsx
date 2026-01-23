@@ -3,7 +3,7 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect } from "react"
 
 import {
-    AlertCircle,
+    // AlertCircle,
     Armchair,
     ArrowDownAZ,
     ArrowUpAZ,
@@ -14,7 +14,8 @@ import {
     Proportions,
     ArrowUp01,
     ArrowDown10
-}  from "lucide-react"
+}  from "lucide-react";
+import { toast } from 'sonner';
 
 import {
     cn,
@@ -44,31 +45,30 @@ import { useDays }                      from "@/hooks/use-days";
 import { useModules, getModulesForDay } from "@/hooks/use-modules";
 import { usePeriods }                   from "@/hooks/use-periods";
 import { useSizes }                     from "@/hooks/use-sizes";
+import { errorToast }                   from '@/config/toast/toast.config';
 
 // import { Section } from "@/models/section.model";
 // import { BuildingEnum } from "@/models/section-session.model";
 
 
 interface ModuleGridProps {
-    // sections            : SectionSession[];
-    spaces               : SpaceData[];
-    onSectionClick      : ( sectionId: string ) => void;
-    onSectionMove       : ( sectionId: string, newRoomId: string, newDay: number, newModuleId: string ) => boolean;
-    onMultipleSectionMove : ( targetRoomId: string, targetDayModuleId: number ) => boolean;
-    onSectionSave       : ( section: SectionSession ) => boolean;
-    onSortChange        : ( field: SortField, direction: SortDirection ) => void;
-    sortConfig          : SortConfig;
-    onFilterChange?     : ( filters: Filters ) => void;
-    getSectionsForCell  : ( spaceId: string, dayModuleId: number ) => SectionSession[];
-    isCalculating       : boolean;
-    selectedSections    : SectionSession[];
-    onSectionSelect     : ( section: SectionSession | null ) => void;
-    onClearSelection    : () => void;
+    spaces                  : SpaceData[];
+    onSectionClick          : ( sectionId: string ) => void;
+    onSectionMove           : ( sectionId: string, newSpaceId: string, newDay: number, newModuleId: string ) => boolean;
+    onMultipleSectionMove   : ( targetSpaceId: string, targetDayModuleId: number ) => boolean;
+    onSectionSave           : ( section: SectionSession ) => boolean;
+    onSortChange            : ( field: SortField, direction: SortDirection ) => void;
+    sortConfig              : SortConfig;
+    onFilterChange?         : ( filters: Filters ) => void;
+    getSectionsForCell      : ( spaceId: string, dayModuleId: number ) => SectionSession[];
+    isCalculating           : boolean;
+    selectedSections        : SectionSession[];
+    onSectionSelect         : ( section: SectionSession | null ) => void;
+    onClearSelection        : () => void;
 }
 
 
 export function ModuleGrid({
-    // sections,
     spaces,
     onSectionClick,
     onSectionMove,
@@ -84,11 +84,10 @@ export function ModuleGrid({
     onClearSelection,
 }: ModuleGridProps ): React.JSX.Element{
     // Filtrar las salas localmente
-    const [filteredRooms, setFilteredRooms]     = useState<SpaceData[]>( spaces );
+    const [filteredSpaces, setFilteredSpaces]   = useState<SpaceData[]>( spaces );
     const [draggedSection, setDraggedSection]   = useState<string | null>( null );
     const [dragOverCell, setDragOverCell]       = useState<string | null>( null );
     const [dragOverCells, setDragOverCells]     = useState<Map<string, boolean>>( new Map() ); // Map<cellId, isOccupied>
-    const [errorMessage, setErrorMessage]       = useState<string | null>( null );
     const [hoveredConsecutiveId, setHoveredConsecutiveId] = useState<string | null>( null );
 
     // State for SessionForm modal
@@ -148,7 +147,7 @@ export function ModuleGrid({
             filtered = filtered.filter(room => filters.capacities!.includes(room.capacity.toString()));
         }
 
-        setFilteredRooms(filtered);
+        setFilteredSpaces(filtered);
     }, [spaces]);
 
     // Manejar cambios en los filtros
@@ -168,7 +167,7 @@ export function ModuleGrid({
 
 
     useEffect(() => {
-        setFilteredRooms( spaces );
+        setFilteredSpaces( spaces );
         applyFilters( localFilters );
     }, [spaces, applyFilters, localFilters]);
 
@@ -221,7 +220,7 @@ export function ModuleGrid({
         const isOccupiedInMultiDrag = dragOverCells.get( cellId ) || false;
 
         // Determine drag over state
-        const isDragOver = isInMultiDrag || dragOverCell === cellId;
+        const isDragOver    = isInMultiDrag || dragOverCell === cellId;
         const hasSection    = cellSections.length > 0;
         const section       = hasSection ? cellSections[0] : null;
 
@@ -415,72 +414,60 @@ export function ModuleGrid({
     };
 
 
-    function handleDrop( e: React.DragEvent, roomId: string, dayModuleId: number ): void {
+    function handleDrop( e: React.DragEvent, spaceId: string, dayModuleId: number ): void {
         e.preventDefault();
         const sectionId = e.dataTransfer.getData( 'text/plain' );
-        
         // console.log('🔍 DEBUG handleDrop - START');
-        // console.log('  roomId:', roomId);
+        // console.log('🚀 ~ handleDrop ~ modules:', modules)
+        // console.log('  SpaceId:', spaceId);
+
         // console.log('  dayModuleId:', dayModuleId);
         // console.log('  dayModuleId type:', typeof dayModuleId);
         // console.log('  sectionId:', sectionId);
         // console.log('  modules array length:', modules.length);
         // console.log('  modules sample:', modules.slice(0, 3));
-        
+
         setDraggedSection( null );
         setDragOverCell( null );
         setDragOverCells( new Map() ); // Clear multi-cell state
 
         // Check if we have multiple selections
         if ( selectedSections.length > 1 ) {
-            // console.log('  Multi-section move detected');
             // Multi-section move
-            const success = onMultipleSectionMove( roomId, dayModuleId );
+            const success = onMultipleSectionMove( spaceId, dayModuleId );
 
             if ( !success ) {
-                setErrorMessage( 'No se pudieron mover las secciones' );
-                // setTimeout(() => setErrorMessage( null ), 3000 );
+                toast( 'No se pudieron mover las secciones', errorToast );
             }
+
             return;
         }
 
         // Single section move (original behavior)
-        const cellSections = getSectionsForCell( roomId, dayModuleId );
-        // console.log('  cellSections found:', cellSections.length);
+        const cellSections = getSectionsForCell( spaceId, dayModuleId );
 
         if ( cellSections.length > 0 ) {
-            // console.log('  Cell is occupied, aborting');
-            setErrorMessage( 'No se puede mover la sección porque el destino ya está ocupado' );
-            // setTimeout(() => setErrorMessage( null ), 3000 );
+            toast( 'No se puede mover la sección porque el destino ya está ocupado', errorToast );
             return;
         }
 
-        // // We need to find the day and moduleId from dayModuleId
-        // console.log('  Searching for dayModule with dayModuleId:', dayModuleId);
-        // console.log('  All dayModuleIds in modules:', modules.map(m => ({ id: m.id, dayModuleId: m.dayModuleId, type: typeof m.dayModuleId })));
-        
         const dayModule = modules.find( m => m.dayModuleId === dayModuleId );
-        // console.log('  dayModule found:', dayModule);
 
         if ( !dayModule ) {
-            // console.error('❌ ERROR: dayModule not found!');
-            // console.error('  Looking for dayModuleId:', dayModuleId, 'type:', typeof dayModuleId);
-            // console.error('  Available dayModuleIds:', modules.map(m => m.dayModuleId));
-            setErrorMessage( 'Error: No se pudo encontrar el módulo' );
-            // setTimeout(() => setErrorMessage( null ), 3000 );
+            toast( 'Error: No se pudo encontrar el módulo', errorToast );
+
             return;
         }
 
-        // console.log('  Calling onSectionMove with:', { sectionId, roomId, dayId: dayModule.dayId, moduleId: dayModule.id });
-        const success = onSectionMove( sectionId, roomId, dayModule.dayId, dayModule.id );
+        const success = onSectionMove( sectionId, spaceId, dayModule.dayId, dayModule.id );
 
         if ( !success ) {
-            // console.log('  onSectionMove failed');
-            setErrorMessage( 'No se pudo mover la sección' );
-            // setTimeout(() => setErrorMessage( null ), 3000 );
-        } else {
-            // console.log('✅ handleDrop - SUCCESS');
+            toast( 'No se pudo mover la sesión.', errorToast );
         }
+        // else {
+        //     console.log('✅ handleDrop - SUCCESS');
+        //     console.log('✅ handleDrop - AQUI DEBO LLAMAR AL SERVICIO');
+        // }
     }
 
     // Handle session creation from SectionCard
@@ -507,14 +494,6 @@ export function ModuleGrid({
 
     return (
         <div className="flex max-h-screen border rounded-lg">
-            { errorMessage && (
-                <div className="absolute top-2 right-2 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded flex items-center z-20">
-                    <AlertCircle className="h-4 w-4 mr-2" />
-
-                    { errorMessage }
-                </div>
-            )}
-
             {/* Tabla para columnas fijas */}
             <div className="z-10 overflow-y-auto w-[100rem] max-h-[calc(100vh-95px)] rounded-tl-lg relative hide-vertical-scrollbar" ref={fixedTableRef} onScroll={handleScroll}>
                 <div className="relative hide-vertical-scrollbar">
@@ -824,7 +803,7 @@ export function ModuleGrid({
                         </thead>
 
                         <tbody>
-                            { filteredRooms.map(( room ) => (
+                            { filteredSpaces.map(( room ) => (
                                 <tr key={`fixed-${room.id}`} className="border-b h-16">
                                     {/* Espacio */}
                                     <td
@@ -933,7 +912,7 @@ export function ModuleGrid({
                                 return map;
                             }, [days, modules]);
 
-                            return filteredRooms.map(( room ) => (
+                            return filteredSpaces.map(( room ) => (
                                 <tr key={`room-row-${room.id}`} className="border-b h-16">
                                     {days.slice(0, 6).map(( day ) => {
                                         const dayModules = dayModulesMap.get(day.id) || [];
@@ -950,16 +929,16 @@ export function ModuleGrid({
                 </table>
             </div>
 
-            {/* Single SessionForm instance for all cells */}
+            {/* To Create */}
             {showSessionForm && sessionFormData && (
                 <SessionForm
-                    isOpen      = { showSessionForm }
-                    onClose     = { handleCloseSessionForm }
-                    sectionSession     = { null }
-                    onSave      = { () => {} }
-                    dayId       = { sessionFormData.dayId }
-                    moduleId    = { sessionFormData.moduleId }
-                    spaceId     = { sessionFormData.spaceId }
+                    isOpen          = { showSessionForm }
+                    onClose         = { handleCloseSessionForm }
+                    sectionSession  = { null }
+                    onSave          = { () => {} }
+                    dayId           = { sessionFormData.dayId }
+                    moduleId        = { sessionFormData.moduleId }
+                    spaceId         = { sessionFormData.spaceId }
                 />
             )}
         </div>
