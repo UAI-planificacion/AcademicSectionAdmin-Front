@@ -227,10 +227,6 @@ export const SectionCard = memo( function SectionCard({
 
                         { !isMoving && <TooltipContent>
                             <div className="grid">
-                                {/* <span className="truncate">
-                                    ID: { section.id }
-                                </span> */}
-
                                 <span className="truncate">
                                     SSEC: { section.subject.id }-{ section.code }
                                 </span>
