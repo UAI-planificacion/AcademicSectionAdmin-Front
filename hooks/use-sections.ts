@@ -52,7 +52,7 @@ async function fetchSections(): Promise<SectionSession[]> {
             }
         }))
     );
-    
+
     return sectionSessions;
 }
 
