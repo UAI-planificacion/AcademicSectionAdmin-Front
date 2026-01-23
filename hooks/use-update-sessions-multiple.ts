@@ -16,6 +16,7 @@ interface UpdateSessionsParams {
     spaceId         : string;
     updates         : UpdateSessionPayload[];
     updatedSections : SectionSession[];
+    isNegativeChairs?: boolean;
 }
 
 
@@ -26,9 +27,10 @@ interface UpdateSessionsContext {
 
 async function updateSessionsMultiple(
     spaceId : string,
-    updates : UpdateSessionPayload[]
+    updates : UpdateSessionPayload[],
+    isNegativeChairs : boolean = false
 ): Promise<SectionSession[]> {
-    const url = `${ENV.REQUEST_BACK_URL}sessions/update-times/${spaceId}`;
+    const url = `${ENV.REQUEST_BACK_URL}sessions/update-times/${spaceId}${isNegativeChairs ? '?isNegativeChairs=true' : ''}`;
 
     const response = await fetch( url, {
         method: 'PATCH',
@@ -39,7 +41,9 @@ async function updateSessionsMultiple(
     });
 
     if ( !response.ok ) {
-        throw new Error( 'Error al actualizar las sesiones' );
+        // Extract the error message from the server response
+        const errorData = await response.json().catch(() => ({ message: 'Error al actualizar las sesiones' }));
+        throw new Error( errorData.message || 'Error al actualizar las sesiones' );
     }
 
     return await response.json();
@@ -64,35 +68,33 @@ export function useUpdateSessionsMultiple(
         UpdateSessionsParams,
         UpdateSessionsContext
     >({
-        mutationFn: async ({ spaceId, updates }) => {
-            return await updateSessionsMultiple( spaceId, updates );
+        mutationFn: async ({ spaceId, updates, isNegativeChairs }) => {
+            return await updateSessionsMultiple( spaceId, updates, isNegativeChairs );
         },
-
         // Optimistic update: apply changes immediately
         onMutate: async ({ updatedSections }) => {
-            // Save current state for potential rollback
-            const previousSections = sections;
+            let previousSections: SectionSession[] = [];
 
-            // Apply optimistic update
-            setSections( updatedSections );
+            // Use functional setState to capture the CURRENT state synchronously
+            setSections( currentSections => {
+                previousSections = currentSections;
+                return updatedSections;
+            });
 
             // Return context with previous state
             return { previousSections };
         },
-
         // On success: show success toast
         onSuccess: () => {
             toast( 'Secciones actualizadas correctamente', successToast );
         },
-
         // On error: rollback to previous state and show error toast
-        onError: ( error, variables, context ) => {
-            // Rollback to previous state
+        onError: ( error, _, context ) => {
             if ( context?.previousSections ) {
                 setSections( context.previousSections );
             }
 
-            toast( 'No se pudieron actualizar las secciones', errorToast );
+            toast( error.message || 'No se pudieron actualizar las secciones', errorToast );
         },
     });
 
