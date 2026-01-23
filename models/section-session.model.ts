@@ -214,6 +214,6 @@ export interface Section {
     sessionsCount   : number;
     haveRequest     : boolean;
     quota           : number;
-    registered      : number;
+    registered      : number | null;
     sessions        : Session[];
 }
