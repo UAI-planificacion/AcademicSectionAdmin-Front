@@ -208,7 +208,7 @@ export const SectionCard = memo( function SectionCard({
                                     section.session.name === SessionType.L && 'bg-[#A6D96A] text-zinc-800',
                                     // isSelected && "border-2 border-white",
                                     isSelected && "ring-2 ring-white",
-                                    isConsecutiveHighlighted && "brightness-125 ring-2 ring-sky-600 transition-all duration-200" 
+                                    !isSelected && isConsecutiveHighlighted && "brightness-125 ring-2 ring-sky-600 transition-all duration-200" 
                                 )}
                             >
                                 <span className="truncate">
