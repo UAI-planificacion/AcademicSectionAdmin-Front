@@ -56,7 +56,6 @@ interface ModuleGridProps {
     onSectionClick          : ( sectionId: string ) => void;
     onSectionMove           : ( sectionId: string, newSpaceId: string, newDay: number, newModuleId: string ) => boolean;
     onMultipleSectionMove   : ( targetSpaceId: string, targetDayModuleId: number ) => boolean;
-    onSectionSave           : ( section: SectionSession ) => boolean;
     onSortChange            : ( field: SortField, direction: SortDirection ) => void;
     sortConfig              : SortConfig;
     onFilterChange?         : ( filters: Filters ) => void;
@@ -73,7 +72,6 @@ export function ModuleGrid({
     onSectionClick,
     onSectionMove,
     onMultipleSectionMove,
-    onSectionSave,
     onSortChange,
     sortConfig,
     onFilterChange,
@@ -255,7 +253,7 @@ export function ModuleGrid({
                 onConsecutiveHover      = { setHoveredConsecutiveId }
             />
         );
-    }, [isCalculating, getSectionsForCell, dragOverCell, dragOverCells, draggedSection, onSectionClick, onSectionSave, selectedSections, onSectionSelect, onClearSelection, hoveredConsecutiveId]);
+    }, [isCalculating, getSectionsForCell, dragOverCell, dragOverCells, draggedSection, onSectionClick, selectedSections, onSectionSelect, onClearSelection, hoveredConsecutiveId]);
 
 
     function handleDragStart( e: React.DragEvent, sectionId: string ): void {

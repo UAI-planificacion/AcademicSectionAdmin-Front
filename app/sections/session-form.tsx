@@ -276,10 +276,6 @@ export function SessionForm({
         }
     }, [ form.watch( 'spaceId' ), form.watch( 'professorId' ), selectedDayModuleId, isOpen, sectionSession?.session.id, queryClient, form ]);
 
-
-
-
-
     // Efecto para manejar el resultado de la query
     useEffect(() => {
         if ( !shouldFetchDates ) return;
@@ -466,7 +462,7 @@ export function SessionForm({
 
             console.log("🚀 ~ file: session-form.tsx ~ updatedSession:", updatedSession)
 
-            // updateSessionMutation.mutate( updatedSession );
+            updateSessionMutation.mutate( updatedSession );
         } else {
             const createSession : CreateSessionRequest = {
                 ...sessionData,

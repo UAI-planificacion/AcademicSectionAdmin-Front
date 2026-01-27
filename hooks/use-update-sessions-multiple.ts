@@ -1,9 +1,10 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { SectionSession } from '@/models/section.model';
 import { ENV } from '@/config/envs/env';
 import { successToast, errorToast } from '@/config/toast/toast.config';
+import { KEY_QUERYS } from '@/lib/key-queries';
 
 
 interface UpdateSessionPayload {
@@ -58,10 +59,9 @@ interface UseUpdateSessionsMultipleReturn {
 }
 
 
-export function useUpdateSessionsMultiple(
-    sections    : SectionSession[],
-    setSections : React.Dispatch<React.SetStateAction<SectionSession[]>>
-): UseUpdateSessionsMultipleReturn {
+export function useUpdateSessionsMultiple(): UseUpdateSessionsMultipleReturn {
+    const queryClient = useQueryClient();
+
     const mutation = useMutation<
         SectionSession[],
         Error,
@@ -71,27 +71,29 @@ export function useUpdateSessionsMultiple(
         mutationFn: async ({ spaceId, updates, isNegativeChairs }) => {
             return await updateSessionsMultiple( spaceId, updates, isNegativeChairs );
         },
-        // Optimistic update: apply changes immediately
+        // Optimistic update: apply changes immediately using queryClient
         onMutate: async ({ updatedSections }) => {
-            let previousSections: SectionSession[] = [];
+            // Cancel any outgoing refetches to avoid overwriting optimistic update
+            await queryClient.cancelQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
 
-            // Use functional setState to capture the CURRENT state synchronously
-            setSections( currentSections => {
-                previousSections = currentSections;
-                return updatedSections;
-            });
+            // Snapshot the previous value
+            const previousSections = queryClient.getQueryData<SectionSession[]>([KEY_QUERYS.SECTIONS]) || [];
 
-            // Return context with previous state
+            // Optimistically update to the new value
+            queryClient.setQueryData<SectionSession[]>([KEY_QUERYS.SECTIONS], updatedSections);
+
+            // Return context with previous state for rollback
             return { previousSections };
         },
-        // On success: show success toast
+        // On success: invalidate and refetch to ensure sync with server
         onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
             toast( 'Secciones actualizadas correctamente', successToast );
         },
         // On error: rollback to previous state and show error toast
         onError: ( error, _, context ) => {
             if ( context?.previousSections ) {
-                setSections( context.previousSections );
+                queryClient.setQueryData<SectionSession[]>([KEY_QUERYS.SECTIONS], context.previousSections);
             }
 
             toast( error.message || 'No se pudieron actualizar las secciones', errorToast );

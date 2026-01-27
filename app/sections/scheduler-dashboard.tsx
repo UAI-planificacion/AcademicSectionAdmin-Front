@@ -41,7 +41,7 @@ import { fetchApi }                 from '@/services/fetch';
 import { useSizes }                 from '@/hooks/use-sizes';
 import { useUpdateSessionsMultiple } from '@/hooks/use-update-sessions-multiple';
 import { CapacityWarningDialog }    from '@/app/sections/capacity-warning-dialog';
-// import { KEY_QUERYS }   from '@/lib/key-queries';
+import { KEY_QUERYS }   from '@/lib/key-queries';
 
 interface SessionMove {
     sessionId   : string;
@@ -65,9 +65,6 @@ export function SchedulerDashboard(): JSX.Element {
     // const router        = useRouter();
     const queryClient   = useQueryClient();
 
-    // Estados locales
-    const [sections, setSections]                   = useState<SectionSession[]>( [] );
-
     // Hooks de datos
     const {
         modules,
@@ -76,7 +73,7 @@ export function SchedulerDashboard(): JSX.Element {
     } = useModules();
 
     const {
-        sections    : initialSections,
+        sections,
         isLoading   : sectionsLoading,
         isError     : sectionsError,
         error       : sectionsErrorMessage
@@ -90,7 +87,7 @@ export function SchedulerDashboard(): JSX.Element {
     const { sizes, loading: sizesLoading } = useSizes();
 
     // TanStack Query mutation for updating multiple sessions
-    const { mutate: updateSessionsMultiple } = useUpdateSessionsMultiple( sections, setSections );
+    const { mutate: updateSessionsMultiple } = useUpdateSessionsMultiple();
     const [filteredRooms, setFilteredRooms]         = useState<SpaceData[]>( [] );
     const [selectedSection, setSelectedSection]     = useState<SectionSession | null>( null );
     const [isModalOpen, setIsModalOpen]             = useState<boolean>( false );
@@ -164,14 +161,11 @@ export function SchedulerDashboard(): JSX.Element {
     useEffect(() => {
         if ( !modulesLoading && !sectionsLoading && !spacesLoading && !sizesLoading ) {
             if ( modules.length > 0 && !sectionsError ) {
-                setSections( initialSections );
-                // setFilteredSections( initialSections );
-                // setRooms( initialRooms );
                 setFilteredRooms( spacesData );
                 setIsInitialized( true );
             }
         }
-    }, [initialSections, spacesData, modules, modulesLoading, sectionsLoading, spacesLoading, sizesLoading, sectionsError]);
+    }, [spacesData, modules, modulesLoading, sectionsLoading, spacesLoading, sizesLoading, sectionsError]);
 
     // Calculate sections by cell - always recalculate to ensure consistency
     useEffect(() => {
@@ -280,72 +274,6 @@ export function SchedulerDashboard(): JSX.Element {
     const handleSortChange = useCallback(( field: SortField, direction: SortDirection ) => {
         setSortConfig({ field, direction });
     }, []);
-
-
-    const handleUpdateSection = useCallback(( updatedSection: SectionSession ) : boolean => {
-        const overlapping = sections.some(( section : SectionSession ) => {
-            if ( section.id                     === updatedSection.id )                     return false;
-            if ( section.session.spaceId        !== updatedSection.session.spaceId )        return false;
-            if ( section.session.dayId          !== updatedSection.session.dayId )          return false;
-            if ( section.session.module.id      !== updatedSection.session.module.id )      return false;
-
-            return true;
-        })
-
-        if ( overlapping ) {
-            toast( 'No se puede actualizar la sección porque ya existe una en ese módulo y sala.', errorToast );
-            return false;
-        }
-
-        const updatedSections = sections.map(( section ) => 
-            ( section.id === updatedSection.id ? updatedSection : section )
-        );
-
-        setSections( updatedSections );
-
-        // setFilteredSections( prevFiltered =>
-        //     prevFiltered.map( s => s.id === updatedSection.id ? updatedSection : s )
-        // );
-
-        return true;
-    }, [sections]);
-
-
-    const handleSaveSection = useCallback(( section: SectionSession ): boolean => {
-        const existingSection = sections.find( s => s.id === section.id );
-
-        if ( existingSection ) {
-            const result = handleUpdateSection( section );
-
-            // if ( result ) {
-            //     setFilteredSections(prevFiltered =>
-            //         prevFiltered.map(s => s.id === section.id ? section : s)
-            //     );
-            // }
-
-            return result;
-        } else {
-            const overlapping = sections.some(( existingSection : SectionSession ) => {
-                if ( existingSection.session.spaceId    !== section.session.spaceId )      return false;
-                if ( existingSection.session.dayId      !== section.session.dayId )        return false;
-                if ( existingSection.session.module.id  !== section.session.module.id )    return false;
-                return true;
-            });
-
-            if ( overlapping ) {
-                toast( 'No se puede crear la sección porque ya existe una en ese módulo y sala.', errorToast );
-                return false;
-            }
-
-            setSections(prevSections => [ ...prevSections, section ]);
-
-            // if ( section.session.spaceId && filteredRoomIds.has( section.session.spaceId )) {
-            //     setFilteredSections(prevFiltered => [...prevFiltered, section]);
-            // }
-
-            return true;
-        }
-    }, [sections, filteredRoomIds, handleUpdateSection]);
 
 
     // const handleDeleteSection = useCallback(( sectionId: string ) => {
@@ -924,7 +852,6 @@ export function SchedulerDashboard(): JSX.Element {
                 onSectionClick          = { handleSectionClick }
                 onSectionMove           = { handleSectionMove }
                 onMultipleSectionMove   = { handleMultipleSectionMove }
-                onSectionSave           = { handleSaveSection }
                 onSortChange            = { handleSortChange }
                 sortConfig              = { sortConfig }
                 getSectionsForCell      = { getSectionsForCell }
@@ -940,10 +867,8 @@ export function SchedulerDashboard(): JSX.Element {
                     isOpen          = { isModalOpen }
                     onClose         = { handleModalClose }
                     sectionSession  = { selectedSection }
-                    onSave          = {( updatedSession: SessionModel ) => {
-                        // Handle session update
-                        console.log('Session updated:', updatedSession);
-                        // TODO: Update the section with the new session data
+                    onSave          = {() => {
+                        // Session mutations handle cache updates automatically
                         handleModalClose();
                     }}
                 />
