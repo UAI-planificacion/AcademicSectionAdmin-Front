@@ -1,15 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { 
-    SectionSession,
-    SessionType
-} from '@/models/section.model';
+import { SectionSession, SessionType }  from '@/models/section.model';
+import { Section as ApiSection }        from '@/models/section-session.model';
 
-import { 
-    Section as ApiSection 
-} from '@/models/section-session.model';
-
-import { ENV } from '@/config/envs/env';
+import { ENV }          from '@/config/envs/env';
+import { KEY_QUERYS }   from '@/lib/key-queries';
 
 
 async function fetchSections(): Promise<SectionSession[]> {
@@ -76,7 +71,7 @@ export function useSections(): UseSectionsReturn {
         isError,
         refetch
     } = useQuery({
-        queryKey    : ['sections'],
+        queryKey    : [KEY_QUERYS.SECTIONS],
         queryFn     : fetchSections,
     });
 
