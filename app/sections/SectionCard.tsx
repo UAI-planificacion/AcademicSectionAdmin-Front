@@ -134,17 +134,19 @@ export const SectionCard = memo( function SectionCard({
             onDragStart(e, section.session.id);
         }
     }, [section, onDragStart]);
-    
+
     // Handle consecutive section hover
     const handleMouseEnter = useCallback(() => {
         if (section?.session.consecutiveId) {
             onConsecutiveHover(section.session.consecutiveId);
         }
     }, [section, onConsecutiveHover]);
-    
+
+
     const handleMouseLeave = useCallback(() => {
         onConsecutiveHover(null);
     }, [onConsecutiveHover]);
+
     // Check if this section should be highlighted (same consecutiveId as hovered)
     const isConsecutiveHighlighted = section?.session.consecutiveId 
         && hoveredConsecutiveId === section.session.consecutiveId;
