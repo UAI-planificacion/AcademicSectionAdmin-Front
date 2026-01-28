@@ -46,6 +46,7 @@ import { useModules, getModulesForDay } from "@/hooks/use-modules";
 import { usePeriods }                   from "@/hooks/use-periods";
 import { useSizes }                     from "@/hooks/use-sizes";
 import { errorToast }                   from '@/config/toast/toast.config';
+import { useSession }                   from "@/hooks/use-session";
 
 // import { Section } from "@/models/section.model";
 // import { BuildingEnum } from "@/models/section-session.model";
@@ -81,6 +82,8 @@ export function ModuleGrid({
     onSectionSelect,
     onClearSelection,
 }: ModuleGridProps ): React.JSX.Element{
+    const { staff } = useSession();
+    const isAdmin   = staff?.role === 'ADMIN' || staff?.role === 'ADMIN_FACULTY';
     // Filtrar las salas localmente
     const [filteredSpaces, setFilteredSpaces]   = useState<SpaceData[]>( spaces );
     const [draggedSection, setDraggedSection]   = useState<string | null>( null );
@@ -257,13 +260,17 @@ export function ModuleGrid({
 
 
     function handleDragStart( e: React.DragEvent, sectionId: string ): void {
+        if ( !isAdmin ) return;
+
         e.dataTransfer.setData( 'text/plain', sectionId );
         setDraggedSection( sectionId );
         e.dataTransfer.effectAllowed = 'move';
     }
 
 
-    function handleDragOver( e: React.DragEvent, roomId: string, dayModuleId: number ): void{
+    function handleDragOver( e: React.DragEvent, roomId: string, dayModuleId: number ): void {
+        if ( !isAdmin ) return;
+
         e.preventDefault();
         const cellId = `${roomId}-${dayModuleId}`;
 
@@ -413,6 +420,7 @@ export function ModuleGrid({
 
 
     function handleDrop( e: React.DragEvent, spaceId: string, dayModuleId: number ): void {
+        if ( !isAdmin ) return;
         e.preventDefault();
         const sectionId = e.dataTransfer.getData( 'text/plain' );
         // console.log('🔍 DEBUG handleDrop - START');
@@ -928,7 +936,7 @@ export function ModuleGrid({
             </div>
 
             {/* To Create */}
-            {showSessionForm && sessionFormData && (
+            { isAdmin && showSessionForm && sessionFormData && (
                 <SessionForm
                     isOpen          = { showSessionForm }
                     onClose         = { handleCloseSessionForm }
