@@ -7,8 +7,13 @@ import { ENV }          from '@/config/envs/env';
 import { KEY_QUERYS }   from '@/lib/key-queries';
 
 
-async function fetchSections(): Promise<SectionSession[]> {
-    const API_URL   = `${ENV.REQUEST_BACK_URL}sections/sessions?canConsecutiveId=true`;
+async function fetchSections(periodId?: string): Promise<SectionSession[]> {
+    // If no periodId is provided, return empty array
+    if (!periodId) {
+        return [];
+    }
+
+    const API_URL   = `${ENV.REQUEST_BACK_URL}sections/sessions?canConsecutiveId=true&periodId=${periodId}`;
     const response  = await fetch( API_URL );
 
     if ( !response.ok ) {
@@ -62,8 +67,12 @@ interface UseSectionsReturn {
     refetchSections : () => void;
 }
 
+interface UseSectionsParams {
+    periodId?: string;
+}
 
-export function useSections(): UseSectionsReturn {
+
+export function useSections({ periodId }: UseSectionsParams = {}): UseSectionsReturn {
     const {
         data: sections = [],
         isLoading,
@@ -71,8 +80,9 @@ export function useSections(): UseSectionsReturn {
         isError,
         refetch
     } = useQuery({
-        queryKey    : [KEY_QUERYS.SECTIONS],
-        queryFn     : fetchSections,
+        queryKey    : [KEY_QUERYS.SECTIONS, periodId],
+        queryFn     : () => fetchSections(periodId),
+        enabled     : !!periodId, // Only fetch when periodId is provided
     });
 
     return {
