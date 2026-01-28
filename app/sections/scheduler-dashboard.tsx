@@ -41,6 +41,7 @@ import { useSizes }                     from '@/hooks/use-sizes';
 import { useUpdateSessionsMultiple }    from '@/hooks/use-update-sessions-multiple';
 import { CapacityWarningDialog }        from '@/app/sections/capacity-warning-dialog';
 import { useSession }                   from '@/hooks/use-session';
+import { usePeriodContext }             from '@/contexts/period-context';
 // import { KEY_QUERYS }   from '@/lib/key-queries';
 
 interface SessionMove {
@@ -68,6 +69,9 @@ export function SchedulerDashboard(): JSX.Element {
 
     const isAdmin = staff?.role === 'ADMIN' || staff?.role === 'ADMIN_FACULTY';
 
+    // Get period from context
+    const { selectedPeriodId } = usePeriodContext();
+
     // Hooks de datos
     const {
         modules,
@@ -80,7 +84,7 @@ export function SchedulerDashboard(): JSX.Element {
         isLoading   : sectionsLoading,
         isError     : sectionsError,
         error       : sectionsErrorMessage
-    } = useSections();
+    } = useSections({ periodId: selectedPeriodId });
 
     const {
         spacesData,
@@ -851,42 +855,92 @@ export function SchedulerDashboard(): JSX.Element {
 
     return (
         <>
-            <ModuleGrid
-                spaces                  = { sortedSpaces }
-                onSectionClick          = { handleSectionClick }
-                onSectionMove           = { handleSectionMove }
-                onMultipleSectionMove   = { handleMultipleSectionMove }
-                onSortChange            = { handleSortChange }
-                sortConfig              = { sortConfig }
-                getSectionsForCell      = { getSectionsForCell }
-                isCalculating           = { isCalculating }
-                selectedSections        = { selectedSections }
-                onSectionSelect         = { handleSectionSelect }
-                onClearSelection        = { handleClearSelection }
-            />
+            {!selectedPeriodId ? (
+                <div className="flex items-center justify-center h-[calc(100vh-120px)]">
+                    <div className="max-w-md w-full mx-4">
+                        <div className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 rounded-lg shadow-lg p-8 border border-blue-200 dark:border-gray-700">
+                            <div className="text-center">
+                                <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 dark:bg-blue-900 mb-4">
+                                    <svg
+                                        className="h-8 w-8 text-blue-600 dark:text-blue-400"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                        />
+                                    </svg>
+                                </div>
+                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                                    Seleccione un Período
+                                </h3>
+                                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                                    Para visualizar las sesiones académicas, por favor seleccione un período desde el selector en la parte superior de la página.
+                                </p>
+                                <div className="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                                    <svg
+                                        className="h-5 w-5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
+                                    </svg>
+                                    <span>El selector se encuentra en la esquina superior derecha</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <>
+                    <ModuleGrid
+                        spaces                  = { sortedSpaces }
+                        onSectionClick          = { handleSectionClick }
+                        onSectionMove           = { handleSectionMove }
+                        onMultipleSectionMove   = { handleMultipleSectionMove }
+                        onSortChange            = { handleSortChange }
+                        sortConfig              = { sortConfig }
+                        getSectionsForCell      = { getSectionsForCell }
+                        isCalculating           = { isCalculating }
+                        selectedSections        = { selectedSections }
+                        onSectionSelect         = { handleSectionSelect }
+                        onClearSelection        = { handleClearSelection }
+                    />
 
-            {/* To Update */}
-            { isAdmin && isModalOpen && selectedSection && (
-                <SessionForm
-                    isOpen          = { isModalOpen }
-                    onClose         = { handleModalClose }
-                    sectionSession  = { selectedSection }
-                    onSave          = { handleModalClose }
-                />
+                    {/* To Update */}
+                    { isAdmin && isModalOpen && selectedSection && (
+                        <SessionForm
+                            isOpen          = { isModalOpen }
+                            onClose         = { handleModalClose }
+                            sectionSession  = { selectedSection }
+                            onSave          = { handleModalClose }
+                        />
+                    )}
+
+                    {/* Capacity Warning Dialog */}
+                    <CapacityWarningDialog
+                        open                = { capacityWarning.show }
+                        spaceName           = { capacityWarning.spaceName }
+                        spaceCapacity       = { capacityWarning.spaceCapacity }
+                        affectedSessions    = { capacityWarning.affectedSessions }
+                        onConfirm           = { handleCapacityWarningConfirm }
+                        onCancel            = { handleCapacityWarningCancel }
+                        onOpenChange        = {( open ) => {
+                            if ( !open ) handleCapacityWarningCancel();
+                        }}
+                    />
+                </>
             )}
-
-            {/* Capacity Warning Dialog */}
-            <CapacityWarningDialog
-                open                = { capacityWarning.show }
-                spaceName           = { capacityWarning.spaceName }
-                spaceCapacity       = { capacityWarning.spaceCapacity }
-                affectedSessions    = { capacityWarning.affectedSessions }
-                onConfirm           = { handleCapacityWarningConfirm }
-                onCancel            = { handleCapacityWarningCancel }
-                onOpenChange        = {( open ) => {
-                    if ( !open ) handleCapacityWarningCancel();
-                }}
-            />
         </>
     );
 }
