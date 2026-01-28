@@ -2,20 +2,20 @@
 
 import { useEffect, useState }  from "react";
 import { useTheme }             from "next-themes";
-import { useRouter }            from "next/navigation";
+// import { useRouter }            from "next/navigation";
 
 import {
-    Book,
-    Calendar,
-    CalendarClock,
-    Clock,
+    // Book,
+    // Calendar,
+    // CalendarClock,
+    // Clock,
     Computer,
-    Cuboid,
-    GraduationCap,
+    // Cuboid,
+    // GraduationCap,
     Moon,
-    Ruler,
+    // Ruler,
     Sun,
-    User
+    // User
 } from "lucide-react";
 
 import {
@@ -24,54 +24,70 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger
 }                   from "@/components/ui/dropdown-menu";
-import {
-    Menubar,
-    MenubarMenu,
-    MenubarTrigger,
-}                       from "@/components/ui/menubar"
-import SignIn           from "@/components/auth/SignIn";
+// import {
+//     Menubar,
+//     MenubarMenu,
+//     MenubarTrigger,
+// }                       from "@/components/ui/menubar"
+// import SignIn           from "@/components/auth/SignIn";
 import { Button }       from "@/components/ui/button";
 import { AlertMessage } from "@/components/dialogs/Alert";
+import { useSession } from "@/hooks/use-session";
+import { Login } from "./Login";
 
-import { signOut, getSession } from "@/config/better-auth/auth-client";
+// import { signOut, getSession } from "@/config/better-auth/auth-client";
 
 
 export default function Header() {
-    const router = useRouter();
+    // const router = useRouter();
     const { setTheme } = useTheme();
 
-    const [session, setSession] = useState<any>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [showAuthMessage, setShowAuthMessage] = useState(false);
+    // const [session, setSession] = useState<any>(null);
+    // const [isLoading, setIsLoading] = useState(true);
+	const { staff }                             = useSession();
+    const [showAuthMessage, setShowAuthMessage] = useState( false );
 
+
+    // useEffect(() => {
+    //     const loadSession = async () => {
+    //         try {
+    //             setIsLoading(true);
+    //             const sessionData = await getSession();
+    //             setSession(sessionData?.data || null);
+    //         } catch (error) {
+    //             console.error('Error al cargar sesión:', error);
+    //             setSession(null);
+    //         } finally {
+    //             setIsLoading(false);
+    //         }
+    //     };
+
+    //     loadSession();
+    // }, []);
+
+
+    // useEffect(() => {
+    //     const urlParams = new URLSearchParams(window.location.search);
+    //     if (urlParams.get('requireAuth') === 'true') {
+    //         setShowAuthMessage(true);
+    //         const newUrl = new URL(window.location.href);
+    //         newUrl.searchParams.delete('requireAuth');
+    //         window.history.replaceState({}, '', newUrl.toString());
+    //     }
+    // }, []);
 
     useEffect(() => {
-        const loadSession = async () => {
-            try {
-                setIsLoading(true);
-                const sessionData = await getSession();
-                setSession(sessionData?.data || null);
-            } catch (error) {
-                console.error('Error al cargar sesión:', error);
-                setSession(null);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        
-        loadSession();
-    }, []);
+		const urlParams = new URLSearchParams( window.location.search );
 
+		if ( urlParams.get( 'requireAuth' ) === 'true' ) {
+			const newUrl = new URL( window.location.href );
 
-    useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('requireAuth') === 'true') {
-            setShowAuthMessage(true);
-            const newUrl = new URL(window.location.href);
-            newUrl.searchParams.delete('requireAuth');
-            window.history.replaceState({}, '', newUrl.toString());
-        }
-    }, []);
+			newUrl.searchParams.delete( 'requireAuth' );
+
+			window.history.replaceState( {}, '', newUrl.toString() );
+		}
+	}, []);
+
 
     return (
         <>
@@ -166,7 +182,7 @@ export default function Header() {
                     } */}
 
                     <div className="flex items-center gap-2">
-                        {isLoading ? (
+                        {/* {isLoading ? (
                             <Button className="bg-black text-white border-zinc-700 hover:bg-zinc-900 hover:text-white" variant="outline" disabled>Cargando...</Button>
                         ) :(
                             session?.user ? (
@@ -180,7 +196,9 @@ export default function Header() {
                             ) : (
                                 <SignIn />
                             )
-                        )}
+                        )} */}
+
+						<Login />
 
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
