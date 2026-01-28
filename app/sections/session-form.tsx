@@ -11,11 +11,7 @@ import {
     useQuery,
     useQueryClient
 }                   from '@tanstack/react-query';
-import {
-    // BookCopy,
-    Calendar,
-    // RefreshCcw
-}                   from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { toast }    from 'sonner';
 
 import {
@@ -52,23 +48,29 @@ import { Button }               from '@/components/ui/button';
 //     CreateSessionRequest,
 //     UpdateSessionRequest
 // }                                       from '@/types/session-request.model';
-import { fetchApi, Method }             from '@/services_/fetch';
-// import { KEY_QUERYS }                   from '@/consts/key-queries';
-import { errorToast, successToast }     from '@/config/toast/toast.config';
-import { useAvailableDates } from '@/hooks/use-available-dates';
-import { Section, Session as SessionModel } from '@/models/section-session.model';
-import { KEY_QUERYS } from '@/lib/key-queries';
-import { CreateSessionRequest, UpdateSessionRequest } from '@/models/session-request.model';
 // import { cn, tempoFormat } from '@/lib/utils';
-import { SessionTypeSelector } from '@/components/session-type-selector';
-import { Switch } from '@/components/ui/switch';
-import { SessionModuleDays } from './session-module-days';
-import { SpaceSelect } from '@/components/select/space-select';
-import { ProfessorSelect } from '@/components/select/professor-select';
-import { CalendarSelect } from '@/components/select/calendar-select';
-import { SessionType, SectionSession } from '@/models/section.model';
-import { DayModule } from '@/models/module.model';
-import { SectionSelect } from '@/components/select/section-select';
+// import { KEY_QUERYS }                   from '@/consts/key-queries';
+import {
+    CreateSessionRequest,
+    UpdateSessionRequest
+}                                   from '@/models/session-request.model';
+import {
+    SessionType,
+    SectionSession
+}                                   from '@/models/section.model';
+import { fetchApi, Method }         from '@/services_/fetch';
+import { errorToast, successToast } from '@/config/toast/toast.config';
+import { useAvailableDates }        from '@/hooks/use-available-dates';
+import { Session as SessionModel }  from '@/models/section-session.model';
+import { KEY_QUERYS }               from '@/lib/key-queries';
+import { SessionTypeSelector }      from '@/components/session-type-selector';
+import { Switch }                   from '@/components/ui/switch';
+import { SessionModuleDays }        from '@/app/sections/session-module-days';
+import { SpaceSelect }              from '@/components/select/space-select';
+import { ProfessorSelect }          from '@/components/select/professor-select';
+import { CalendarSelect }           from '@/components/select/calendar-select';
+import { DayModule }                from '@/models/module.model';
+import { SectionSelect }            from '@/components/select/section-select';
 // import { Session } from '@/models/section.model';
 // import { cn, tempoFormat }              from '@/lib/utils';
 // import { useAvailableDates }            from '@/hooks/use-available-dates';
@@ -207,7 +209,6 @@ export function SessionForm({
         }
     }, [ sectionSession, form, isOpen, dayId, moduleId, dayModules.length, spaceId ]);
 
-
     // When editing, use the current session date as the only available date initially
     // When creating or after fetching, use the fetched dates
     const {
@@ -303,7 +304,7 @@ export function SessionForm({
 
     const createSessionApi = async ( newSession: CreateSessionRequest ): Promise<SessionModel> =>
         fetchApi({
-            url     : 'sessions',
+            url     : 'sessions?isTime=true',
             method  : Method.POST,
             body    : newSession
         });
@@ -311,18 +312,16 @@ export function SessionForm({
 
     const updateSessionApi = async ( updatedSession: UpdateSessionRequest ): Promise<SessionModel> =>
         fetchApi({
-            url     : `sessions/${updatedSession.id}`,
+            url     : `sessions/${updatedSession.id}?isTime=true`,
             method  : Method.PATCH,
             body    : updatedSession
         });
-
 
     // Mutations
     const createSessionMutation = useMutation({
         mutationFn: createSessionApi,
         onSuccess: ( createdSession ) => {
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SESSIONS, sectionSession?.id] });
+            queryClient.refetchQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
 
             onSave( createdSession );
             onClose();
@@ -336,8 +335,7 @@ export function SessionForm({
     const updateSessionMutation = useMutation({
         mutationFn: updateSessionApi,
         onSuccess: ( updatedSession ) => {
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SESSIONS, sectionSession?.id] });
+            queryClient.refetchQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
 
             onSave( updatedSession );
             onClose();
