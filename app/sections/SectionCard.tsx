@@ -11,37 +11,41 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-import { cn, sessionColors }    from '@/lib/utils';
-import { SectionSession, SessionType }       from '@/models/section.model';
-import { useModules }           from '@/hooks/use-modules';
+import {
+    SectionSession,
+    SessionType
+}                       from '@/models/section.model';
+import { cn }           from '@/lib/utils';
+import { useModules }   from '@/hooks/use-modules';
+import { useSession }   from '@/hooks/use-session';
 
 
 const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
 
 interface Props {
-    section             : SectionSession | null;
-    dayModuleId         : number;
-    dayId               : number;
-    moduleId            : string;
-    roomId              : string;
-    isLastModule        : boolean;
-    moduleIndex         : number;
-    isDragOver          : boolean;
-    isOccupiedDuringDrag: boolean;
-    hasSection          : boolean;
-    draggedSection      : string | null;
-    onSectionClick      : ( sectionId: string ) => void;
-    onDragStart         : ( e: React.DragEvent, sectionId: string ) => void;
-    onDragOver          : ( e: React.DragEvent, roomId: string, dayModuleId: number ) => void;
-    onDragLeave         : () => void;
-    onDrop              : ( e: React.DragEvent, roomId: string, dayModuleId: number ) => void;
-    onCreateSession?    : ( dayId: number, moduleId: string, spaceId: string ) => void;
-    isSelected          : boolean;
-    onSelect            : ( section: SectionSession | null ) => void;
-    onClearSelection    : () => void;
-    hoveredConsecutiveId: string | null;
-    onConsecutiveHover  : ( consecutiveId: string | null ) => void;
+    section                 : SectionSession | null;
+    dayModuleId             : number;
+    dayId                   : number;
+    moduleId                : string;
+    roomId                  : string;
+    isLastModule            : boolean;
+    moduleIndex             : number;
+    isDragOver              : boolean;
+    isOccupiedDuringDrag    : boolean;
+    hasSection              : boolean;
+    draggedSection          : string | null;
+    onSectionClick          : ( sectionId: string ) => void;
+    onDragStart             : ( e: React.DragEvent, sectionId: string ) => void;
+    onDragOver              : ( e: React.DragEvent, roomId: string, dayModuleId: number ) => void;
+    onDragLeave             : () => void;
+    onDrop                  : ( e: React.DragEvent, roomId: string, dayModuleId: number ) => void;
+    onCreateSession?        : ( dayId: number, moduleId: string, spaceId: string ) => void;
+    isSelected              : boolean;
+    onSelect                : ( section: SectionSession | null ) => void;
+    onClearSelection        : () => void;
+    hoveredConsecutiveId    : string | null;
+    onConsecutiveHover      : ( consecutiveId: string | null ) => void;
 }
 
 
@@ -70,6 +74,8 @@ export const SectionCard = memo( function SectionCard({
     onConsecutiveHover,
 }: Props): React.ReactElement {
     const [isMoving, setIsMoving] = useState<boolean>( false );
+    const { staff } = useSession();
+    const isAdmin   = staff?.role === 'ADMIN' || staff?.role === 'ADMIN_FACULTY';
 
     const { modules } = useModules();
 
@@ -159,7 +165,7 @@ export const SectionCard = memo( function SectionCard({
                 isDragOver && isOccupiedDuringDrag && "bg-red-100 dark:bg-red-900 transition-colors",
             )}
         >
-            { !section && !isDragOver && !draggedSection && (
+            { isAdmin && !section && !isDragOver && !draggedSection && (
                 <button 
                     onClick={() => {
                         handleCreateSection();
