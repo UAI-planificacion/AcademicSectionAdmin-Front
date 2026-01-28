@@ -6,6 +6,7 @@ import { ThemeProvider }    from '@/components/theme-provider'
 import Header               from '@/components/Header'
 import { Toaster }          from "@/components/ui/sonner"
 import { QueryProvider }    from '@/providers/query-provider'
+import { PeriodProvider }   from '@/contexts/period-context'
 
 
 export const metadata: Metadata = {
@@ -28,13 +29,15 @@ export default function RootLayout({
                         defaultTheme    = "system"
                         enableSystem 
                     >
-                        <Header />
+                        <PeriodProvider>
+                            <Header />
 
-                        <Toaster />
+                            <Toaster />
 
-                        <main className="flex-grow">
-                            {children}
-                        </main>
+                            <main className="flex-grow">
+                                {children}
+                            </main>
+                        </PeriodProvider>
                     </ThemeProvider>
                 </QueryProvider>
             </body>
