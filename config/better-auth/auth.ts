@@ -1,5 +1,5 @@
-import { betterAuth } from "better-auth"
-import { ENV } from "../envs/env"
+import { betterAuth }   from "better-auth"
+import { ENV }          from "@/config/envs/env"
 
 
 export const auth = betterAuth({
