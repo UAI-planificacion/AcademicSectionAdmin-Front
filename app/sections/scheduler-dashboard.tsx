@@ -7,11 +7,10 @@ import {
     useMemo,
     useCallback,
     useRef
-}                               from 'react';
+}                           from 'react';
+import { useQueryClient }   from '@tanstack/react-query';
+import { toast }            from 'sonner';
 // import { useRouter }            from 'next/navigation';
-import { useQueryClient }       from '@tanstack/react-query';
-
-import { toast } from 'sonner';
 
 import type {
     SpaceData,
@@ -19,29 +18,30 @@ import type {
     SortField,
     // Filters,
     SortConfig,
-}                                   from '@/lib/types';
+}                                       from '@/lib/types';
 import {
     SectionSession,
     UpdateSection
-}                                   from '@/models/section.model';
+}                                       from '@/models/section.model';
 import {
     errorToast,
     successToast
-}                                   from '@/config/toast/toast.config';
-import { ENV }                      from '@/config/envs/env';
-import { useSections }              from '@/hooks/use-sections';
-import { useSpace }                 from '@/hooks/use-space';
-import { useModules }               from '@/hooks/use-modules';
-import { Session as SessionModel }  from '@/models/section-session.model';
-import { SessionForm }              from '@/app/sections/session-form';
-import { ModuleGrid }               from '@/app/sections/module-grid';
-import TableSkeleton                from '@/app/sections/TableSkeleton';
-import { Sizes }                    from '@/models/size.model';
-import { fetchApi }                 from '@/services/fetch';
-import { useSizes }                 from '@/hooks/use-sizes';
-import { useUpdateSessionsMultiple } from '@/hooks/use-update-sessions-multiple';
-import { CapacityWarningDialog }    from '@/app/sections/capacity-warning-dialog';
-import { KEY_QUERYS }   from '@/lib/key-queries';
+}                                       from '@/config/toast/toast.config';
+import { ENV }                          from '@/config/envs/env';
+import { useSections }                  from '@/hooks/use-sections';
+import { useSpace }                     from '@/hooks/use-space';
+import { useModules }                   from '@/hooks/use-modules';
+// import { Session as SessionModel }  from '@/models/section-session.model';
+import { SessionForm }                  from '@/app/sections/session-form';
+import { ModuleGrid }                   from '@/app/sections/module-grid';
+import TableSkeleton                    from '@/app/sections/TableSkeleton';
+import { Sizes }                        from '@/models/size.model';
+import { fetchApi }                     from '@/services/fetch';
+import { useSizes }                     from '@/hooks/use-sizes';
+import { useUpdateSessionsMultiple }    from '@/hooks/use-update-sessions-multiple';
+import { CapacityWarningDialog }        from '@/app/sections/capacity-warning-dialog';
+import { useSession }                   from '@/hooks/use-session';
+// import { KEY_QUERYS }   from '@/lib/key-queries';
 
 interface SessionMove {
     sessionId   : string;
@@ -64,6 +64,9 @@ function orderSizes( sizeOrderMap: Map<string, number>, a: SpaceData, b: SpaceDa
 export function SchedulerDashboard(): JSX.Element {
     // const router        = useRouter();
     const queryClient   = useQueryClient();
+    const { staff }     = useSession();
+
+    const isAdmin = staff?.role === 'ADMIN' || staff?.role === 'ADMIN_FACULTY';
 
     // Hooks de datos
     const {
@@ -87,7 +90,7 @@ export function SchedulerDashboard(): JSX.Element {
     const { sizes, loading: sizesLoading } = useSizes();
 
     // TanStack Query mutation for updating multiple sessions
-    const { mutate: updateSessionsMultiple } = useUpdateSessionsMultiple();
+    const { mutate: updateSessionsMultiple }        = useUpdateSessionsMultiple();
     const [filteredRooms, setFilteredRooms]         = useState<SpaceData[]>( [] );
     const [selectedSection, setSelectedSection]     = useState<SectionSession | null>( null );
     const [isModalOpen, setIsModalOpen]             = useState<boolean>( false );
@@ -253,7 +256,7 @@ export function SchedulerDashboard(): JSX.Element {
     // }, [ sections, rooms, isInitialized ]);
 
     const sizeOrderMap      = useMemo(() => createSizeOrderMap( sizes ), [ sizes ]);
-    const filteredRoomIds   = useMemo(() => new Set( filteredRooms.map( room => room.name )), [ filteredRooms ]);
+    // const filteredRoomIds   = useMemo(() => new Set( filteredRooms.map( room => room.name )), [ filteredRooms ]);
     const sortedSpaces      = useMemo(() => {
         if ( !filteredRooms.length ) return [];
 
@@ -286,6 +289,7 @@ export function SchedulerDashboard(): JSX.Element {
 
 
     const handleSectionClick = useCallback(( sectionId: string ) => {
+        if ( !isAdmin ) return;
         if ( selectedSections.length > 0 ) return; // Don't open if multi-selected
 
         const sectionSession = sections.find(( s : SectionSession ) => s.id === sectionId );
@@ -403,7 +407,7 @@ export function SchedulerDashboard(): JSX.Element {
     ): void => {
         // Find the target space
         const targetSpace = sortedSpaces.find(space => space.name === spaceId);
-        
+
         if (!targetSpace) {
             toast('No se pudo encontrar el espacio destino', errorToast);
             return;
@@ -862,31 +866,26 @@ export function SchedulerDashboard(): JSX.Element {
             />
 
             {/* To Update */}
-            { isModalOpen && selectedSection && (
+            { isAdmin && isModalOpen && selectedSection && (
                 <SessionForm
                     isOpen          = { isModalOpen }
                     onClose         = { handleModalClose }
                     sectionSession  = { selectedSection }
-                    onSave          = {() => {
-                        // Session mutations handle cache updates automatically
-                        handleModalClose();
-                    }}
+                    onSave          = { handleModalClose }
                 />
             )}
 
             {/* Capacity Warning Dialog */}
             <CapacityWarningDialog
-                open={capacityWarning.show}
-                onOpenChange={(open) => {
-                    if (!open) {
-                        handleCapacityWarningCancel();
-                    }
+                open                = { capacityWarning.show }
+                spaceName           = { capacityWarning.spaceName }
+                spaceCapacity       = { capacityWarning.spaceCapacity }
+                affectedSessions    = { capacityWarning.affectedSessions }
+                onConfirm           = { handleCapacityWarningConfirm }
+                onCancel            = { handleCapacityWarningCancel }
+                onOpenChange        = {( open ) => {
+                    if ( !open ) handleCapacityWarningCancel();
                 }}
-                spaceName={capacityWarning.spaceName}
-                spaceCapacity={capacityWarning.spaceCapacity}
-                affectedSessions={capacityWarning.affectedSessions}
-                onConfirm={handleCapacityWarningConfirm}
-                onCancel={handleCapacityWarningCancel}
             />
         </>
     );
