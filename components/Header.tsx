@@ -30,10 +30,13 @@ import {
 //     MenubarTrigger,
 // }                       from "@/components/ui/menubar"
 // import SignIn           from "@/components/auth/SignIn";
-import { Button }       from "@/components/ui/button";
-import { AlertMessage } from "@/components/dialogs/Alert";
-import { useSession } from "@/hooks/use-session";
-import { Login } from "./Login";
+import { Button }           from "@/components/ui/button";
+import { AlertMessage }     from "@/components/dialogs/Alert";
+import { useSession }       from "@/hooks/use-session";
+import { usePeriods }       from "@/hooks/use-periods";
+import { usePeriodContext } from "@/contexts/period-context";
+import { Login }            from "./Login";
+import MultiSelectCombobox  from "@/components/inputs/Combobox";
 
 // import { signOut, getSession } from "@/config/better-auth/auth-client";
 
@@ -45,6 +48,8 @@ export default function Header() {
     // const [session, setSession] = useState<any>(null);
     // const [isLoading, setIsLoading] = useState(true);
 	const { staff }                             = useSession();
+    const { periods }                           = usePeriods();
+    const { selectedPeriodId, setSelectedPeriodId } = usePeriodContext();
     const [showAuthMessage, setShowAuthMessage] = useState( false );
 
 
@@ -182,23 +187,21 @@ export default function Header() {
                     } */}
 
                     <div className="flex items-center gap-2">
-                        {/* {isLoading ? (
-                            <Button className="bg-black text-white border-zinc-700 hover:bg-zinc-900 hover:text-white" variant="outline" disabled>Cargando...</Button>
-                        ) :(
-                            session?.user ? (
-                                <Button 
-                                    className   = "bg-black text-white border-zinc-700 hover:bg-zinc-900 hover:text-white"
-                                    variant     = "outline" 
-                                    onClick     = { async () => await signOut() }
-                                >
-                                    Cerrar sesión
-                                </Button>
-                            ) : (
-                                <SignIn />
-                            )
-                        )} */}
-
 						<Login />
+
+                        {/* Period Selector */}
+                        { staff &&
+                            <div className="w-[200px]">
+                                <MultiSelectCombobox
+                                    options             = { periods.map((period) => ({ value: period.id, label: period.label || '' }))}
+                                    placeholder         = "Seleccionar período"
+                                    onSelectionChange   = {(value) => setSelectedPeriodId(value as string)}
+                                    defaultValues       = { selectedPeriodId || '' }
+                                    multiple            = { false }
+                                    className           = "bg-black text-white border-zinc-700 hover:bg-zinc-900"
+                                />
+                            </div>
+                        }
 
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
