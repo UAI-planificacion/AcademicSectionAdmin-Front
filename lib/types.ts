@@ -46,7 +46,6 @@ export type SortDirection   = "asc" | "desc";
 
 
 export interface Filters {
-    periods     : string[];
     buildings   : string[];
     sizes       : string[];
     rooms       : string[];
@@ -68,8 +67,8 @@ export type Status = 'InProgress' | 'Closed' | 'Open';
 export interface Period {
     id          : string;
     name        : string;
-    startDate   : Date | null;
-    endDate     : Date | null;
+    startDate   : Date;
+    endDate     : Date;
     openingDate : Date | null;
     closingDate : Date | null;
     status      : Status;
