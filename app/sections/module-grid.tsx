@@ -3,7 +3,6 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect } from "react"
 
 import {
-    // AlertCircle,
     Armchair,
     ArrowDownAZ,
     ArrowUpAZ,
@@ -14,22 +13,8 @@ import {
     Proportions,
     ArrowUp01,
     ArrowDown10
-}  from "lucide-react";
-import { toast } from 'sonner';
-
-import {
-    cn,
-    getBuildingName,
-    getSpaceType
-} from "@/lib/utils";
-import type {
-    SpaceData,
-    SortConfig,
-    SortField,
-    SortDirection,
-    Filters
-} from "@/lib/types";
-import { SectionSession } from "@/models/section.model";
+}                   from "lucide-react";
+import { toast }    from 'sonner';
 
 import {
     Popover,
@@ -41,22 +26,30 @@ import { Button }           from "@/components/ui/button";
 import { SectionCard }      from "@/app/sections/SectionCard";
 import { SessionForm }      from "@/app/sections/session-form";
 
+import {
+    cn,
+    getBuildingName,
+    getSpaceType
+}                                       from "@/lib/utils";
+import type {
+    SpaceData,
+    SortConfig,
+    SortField,
+    SortDirection,
+    Filters
+}                                       from "@/lib/types";
 import { useDays }                      from "@/hooks/use-days";
 import { useModules, getModulesForDay } from "@/hooks/use-modules";
-import { usePeriods }                   from "@/hooks/use-periods";
 import { useSizes }                     from "@/hooks/use-sizes";
 import { errorToast }                   from '@/config/toast/toast.config';
 import { useSession }                   from "@/hooks/use-session";
-
-// import { Section } from "@/models/section.model";
-// import { BuildingEnum } from "@/models/section-session.model";
+import { SectionSession }               from "@/models/section.model";
 
 
 interface ModuleGridProps {
     spaces                  : SpaceData[];
     onSectionClick          : ( sectionId: string ) => void;
-    onSectionMove           : ( sectionId: string, newSpaceId: string, newDay: number, newModuleId: string ) => boolean;
-    onMultipleSectionMove   : ( targetSpaceId: string, targetDayModuleId: number ) => boolean;
+    onMultipleSectionMove   : ( targetSpaceId: string, targetDayModuleId: number, draggedSessionId?: string ) => boolean;
     onSortChange            : ( field: SortField, direction: SortDirection ) => void;
     sortConfig              : SortConfig;
     onFilterChange?         : ( filters: Filters ) => void;
@@ -71,7 +64,6 @@ interface ModuleGridProps {
 export function ModuleGrid({
     spaces,
     onSectionClick,
-    onSectionMove,
     onMultipleSectionMove,
     onSortChange,
     sortConfig,
@@ -97,7 +89,6 @@ export function ModuleGrid({
 
     // Estados para los filtros
     const [localFilters, setLocalFilters] = useState<Filters & { rooms?: string[], types?: string[], capacities?: string[] }>({
-        periods     : [],
         buildings   : [],
         sizes       : [],
         rooms       : [],
@@ -111,7 +102,6 @@ export function ModuleGrid({
 
     const { days }      = useDays();
     const { modules }   = useModules();
-    const { periods }   = usePeriods();
     const { sizes }     = useSizes();
 
     // Extraer valores únicos para los filtros
@@ -241,7 +231,6 @@ export function ModuleGrid({
                 moduleIndex             = { moduleIndex }
                 isDragOver              = { isDragOver }
                 isOccupiedDuringDrag    = { isInMultiDrag ? isOccupiedInMultiDrag : isOccupiedBySingleDrag }
-                hasSection              = { hasSection }
                 draggedSection          = { draggedSection }
                 onSectionClick          = { onSectionClick }
                 onDragStart             = { handleDragStart }
@@ -423,57 +412,22 @@ export function ModuleGrid({
         if ( !isAdmin ) return;
         e.preventDefault();
         const sectionId = e.dataTransfer.getData( 'text/plain' );
-        // console.log('🔍 DEBUG handleDrop - START');
-        // console.log('🚀 ~ handleDrop ~ modules:', modules)
-        // console.log('  SpaceId:', spaceId);
-
-        // console.log('  dayModuleId:', dayModuleId);
-        // console.log('  dayModuleId type:', typeof dayModuleId);
-        // console.log('  sectionId:', sectionId);
-        // console.log('  modules array length:', modules.length);
-        // console.log('  modules sample:', modules.slice(0, 3));
 
         setDraggedSection( null );
         setDragOverCell( null );
         setDragOverCells( new Map() ); // Clear multi-cell state
 
-        // Check if we have multiple selections
-        if ( selectedSections.length > 1 ) {
-            // Multi-section move
-            const success = onMultipleSectionMove( spaceId, dayModuleId );
-
-            if ( !success ) {
-                toast( 'No se pudieron mover las secciones', errorToast );
-            }
-
-            return;
-        }
-
-        // Single section move (original behavior)
-        const cellSections = getSectionsForCell( spaceId, dayModuleId );
-
-        if ( cellSections.length > 0 ) {
-            toast( 'No se puede mover la sección porque el destino ya está ocupado', errorToast );
-            return;
-        }
-
-        const dayModule = modules.find( m => m.dayModuleId === dayModuleId );
-
-        if ( !dayModule ) {
-            toast( 'Error: No se pudo encontrar el módulo', errorToast );
-
-            return;
-        }
-
-        const success = onSectionMove( sectionId, spaceId, dayModule.dayId, dayModule.id );
+        // Always call onMultipleSectionMove for both single and multiple session moves
+        const success = onMultipleSectionMove( spaceId, dayModuleId, sectionId );
 
         if ( !success ) {
-            toast( 'No se pudo mover la sesión.', errorToast );
+            toast( 
+                selectedSections.length > 1 
+                    ? 'No se pudieron mover las secciones' 
+                    : 'No se pudo mover la sesión', 
+                errorToast 
+            );
         }
-        // else {
-        //     console.log('✅ handleDrop - SUCCESS');
-        //     console.log('✅ handleDrop - AQUI DEBO LLAMAR AL SERVICIO');
-        // }
     }
 
     // Handle session creation from SectionCard
@@ -529,28 +483,19 @@ export function ModuleGrid({
                                                 >
                                                     <Filter className={cn(
                                                         "text-white w-4 h-4 cursor-pointer",
-                                                        localFilters.rooms.length > 0 && 'text-blue-500',
-                                                        localFilters.periods.length > 0 && 'text-blue-500',
+                                                        localFilters.rooms.length > 0 && 'text-blue-500'
                                                     )} />
                                                 </Button>
                                             </PopoverTrigger>
 
-                                            <PopoverContent className="w-64 h-[29rem] p-0" align="center">
+                                            <PopoverContent className="w-64 h-[26rem] p-0" align="center">
                                                 <div className="p-2">
                                                     <MultiSelectCombobox
                                                         options             = { uniqueRoomIds.map(( id ) => ({ value: id, label: id }))}
                                                         placeholder         = "Filtrar por sala"
                                                         onSelectionChange   = {( values ) => handleFilterChange( 'rooms', values as string[] )}
                                                         defaultValues       = { localFilters.rooms || [] }
-                                                    />
-                                                </div>
-
-                                                <div className="p-2 border-t">
-                                                    <MultiSelectCombobox
-                                                        options             = { periods.map((period) => ({ value: period.id, label: period.label || '' }))}
-                                                        placeholder         = "Filtrar por periodo"
-                                                        onSelectionChange   = {( values ) => handleFilterChange( 'periods', values as string[] )}
-                                                        defaultValues       = { localFilters.periods }
+                                                        isOpen              = { true }
                                                     />
                                                 </div>
                                             </PopoverContent>
