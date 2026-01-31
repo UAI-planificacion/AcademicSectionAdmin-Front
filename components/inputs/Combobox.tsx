@@ -48,6 +48,7 @@ interface ComboboxProps {
     onSelectionChange?  : ( selectedValues: string[] | string ) => void;
     maxDisplayItems?    : number;
     multiple?           : boolean;
+    disabledValues?     : string[]; // Array of option values that should be disabled
 }
 
 interface FlattenedItem {
@@ -71,6 +72,7 @@ export default function MultiSelectCombobox({
     onSelectionChange,
     maxDisplayItems = 1,
     multiple = true,
+    disabledValues = [],
 }: ComboboxProps) {
     const [open, setOpen] = useState(isOpen);
     const [searchValue, setSearchValue] = useState("")
@@ -173,6 +175,11 @@ export default function MultiSelectCombobox({
     // Handle option selection
     const handleOptionToggle = useCallback(
         (value: string) => {
+            // Prevent selection of disabled values
+            if (disabledValues.includes(value)) {
+                return;
+            }
+            
             if (!multiple) {
                 const newSelected = new Set([value])
                 setSelectedValues(newSelected)
@@ -189,7 +196,7 @@ export default function MultiSelectCombobox({
                 onSelectionChange?.(Array.from(newSelected)) 
             }
         },
-        [selectedValues, onSelectionChange, multiple],
+        [selectedValues, onSelectionChange, multiple, disabledValues],
     )
 
     // Handle group selection
@@ -305,22 +312,26 @@ export default function MultiSelectCombobox({
 
             if (item.option) {
                 const isSelected = selectedValues.has(item.option.value)
+                const isDisabled = disabledValues.includes(item.option.value)
 
                 return (
                     <div style={style} className="px-1">
                         <div
                             className={cn(
-                                "flex items-center px-3 py-2 text-sm cursor-pointer rounded-md hover:bg-accent transition-colors",
-                                isSelected && "bg-accent",
+                                "flex items-center px-3 py-2 text-sm rounded-md transition-colors",
+                                !isDisabled && "cursor-pointer hover:bg-accent",
+                                isDisabled && "opacity-50 cursor-not-allowed",
+                                isSelected && !isDisabled && "bg-accent",
                                 item.group && multiple && "ml-4", // Only indent if multiple and has group
                             )}
-                            onClick={() => handleOptionToggle(item.option!.value)}
+                            onClick={() => !isDisabled && handleOptionToggle(item.option!.value)}
                         >
                             {multiple && (
                                 <div
                                     className={cn(
                                     "flex items-center justify-center w-4 h-4 mr-3 border rounded-sm flex-shrink-0",
                                     isSelected ? "bg-primary border-primary" : "border-input",
+                                    isDisabled && "opacity-50",
                                     )}
                                 >
                                     {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
@@ -338,7 +349,7 @@ export default function MultiSelectCombobox({
 
             return null
         },
-        [filteredItems, selectedValues, isGroupSelected, isGroupPartiallySelected, handleGroupToggle, handleOptionToggle, multiple],
+        [filteredItems, selectedValues, isGroupSelected, isGroupPartiallySelected, handleGroupToggle, handleOptionToggle, multiple, disabledValues],
     )
 
     useEffect(() => {
@@ -392,7 +403,24 @@ export default function MultiSelectCombobox({
                         )}
                     </div>
 
-                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                    <div className="flex items-center gap-1">
+                        {/* Clear button - only show if there are selections */}
+                        {selectedOptions.length > 0 && (
+                            <div 
+                                className   = "shrink-0 cursor-pointer hover:bg-accent/20 dark:hover:bg-zinc-700 rounded-full p-0.5 transition-colors"
+                                title       = "Limpiar selección"
+                                onClick     = {(e) => {
+                                    e.stopPropagation();
+                                    setSelectedValues(new Set());
+                                    onSelectionChange?.(multiple ? [] : '');
+                                }}
+                            >
+                                <X className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+                            </div>
+                        )}
+
+                        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    </div>
                 </Button>
             </PopoverTrigger>
 
