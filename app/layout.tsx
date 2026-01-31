@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 import './globals.css'
 
-import { ThemeProvider }    from '@/components/theme-provider'
+import { ThemeProvider }    from '@/components/theme/theme-provider'
 import Header               from '@/components/Header'
 import { Toaster }          from "@/components/ui/sonner"
 import { QueryProvider }    from '@/providers/query-provider'
