@@ -33,7 +33,6 @@ interface Props {
     moduleIndex             : number;
     isDragOver              : boolean;
     isOccupiedDuringDrag    : boolean;
-    hasSection              : boolean;
     draggedSection          : string | null;
     onSectionClick          : ( sectionId: string ) => void;
     onDragStart             : ( e: React.DragEvent, sectionId: string ) => void;
@@ -59,7 +58,6 @@ export const SectionCard = memo( function SectionCard({
     moduleIndex,
     isDragOver,
     isOccupiedDuringDrag,
-    hasSection,
     draggedSection,
     onSectionClick,
     onDragStart,
@@ -94,20 +92,6 @@ export const SectionCard = memo( function SectionCard({
         }
     }, [onCreateSession, dayId, moduleId, roomId]);
 
-    // const handleCloseModal = useCallback(() => {
-    //     setShowCreateModal( false );
-    // }, []);
-
-    // const handleSaveSection = useCallback(( newSection: Section ): boolean => {
-    //     if ( onSaveSectionFromCard ) {
-    //         return onSaveSectionFromCard( newSection );
-    //     }
-    //     return false;
-    // }, [ onSaveSectionFromCard ] );
-
-    // const handleDeleteSection = useCallback(() => {
-    //     setShowCreateModal(false);
-    // }, []);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         setIsMoving( true );
@@ -236,6 +220,10 @@ export const SectionCard = memo( function SectionCard({
                         { !isMoving && <TooltipContent>
                             <div className="grid">
                                 <span className="truncate">
+                                    ID: { section.session.id }
+                                </span>
+
+                                <span className="truncate">
                                     SSEC: { section.subject.id }-{ section.code }
                                 </span>
 
@@ -305,7 +293,6 @@ export const SectionCard = memo( function SectionCard({
     // Comparar propiedades básicas
     if (
         prevProps.isDragOver        !== nextProps.isDragOver
-        || prevProps.hasSection     !== nextProps.hasSection
         || prevProps.draggedSection !== nextProps.draggedSection
         || prevProps.isSelected     !== nextProps.isSelected
     ) {
