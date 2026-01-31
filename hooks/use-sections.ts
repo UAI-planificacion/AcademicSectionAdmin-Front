@@ -7,13 +7,15 @@ import { ENV }          from '@/config/envs/env';
 import { KEY_QUERYS }   from '@/lib/key-queries';
 
 
-async function fetchSections(periodId?: string): Promise<SectionSession[]> {
-    // If no periodId is provided, return empty array
-    if (!periodId) {
+async function fetchSections(periodIds: string[]): Promise<SectionSession[]> {
+    // If no periodIds are provided, return empty array
+    if (!periodIds || periodIds.length === 0) {
         return [];
     }
 
-    const API_URL   = `${ENV.REQUEST_BACK_URL}sections/sessions?canConsecutiveId=true&periodId=${periodId}`;
+    // Build query string with multiple periodId parameters
+    const periodParams = periodIds.map(id => `periodIds=${id}`).join('&');
+    const API_URL   = `${ENV.REQUEST_BACK_URL}sections/sessions?canConsecutiveId=true&${periodParams}`;
     const response  = await fetch( API_URL );
 
     if ( !response.ok ) {
@@ -68,11 +70,11 @@ interface UseSectionsReturn {
 }
 
 interface UseSectionsParams {
-    periodId?: string;
+    periodIds?: string[];
 }
 
 
-export function useSections({ periodId }: UseSectionsParams = {}): UseSectionsReturn {
+export function useSections({ periodIds = [] }: UseSectionsParams = {}): UseSectionsReturn {
     const {
         data: sections = [],
         isLoading,
@@ -80,9 +82,9 @@ export function useSections({ periodId }: UseSectionsParams = {}): UseSectionsRe
         isError,
         refetch
     } = useQuery({
-        queryKey    : [KEY_QUERYS.SECTIONS, periodId],
-        queryFn     : () => fetchSections(periodId),
-        enabled     : !!periodId, // Only fetch when periodId is provided
+        queryKey    : [KEY_QUERYS.SECTIONS, ...periodIds], // Include all period IDs in cache key
+        queryFn     : () => fetchSections(periodIds),
+        enabled     : periodIds.length > 0, // Only fetch when at least one periodId is provided
     });
 
     return {
