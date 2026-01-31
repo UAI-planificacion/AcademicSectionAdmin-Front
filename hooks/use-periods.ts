@@ -7,8 +7,8 @@ import {
     savePeriodsStorage
 } from '@/stores/local-storage-periods';
 
-import { Period }  from '@/lib/types';
-import { ENV } from '@/config/envs/env';
+import { Period }   from '@/lib/types';
+import { ENV }      from '@/config/envs/env';
 
 
 export interface UsePeriodsResult {
@@ -19,6 +19,17 @@ export interface UsePeriodsResult {
 
 
 const API_URL = `${ENV.REQUEST_BACK_URL}periods`;
+
+/**
+ * Format a date to DD/MM/YYYY
+ */
+function formatPeriodDate(date: Date): string {
+    const d = new Date(date);
+    const day = d.getDate().toString().padStart(2, '0');
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+}
 
 
 export function usePeriods(): UsePeriodsResult {
@@ -47,11 +58,19 @@ export function usePeriods(): UsePeriodsResult {
 
                 const data = await response.json();
 
-                // Transform data to add label property
+                // Transform data to add label property with date range
                 const transformedData = data.map(( period: Omit<Period, 'label'> ) => ({
                     ...period,
-                    label: `${period.id}-${period.name}`
-                }));
+                    label: `${period.id}-${period.name} (${formatPeriodDate(period.startDate)}-${formatPeriodDate(period.endDate)})`
+                })).sort(( a: Period, b: Period ) => {
+                    const nameComparison = a.name.localeCompare( b.name );
+
+                    if ( nameComparison !== 0 ) {
+                        return nameComparison;
+                    }
+
+                    return new Date( b.startDate ).getTime() - new Date( a.startDate ).getTime();
+                });
 
                 // Save to localStorage
                 savePeriodsStorage( transformedData );
