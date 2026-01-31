@@ -7,42 +7,30 @@ import {
     useMemo,
     useCallback,
     useRef
-}                           from 'react';
-import { useQueryClient }   from '@tanstack/react-query';
-import { toast }            from 'sonner';
-// import { useRouter }            from 'next/navigation';
+}                   from 'react';
+import { toast }    from 'sonner';
 
 import type {
     SpaceData,
     SortDirection,
     SortField,
-    // Filters,
     SortConfig,
 }                                       from '@/lib/types';
-import {
-    SectionSession,
-    UpdateSection
-}                                       from '@/models/section.model';
-import {
-    errorToast,
-    successToast
-}                                       from '@/config/toast/toast.config';
-import { ENV }                          from '@/config/envs/env';
+import { SectionSession }               from '@/models/section.model';
+import { errorToast }                   from '@/config/toast/toast.config';
 import { useSections }                  from '@/hooks/use-sections';
 import { useSpace }                     from '@/hooks/use-space';
 import { useModules }                   from '@/hooks/use-modules';
-// import { Session as SessionModel }  from '@/models/section-session.model';
 import { SessionForm }                  from '@/app/sections/session-form';
 import { ModuleGrid }                   from '@/app/sections/module-grid';
 import TableSkeleton                    from '@/app/sections/TableSkeleton';
 import { Sizes }                        from '@/models/size.model';
-import { fetchApi }                     from '@/services/fetch';
 import { useSizes }                     from '@/hooks/use-sizes';
 import { useUpdateSessionsMultiple }    from '@/hooks/use-update-sessions-multiple';
 import { CapacityWarningDialog }        from '@/app/sections/capacity-warning-dialog';
 import { useSession }                   from '@/hooks/use-session';
 import { usePeriodContext }             from '@/contexts/period-context';
-// import { KEY_QUERYS }   from '@/lib/key-queries';
+
 
 interface SessionMove {
     sessionId   : string;
@@ -52,7 +40,7 @@ interface SessionMove {
 
 
 const createSizeOrderMap = ( sizes: Sizes[] ): Map<string, number> =>
-    new Map(sizes.map( size => [ size?.id || '', size?.order || 0 ]));
+    new Map( sizes.map( size => [ size?.id || '', size?.order || 0 ]));
 
 
 function orderSizes( sizeOrderMap: Map<string, number>, a: SpaceData, b: SpaceData ): number {
@@ -63,33 +51,31 @@ function orderSizes( sizeOrderMap: Map<string, number>, a: SpaceData, b: SpaceDa
 
 
 export function SchedulerDashboard(): JSX.Element {
-    // const router        = useRouter();
-    const queryClient   = useQueryClient();
-    const { staff }     = useSession();
+    const { selectedPeriodIds } = usePeriodContext();
+    const { staff }             = useSession();
+    const isAdmin               = staff?.role === 'ADMIN' || staff?.role === 'ADMIN_FACULTY';
 
-    const isAdmin = staff?.role === 'ADMIN' || staff?.role === 'ADMIN_FACULTY';
 
-    // Get period from context
-    const { selectedPeriodId } = usePeriodContext();
-
-    // Hooks de datos
     const {
         modules,
         isLoading   : modulesLoading,
         isError     : modulesError
     } = useModules();
 
+
     const {
         sections,
         isLoading   : sectionsLoading,
         isError     : sectionsError,
         error       : sectionsErrorMessage
-    } = useSections({ periodId: selectedPeriodId });
+    } = useSections({ periodIds: selectedPeriodIds });
+
 
     const {
         spacesData,
         isLoading   : spacesLoading
     } = useSpace();
+
 
     const { sizes, loading: sizesLoading } = useSizes();
 
@@ -133,36 +119,6 @@ export function SchedulerDashboard(): JSX.Element {
     // Ref para cache persistente de sectionsByCellMemo
     const sectionsByCellRef     = useRef<Map<string, SectionSession[]>>(new Map());
     const lastSectionsLengthRef = useRef<number>(0);
-
-
-    // const filters: Filters = {
-    //     periods     : [],
-    //     buildings   : [],
-    //     sizes       : [],
-    //     rooms       : [],
-    //     types       : [],
-    //     capacities  : [],
-    // }
-
-
-    // useEffect(() => {
-    //     if ( !modulesLoading && !modulesError && modules.length === 0 ) {
-    //         toast( 'No se encontraron los módulos, debes cargarlos manualmente.', errorToast );
-    //         router.push( '/modules' );
-
-    //         return;
-    //     }
-    // }, [modules, modulesLoading, modulesError, router]);
-
-
-    // useEffect(() => {
-    //     if ( !sectionsLoading && initialSections.length === 0 && !sectionsError ) {
-    //         toast( 'No se encontraron secciones. Debes cargar un archivo Excel.', errorToast );
-    //         // setShowLoadExcel( true );
-
-    //         return;
-    //     }
-    // }, [sectionsLoading, initialSections, sectionsError]);
 
 
     useEffect(() => {
@@ -217,50 +173,7 @@ export function SchedulerDashboard(): JSX.Element {
     }, [sections, isInitialized]);
 
 
-    // useEffect(() => {
-    //     if ( !isInitialized ) return;
-
-    //     let filteredSecs = [...sections];
-
-    //     if ( filters.periods.length > 0 ) {
-    //         filteredSecs = filteredSecs.filter( section => filters.periods.includes( section.period.name ));
-    //     }
-
-    //     let filteredRms = [...rooms];
-
-    //     if ( filters.buildings && filters.buildings.length > 0 ) {
-    //         filteredRms = filteredRms.filter( room => filters.buildings.includes( room.building ));
-    //     }
-
-    //     if ( filters.sizes && filters.sizes.length > 0 ) {
-    //         filteredRms = filteredRms.filter( room => filters.sizes.includes( room.size ));
-    //     }
-
-    //     if ( filters.rooms && filters.rooms.length > 0 ) {
-    //         filteredRms = filteredRms.filter( room => filters.rooms.includes( room.name ));
-    //     }
-
-    //     if ( filters.types && filters.types.length > 0 ) {
-    //         filteredRms = filteredRms.filter( room => filters.types.includes( room.type ));
-    //     }
-
-    //     if ( filters.capacities && filters.capacities.length > 0 ) {
-    //         filteredRms = filteredRms.filter( room => filters.capacities.includes( room.capacity.toString() ));
-    //     }
-
-    //     const filteredRoomIds = new Set(filteredRms.map( room => room.name ))
-
-    //     filteredSecs = filteredSecs.filter( section => section.session.spaceId && filteredRoomIds.has( section.session.spaceId ));
-
-    //     console.log("************Secciones filtradas:", filteredSecs.length)
-    //     console.log("**********Salas filtradas:", filteredRms.length)
-
-    //     // setFilteredSections( filteredSecs );
-    //     setFilteredRooms( filteredRms );
-    // }, [ sections, rooms, isInitialized ]);
-
     const sizeOrderMap      = useMemo(() => createSizeOrderMap( sizes ), [ sizes ]);
-    // const filteredRoomIds   = useMemo(() => new Set( filteredRooms.map( room => room.name )), [ filteredRooms ]);
     const sortedSpaces      = useMemo(() => {
         if ( !filteredRooms.length ) return [];
 
@@ -281,15 +194,6 @@ export function SchedulerDashboard(): JSX.Element {
     const handleSortChange = useCallback(( field: SortField, direction: SortDirection ) => {
         setSortConfig({ field, direction });
     }, []);
-
-
-    // const handleDeleteSection = useCallback(( sectionId: string ) => {
-    //     const updatedSections = sections.filter( section => section.id !== sectionId );
-    //     setSections( updatedSections );
-    //     setFilteredSections(prevFiltered =>
-    //         prevFiltered.filter( section => section.id !== sectionId )
-    //     );
-    // }, [sections]);
 
 
     const handleSectionClick = useCallback(( sectionId: string ) => {
@@ -341,17 +245,13 @@ export function SchedulerDashboard(): JSX.Element {
 
 
     const handleClearSelection = useCallback(() => {
-        // console.log('Clearing all selections');
         setSelectedSections( [] );
-        // console.log('Selections cleared');
     }, []);
 
 
     useEffect(() => {
         const handleKeyDown = ( e: KeyboardEvent ) => {
-            // console.log('Key pressed:', e.key, 'Selected count:', selectedSections.length);
             if ( e.key === 'Escape' && selectedSections.length > 0 ) {
-                // console.log('Clearing selection via ESC');
                 handleClearSelection();
             }
         };
@@ -361,47 +261,15 @@ export function SchedulerDashboard(): JSX.Element {
     }, [selectedSections.length, handleClearSelection]);
 
 
-    const getDayModuleId = useCallback((
-        dayId       : number,
-        moduleId    : string
-    ): number | undefined =>
-        modules.find( dayM =>
-            dayM.id === moduleId &&
-            dayM.dayId === dayId
-        )?.dayModuleId,
-    [modules]);
-
-
-    const onUpdateSection = useCallback( async (
-        sectionId   : string,
-        spaceId     : string,
-        dayModuleId : number
-    ) => {
-        const saveSection: UpdateSection = {
-            roomId      : spaceId,
-            dayModuleId : dayModuleId
-        }
-
-        const url = `${ENV.REQUEST_BACK_URL}sessions/${sectionId}`;
-
-        try {
-            const data = await fetchApi<SectionSession | null>( url, "PATCH", saveSection );
-
-            if ( !data ) {
-                toast( 'No se pudo actualizar la sección', errorToast );
-                return false;
-            }
-
-            // Invalidate TanStack Query cache to refresh sections
-            // await queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
-
-            toast( 'Sección actualizada correctamente', successToast );
-            return true;
-        } catch ( error ) {
-            toast( 'No se pudo actualizar la sección', errorToast );
-            return false;
-        }
-    }, [queryClient]);
+    // const getDayModuleId = useCallback((
+    //     dayId       : number,
+    //     moduleId    : string
+    // ): number | undefined =>
+    //     modules.find( dayM =>
+    //         dayM.id === moduleId &&
+    //         dayM.dayId === dayId
+    //     )?.dayModuleId,
+    // [modules]);
 
 
     const onUpdateSectionMultiple = useCallback((
@@ -419,30 +287,30 @@ export function SchedulerDashboard(): JSX.Element {
 
         // Check for capacity issues only for sessions changing spaces
         const affectedSessions: Array<{
-            ssec: string;
-            registered: number | null;
-            quota: number;
-            chairsAvailable: number;
+            ssec            : string;
+            registered      : number | null;
+            quota           : number;
+            chairsAvailable : number;
         }> = [];
 
-        updates.forEach(update => {
+        updates.forEach( update => {
             // Find the session in the current sections
-            const section = sections.find(s => s.session.id === update.sessionId);
-            
-            if (!section) return;
+            const section = sections.find( s => s.session.id === update.sessionId );
+
+            if ( !section ) return;
 
             // Only validate if the space is changing
-            if (section.session.spaceId !== spaceId) {
+            if ( section.session.spaceId !== spaceId ) {
                 // Calculate students: use registered if not null, otherwise use quota
-                const students = section.registered || section.quota;
-                const chairsAvailable = targetSpace.capacity - students;
+                const students          = section.registered || section.quota;
+                const chairsAvailable   = targetSpace.capacity - students;
 
                 // If capacity would be negative, add to affected sessions
-                if (chairsAvailable < 0) {
+                if ( chairsAvailable < 0 ) {
                     affectedSessions.push({
-                        ssec: `${section.subject.id}-${section.code}`,
-                        registered: section.registered,
-                        quota: section.quota,
+                        ssec            : `${section.subject.id}-${section.code}`,
+                        registered      : section.registered,
+                        quota           : section.quota,
                         chairsAvailable
                     });
                 }
@@ -450,11 +318,11 @@ export function SchedulerDashboard(): JSX.Element {
         });
 
         // If there are affected sessions, show warning dialog
-        if (affectedSessions.length > 0) {
+        if ( affectedSessions.length > 0 ) {
             setCapacityWarning({
-                show: true,
-                spaceName: targetSpace.name,
-                spaceCapacity: targetSpace.capacity,
+                show            : true,
+                spaceName       : targetSpace.name,
+                spaceCapacity   : targetSpace.capacity,
                 affectedSessions,
                 pendingUpdate: {
                     spaceId,
@@ -473,127 +341,71 @@ export function SchedulerDashboard(): JSX.Element {
 
         updateSessionsMultiple({
             spaceId,
-            updates         : payload,
+            updates: payload,
             updatedSections
         });
     }, [sections, sortedSpaces, updateSessionsMultiple]);
 
 
-    const handleSectionMove = useCallback((
-        sectionId   : string,
-        newRoomId   : string,
-        newDay      : number,
-        newModuleId : string
-    ) : boolean => {
-        const targetOccupied = sections
-            .some(( section : SectionSession ) =>
-                section.id                      !== sectionId
-                && section.session.spaceId      === newRoomId
-                && section.session.dayId        === newDay
-                && section.session.module.id    === newModuleId
-            );
-
-        if ( targetOccupied ) {
-            toast( 'No se puede mover la sección porque ya existe una en ese módulo y sala.', errorToast );
-            return false;
-        }
-
-        const sectionToMove = sections.find( section => section.id === sectionId );
-
-        if ( !sectionToMove ) return false;
-
-        // Calculate dayModuleId from newDay and newModuleId
-        const dayModuleId = getDayModuleId( newDay, newModuleId );
-
-        if ( !dayModuleId ) {
-            toast( 'No se pudo encontrar el módulo del día', errorToast );
-            return false;
-        }
-
-        // const updatedSection: SectionSession = {
-        //     ...sectionToMove,
-        //     session: {
-        //         ...sectionToMove.session,
-        //         dayId       : newDay,
-        //         module      : { ...sectionToMove.session.module, id: newModuleId },
-        //         dayModuleId : dayModuleId,
-        //         spaceId     : newRoomId,
-        //     }
-        // };
-
-        // Update local state optimistically
-        // setSections( prevSections =>
-        //     prevSections.map( section =>
-        //         section.id === sectionId ? updatedSection : section
-        //     )
-        // );
-
-        // setFilteredSections( prevFiltered =>
-        //     prevFiltered.map( section =>
-        //         section.id === sectionId ? updatedSection : section
-        //     )
-        // );
-
-        // Send update to backend
-        onUpdateSection( sectionId, newRoomId, dayModuleId );
-
-        return true;
-    }, [sections, getDayModuleId, onUpdateSection]);
-
-
-    const getSectionsForCell = useCallback((spaceId: string, dayModuleId: number) => {
+    const getSectionsForCell = useCallback(( spaceId: string, dayModuleId: number ) => {
         const key = `${spaceId}-${dayModuleId}`;
+
         return sectionsByCellRef.current.get(key) || [];
     }, []);
 
 
     const handleMultipleSectionMove = useCallback((
         targetRoomId: string,
-        targetDayModuleId: number
+        targetDayModuleId: number,
+        draggedSessionId?: string
     ): boolean => {
-        if ( selectedSections.length === 0 ) return false;
+        // Determine which sections to move
+        let sectionsToMove: SectionSession[];
 
-        // console.log('🔍 DEBUG handleMultipleSectionMove - START');
-        // console.log('  targetRoomId:', targetRoomId);
-        // console.log('  targetDayModuleId:', targetDayModuleId);
-        // console.log('  selectedSections count:', selectedSections.length);
+        if ( selectedSections.length > 0 ) {
+            // Use selected sections for multi-selection move
+            sectionsToMove = selectedSections;
+        } else if ( draggedSessionId ) {
+            // Single session drag without selection - find the dragged session
+            const draggedSection = sections.find( s => s.session.id === draggedSessionId );
 
-        // Find the target module info
-        const targetModule = modules.find(m => m.dayModuleId === targetDayModuleId);
-        
-        if (!targetModule) {
-            // console.error('❌ ERROR: Target module not found!');
-            // console.error('  Looking for targetDayModuleId:', targetDayModuleId);
-            // console.error('  Available dayModuleIds:', modules.map(m => m.dayModuleId));
-            toast('No se pudo encontrar el módulo de destino', errorToast);
+            if ( !draggedSection ) {
+                toast( 'No se pudo encontrar la sesión', errorToast );
+                return false;
+            }
+
+            sectionsToMove = [draggedSection];
+        } else {
+            // No sections to move
             return false;
         }
 
-        // console.log('  targetModule found:', targetModule);
+        // Find the target module info
+        const targetModule = modules.find( m => m.dayModuleId === targetDayModuleId );
 
-        // Calculate relative positions based on the first selected section
-        const baseSection = selectedSections[0];
-        const baseDayModuleId = baseSection.session.dayModuleId;
-        
+        if ( !targetModule ) {
+            toast( 'No se pudo encontrar el módulo de destino', errorToast );
+            return false;
+        }
+
+        // Calculate relative positions based on the first section to move
+        const baseSection       = sectionsToMove[0];
+        const baseDayModuleId   = baseSection.session.dayModuleId;
+
         // Find the base module info
-        const baseModule = modules.find(m => m.dayModuleId === baseDayModuleId);
-        
+        const baseModule = modules.find( m => m.dayModuleId === baseDayModuleId );
+
         if ( !baseModule ) {
-            // console.error('❌ ERROR: Base module not found!');
-            // console.error('  Looking for baseDayModuleId:', baseDayModuleId);
             toast( 'No se pudo encontrar el módulo base', errorToast );
             return false;
         }
 
-        // console.log('  baseModule found:', baseModule);
-
         // Calculate all target positions using module ORDER instead of dayModuleId
-        const updates = selectedSections.map( section => {
+        const updates = sectionsToMove.map( section => {
             // Find the module for this section
             const sectionModule = modules.find( m => m.dayModuleId === section.session.dayModuleId );
-            
+
             if ( !sectionModule ) {
-                // console.error('❌ ERROR: Section module not found for section:', section.id);
                 toast( 'No se pudo encontrar el módulo de la sección', errorToast );
                 return null;
             }
@@ -629,13 +441,13 @@ export function SchedulerDashboard(): JSX.Element {
                 }
                 // If targetModuleOrder is negative, look in previous day
                 else if ( targetModuleOrder < 0 ) {
-                    const prevDayId = targetDayId - 1;
-                    const prevDayModules = modules
-                        .filter(m => m.dayId === prevDayId)
-                        .sort((a, b) => a.order - b.order);
+                    const prevDayId         = targetDayId - 1;
+                    const prevDayModules    = modules
+                        .filter( m => m.dayId === prevDayId )
+                        .sort(( a, b ) => a.order - b.order );
                     const prevDayOrder = prevDayModules.length + targetModuleOrder;
 
-                    targetModuleForSection = modules.find(m => 
+                    targetModuleForSection = modules.find( m => 
                         m.dayId === prevDayId && m.order === prevDayOrder
                     );
                 }
@@ -657,43 +469,31 @@ export function SchedulerDashboard(): JSX.Element {
 
         // Check if any update failed to calculate
         if ( updates.some( u => u === null )) {
-            // console.error('❌ ERROR: Some updates failed to calculate');
             toast( 'No se pudieron calcular todas las posiciones', errorToast );
             return false;
         }
-
-        // console.log('  All updates calculated:', updates);
 
         // Validate that ALL target positions are available
         for ( const update of updates ) {
             if ( !update ) continue;
 
             const cellSections = getSectionsForCell( update.newRoomId, update.newDayModuleId );
-            // A cell is occupied if it has sections that are NOT in our selection
+            // A cell is occupied if it has sections that are NOT in our sections to move
             // Use session.id for unique identification
             const isOccupied = cellSections.some( s => 
-                !selectedSections.some( selected => selected.session.id === s.session.id )
+                !sectionsToMove.some( selected => selected.session.id === s.session.id )
             );
 
             if ( isOccupied ) {
-                // console.log('  Cell is occupied:', update.newRoomId, update.newDayModuleId);
                 toast( 'Una o más sesiones no se pueden mover porque el destino está ocupado', errorToast );
                 return false;
             }
         }
 
-        // console.log('  All target positions are available');
-
-        // Update local state optimistically
-        // console.log('🔍 DEBUG: Starting section updates');
-        // console.log('  Total sections before update:', sections.length);
-        // console.log('  Updates to apply:', updates.map(u => ({ sessionId: u?.sessionId, newDayModuleId: u?.newDayModuleId })));
-        
         const updatedSections = sections.map( section => {
             const updateInfo = updates.find( u => u?.sessionId === section.session.id );
 
             if ( updateInfo ) {
-                // console.log(`  ✅ Updating session ${section.session.id} to dayModuleId ${updateInfo.newDayModuleId}`);
                 return {
                     ...section,
                     session: {
@@ -708,34 +508,6 @@ export function SchedulerDashboard(): JSX.Element {
 
             return section;
         });
-        
-        // console.log('  Total sections after update:', updatedSections.length);
-        // console.log('  Sessions that were updated:', updatedSections.filter(s => 
-            // updates.some(u => u?.sessionId === s.session.id)
-        // ).length);
-
-        // setSections( updatedSections );
-
-        // setFilteredSections(prevFiltered =>
-        //     prevFiltered.map(section => {
-        //         const updateInfo = updates.find(u => u?.sectionId === section.id);
-
-        //         if (updateInfo) {
-        //             return {
-        //                 ...section,
-        //                 session: {
-        //                     ...section.session,
-        //                     dayId: updateInfo.dayId,
-        //                     module: { ...section.session.module, id: updateInfo.moduleId },
-        //                     dayModuleId: updateInfo.newDayModuleId,
-        //                     spaceId: updateInfo.newRoomId,
-        //                 }
-        //             };
-        //         }
-
-        //         return section;
-        //     })
-        // );
 
         // Send update to backend
         const backendUpdates = updates
@@ -749,15 +521,13 @@ export function SchedulerDashboard(): JSX.Element {
         // Extract the common spaceId (all sessions go to the same room)
         const spaceId = targetRoomId;
 
-        // console.log('  Sending backend updates:', backendUpdates);
         onUpdateSectionMultiple( spaceId, backendUpdates, updatedSections );
 
         // Clear selection after successful move
         handleClearSelection();
 
-        // console.log('✅ handleMultipleSectionMove - SUCCESS');
         return true;
-    }, [selectedSections, getSectionsForCell, modules, sections, onUpdateSectionMultiple, handleClearSelection]);
+    }, [selectedSections, sections, getSectionsForCell, modules, onUpdateSectionMultiple, handleClearSelection]);
 
 
     const handleModalClose = useCallback(() => {
@@ -767,9 +537,9 @@ export function SchedulerDashboard(): JSX.Element {
 
 
     const handleCapacityWarningConfirm = useCallback(() => {
-        if (capacityWarning.pendingUpdate) {
+        if ( capacityWarning.pendingUpdate ) {
             const { spaceId, updates, updatedSections } = capacityWarning.pendingUpdate;
-            
+
             // Transform updates to remove spaceId (it goes in the URL)
             const payload = updates.map( u => ({
                 sessionId   : u.sessionId,
@@ -784,14 +554,14 @@ export function SchedulerDashboard(): JSX.Element {
                 isNegativeChairs: true  // Force update despite negative capacity
             });
         }
-        
+
         // Reset capacity warning state
         setCapacityWarning({
-            show: false,
-            spaceName: '',
-            spaceCapacity: 0,
-            affectedSessions: [],
-            pendingUpdate: null
+            show                : false,
+            spaceName           : '',
+            spaceCapacity       : 0,
+            affectedSessions    : [],
+            pendingUpdate       : null
         });
     }, [capacityWarning.pendingUpdate, updateSessionsMultiple]);
 
@@ -799,63 +569,23 @@ export function SchedulerDashboard(): JSX.Element {
     const handleCapacityWarningCancel = useCallback(() => {
         // Just close the dialog, don't send the update
         setCapacityWarning({
-            show: false,
-            spaceName: '',
-            spaceCapacity: 0,
-            affectedSessions: [],
-            pendingUpdate: null
+            show                : false,
+            spaceName           : '',
+            spaceCapacity       : 0,
+            affectedSessions    : [],
+            pendingUpdate       : null
         });
     }, []);
-
-
-    // const handleLoadExcelSuccess = useCallback(() => {
-    //     // setShowLoadExcel( false );
-    //     toast( 'Archivo Excel cargado exitosamente. Recargando datos...', successToast );
-    //     window.location.reload();
-    // }, []);
-
-    // const handleLoadExcelCancel = useCallback(() => {
-    //     // setShowLoadExcel( false );
-    // }, []);
 
 
     if ( modulesLoading || sectionsLoading || spacesLoading || sizesLoading || !isInitialized ) {
         return <TableSkeleton />;
     }
 
-    // if ( sectionsError ) {
-    //     return (
-    //         <div className="flex items-center justify-center h-64">
-    //             <div className="text-center">
-    //                 <p className="text-destructive mb-2">Error al cargar secciones</p>
-
-    //                 <p className="text-muted-foreground text-sm">{sectionsErrorMessage?.message}</p>
-
-    //                 <div className="mt-4">
-    //                     <p className="text-sm text-muted-foreground mb-2">Debes cargar un archivo Excel con las secciones</p>
-
-    //                     <LoadExcel
-    //                         onSuccess   = { handleLoadExcelSuccess }
-    //                         onCancel    = { handleLoadExcelCancel }
-    //                     />
-    //                 </div>
-    //             </div>
-    //         </div>
-    //     );
-    // }
-
-    // if ( showLoadExcel ) {
-    //     return (
-    //         <LoadExcel
-    //             onSuccess   = { handleLoadExcelSuccess }
-    //             onCancel    = { handleLoadExcelCancel }
-    //         />
-    //     );
-    // }
 
     return (
         <>
-            {!selectedPeriodId ? (
+            {selectedPeriodIds.length === 0 ? (
                 <div className="flex items-center justify-center h-[calc(100vh-120px)]">
                     <div className="max-w-md w-full mx-4">
                         <div className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 rounded-lg shadow-lg p-8 border border-blue-200 dark:border-gray-700">
@@ -875,12 +605,15 @@ export function SchedulerDashboard(): JSX.Element {
                                         />
                                     </svg>
                                 </div>
+
                                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                                     Seleccione un Período
                                 </h3>
+
                                 <p className="text-gray-600 dark:text-gray-300 mb-4">
                                     Para visualizar las sesiones académicas, por favor seleccione un período desde el selector en la parte superior de la página.
                                 </p>
+
                                 <div className="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                                     <svg
                                         className="h-5 w-5"
@@ -895,6 +628,7 @@ export function SchedulerDashboard(): JSX.Element {
                                             d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                                         />
                                     </svg>
+
                                     <span>El selector se encuentra en la esquina superior derecha</span>
                                 </div>
                             </div>
@@ -906,7 +640,6 @@ export function SchedulerDashboard(): JSX.Element {
                     <ModuleGrid
                         spaces                  = { sortedSpaces }
                         onSectionClick          = { handleSectionClick }
-                        onSectionMove           = { handleSectionMove }
                         onMultipleSectionMove   = { handleMultipleSectionMove }
                         onSortChange            = { handleSortChange }
                         sortConfig              = { sortConfig }
