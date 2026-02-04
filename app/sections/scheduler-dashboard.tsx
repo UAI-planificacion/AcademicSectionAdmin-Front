@@ -27,7 +27,10 @@ import TableSkeleton                    from '@/app/sections/TableSkeleton';
 import { Sizes }                        from '@/models/size.model';
 import { useSizes }                     from '@/hooks/use-sizes';
 import { useUpdateSessionsMultiple }    from '@/hooks/use-update-sessions-multiple';
+import { useDeleteSessionsMassive }     from '@/hooks/use-delete-sessions-massive';
+import { useDeleteSession }             from '@/hooks/use-delete-session';
 import { CapacityWarningDialog }        from '@/app/sections/capacity-warning-dialog';
+import { DeleteConfirmationDialog }     from '@/app/sections/delete-confirmation-dialog';
 import { useSession }                   from '@/hooks/use-session';
 import { usePeriodContext }             from '@/contexts/period-context';
 
@@ -79,8 +82,11 @@ export function SchedulerDashboard(): JSX.Element {
 
     const { sizes, loading: sizesLoading } = useSizes();
 
-    // TanStack Query mutation for updating multiple sessions
+    // TanStack Query mutations
     const { mutate: updateSessionsMultiple }        = useUpdateSessionsMultiple();
+    const { mutate: deleteSessionsMassive, isPending: isDeleting } = useDeleteSessionsMassive();
+    const { mutate: deleteSession }                 = useDeleteSession();
+    
     const [filteredRooms, setFilteredRooms]         = useState<SpaceData[]>( [] );
     const [selectedSection, setSelectedSection]     = useState<SectionSession | null>( null );
     const [isModalOpen, setIsModalOpen]             = useState<boolean>( false );
@@ -91,6 +97,10 @@ export function SchedulerDashboard(): JSX.Element {
         field       : "name",
         direction   : "asc",
     });
+
+    // Delete confirmation dialog state
+    const [deleteDialogOpen, setDeleteDialogOpen]   = useState<boolean>( false );
+    const [sessionsToDelete, setSessionsToDelete]   = useState<SectionSession[]>([]);
 
     // Capacity warning dialog state
     const [capacityWarning, setCapacityWarning] = useState<{
@@ -196,17 +206,18 @@ export function SchedulerDashboard(): JSX.Element {
     }, []);
 
 
-    const handleSectionClick = useCallback(( sectionId: string ) => {
+    const handleSectionClick = useCallback(( sessionId: string ) => {
         if ( !isAdmin ) return;
         if ( selectedSections.length > 0 ) return; // Don't open if multi-selected
 
-        const sectionSession = sections.find(( s : SectionSession ) => s.id === sectionId );
+        // Search by session.id (unique) instead of section.id (shared)
+        const sectionSession = sections.find(( s : SectionSession ) => s.session.id === sessionId );
 
         if ( !sectionSession ) return;
 
         setSelectedSection( sectionSession );
         setIsModalOpen( true );
-    }, [sections, selectedSections.length]);
+    }, [sections, selectedSections.length, isAdmin]);
 
 
     const handleSectionSelect = useCallback(( section: SectionSession | null ) => {
@@ -251,25 +262,39 @@ export function SchedulerDashboard(): JSX.Element {
 
     useEffect(() => {
         const handleKeyDown = ( e: KeyboardEvent ) => {
+            // Escape: Clear selection
             if ( e.key === 'Escape' && selectedSections.length > 0 ) {
                 handleClearSelection();
+                return;
+            }
+
+            // Ctrl+X: Delete selected sessions
+            if ( e.key === 'x' && (e.ctrlKey || e.metaKey) && selectedSections.length > 0 ) {
+                e.preventDefault();
+
+                // Only admins can delete sessions
+                if ( !isAdmin ) {
+                    toast( 'No tiene permisos para eliminar sesiones', errorToast );
+                    return;
+                }
+
+                // Validate sessions exist before opening dialog
+                if ( selectedSections.length === 0 ) {
+                    return;
+                }
+
+                // Set sessions and open dialog
+                setSessionsToDelete( selectedSections );
+                setDeleteDialogOpen( true );
             }
         };
 
         window.addEventListener( 'keydown', handleKeyDown );
-        return () => window.removeEventListener( 'keydown', handleKeyDown );
-    }, [selectedSections.length, handleClearSelection]);
 
-
-    // const getDayModuleId = useCallback((
-    //     dayId       : number,
-    //     moduleId    : string
-    // ): number | undefined =>
-    //     modules.find( dayM =>
-    //         dayM.id === moduleId &&
-    //         dayM.dayId === dayId
-    //     )?.dayModuleId,
-    // [modules]);
+        return () => {
+            window.removeEventListener( 'keydown', handleKeyDown );
+        };
+    }, [selectedSections, handleClearSelection, isAdmin]);
 
 
     const onUpdateSectionMultiple = useCallback((
@@ -578,6 +603,71 @@ export function SchedulerDashboard(): JSX.Element {
     }, []);
 
 
+    const handleDeleteConfirm = useCallback(() => {
+        if ( sessionsToDelete.length === 0 ) return;
+
+        // Deduplicate sessions by session.id
+        const uniqueSessions = sessionsToDelete.filter((session, index, self) =>
+            index === self.findIndex((s) => s.session.id === session.session.id)
+        );
+
+        // Extract unique session IDs
+        const sessionIds = uniqueSessions.map( s => s.session.id );
+
+        // Create updated sections array without the deleted sessions
+        const updatedSections = sections.filter( 
+            section => !sessionIds.includes( section.session.id )
+        );
+
+        // Use single or massive deletion based on count
+        if ( sessionIds.length === 1 ) {
+            // Single session deletion
+            deleteSession({
+                sessionId: sessionIds[0],
+                updatedSections
+            });
+        } else {
+            // Massive session deletion
+            deleteSessionsMassive({
+                sessionIds,
+                updatedSections
+            });
+        }
+
+        // Close dialog and clear selection
+        setDeleteDialogOpen( false );
+        setSessionsToDelete( [] );
+        handleClearSelection();
+    }, [sessionsToDelete, sections, deleteSession, deleteSessionsMassive, handleClearSelection]);
+
+
+    const handleDeleteCancel = useCallback(() => {
+        setDeleteDialogOpen( false );
+        setSessionsToDelete( [] );
+    }, []);
+
+
+    const handleSingleSessionDelete = useCallback(( sessionId: string ) => {
+        // Only admins can delete sessions
+        if ( !isAdmin ) {
+            toast( 'No tiene permisos para eliminar sesiones', errorToast );
+            return;
+        }
+
+        // Find the session to delete
+        const sessionToDelete = sections.find( section => section.session.id === sessionId );
+
+        if ( !sessionToDelete ) {
+            toast( 'Sesión no encontrada', errorToast );
+            return;
+        }
+
+        // Open confirmation dialog with this single session
+        setSessionsToDelete( [sessionToDelete] );
+        setDeleteDialogOpen( true );
+    }, [sections, isAdmin]);
+
+
     if ( modulesLoading || sectionsLoading || spacesLoading || sizesLoading || !isInitialized ) {
         return <TableSkeleton />;
     }
@@ -648,6 +738,7 @@ export function SchedulerDashboard(): JSX.Element {
                         selectedSections        = { selectedSections }
                         onSectionSelect         = { handleSectionSelect }
                         onClearSelection        = { handleClearSelection }
+                        onSingleSessionDelete   = { handleSingleSessionDelete }
                     />
 
                     {/* To Update */}
@@ -671,6 +762,15 @@ export function SchedulerDashboard(): JSX.Element {
                         onOpenChange        = {( open ) => {
                             if ( !open ) handleCapacityWarningCancel();
                         }}
+                    />
+
+                    {/* Delete Confirmation Dialog */}
+                    <DeleteConfirmationDialog
+                        open        = { deleteDialogOpen }
+                        sessions    = { sessionsToDelete }
+                        onConfirm   = { handleDeleteConfirm }
+                        onCancel    = { handleDeleteCancel }
+                        isLoading   = { isDeleting }
                     />
                 </>
             )}
