@@ -58,6 +58,7 @@ interface ModuleGridProps {
     selectedSections        : SectionSession[];
     onSectionSelect         : ( section: SectionSession | null ) => void;
     onClearSelection        : () => void;
+    onSingleSessionDelete   : ( sessionId: string ) => void;
 }
 
 
@@ -73,6 +74,7 @@ export function ModuleGrid({
     selectedSections,
     onSectionSelect,
     onClearSelection,
+    onSingleSessionDelete,
 }: ModuleGridProps ): React.JSX.Element{
     const { staff } = useSession();
     const isAdmin   = staff?.role === 'ADMIN' || staff?.role === 'ADMIN_FACULTY';
@@ -243,9 +245,10 @@ export function ModuleGrid({
                 onClearSelection        = { onClearSelection }
                 hoveredConsecutiveId    = { hoveredConsecutiveId }
                 onConsecutiveHover      = { setHoveredConsecutiveId }
+                onSingleSessionDelete   = { onSingleSessionDelete }
             />
         );
-    }, [isCalculating, getSectionsForCell, dragOverCell, dragOverCells, draggedSection, onSectionClick, selectedSections, onSectionSelect, onClearSelection, hoveredConsecutiveId]);
+    }, [isCalculating, getSectionsForCell, dragOverCell, dragOverCells, draggedSection, onSectionClick, selectedSections, onSectionSelect, onClearSelection, hoveredConsecutiveId, onSingleSessionDelete]);
 
 
     function handleDragStart( e: React.DragEvent, sectionId: string ): void {
