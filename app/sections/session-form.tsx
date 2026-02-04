@@ -30,26 +30,13 @@ import {
     FormLabel,
     FormMessage
 }                               from '@/components/ui/form';
-// import {
-//     Card,
-//     CardContent,
-//     CardHeader
-// }                               from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardHeader
+}                               from '@/components/ui/card';
 import { Button }               from '@/components/ui/button';
-// import { SpaceSelect }          from '@/components/shared/item-select/space-select';
-// import { ProfessorSelect }      from '@/components/shared/item-select/professor-select';
-// import { SessionModuleDays }    from '@/components/session/session-module-days';
-// import { CalendarSelect }       from '@/components/ui/calendar-select';
-// import { Switch }               from '@/components/ui/switch';
-// import { PlanningChangeForm }   from '@/components/planning-change/planning-change-form';
-// import { SessionTypeSelector }  from '@/components/shared/session-type-selector';
 
-// import {
-//     CreateSessionRequest,
-//     UpdateSessionRequest
-// }                                       from '@/types/session-request.model';
-// import { cn, tempoFormat } from '@/lib/utils';
-// import { KEY_QUERYS }                   from '@/consts/key-queries';
 import {
     CreateSessionRequest,
     UpdateSessionRequest
@@ -71,12 +58,6 @@ import { ProfessorSelect }          from '@/components/select/professor-select';
 import { CalendarSelect }           from '@/components/select/calendar-select';
 import { DayModule }                from '@/models/module.model';
 import { SectionSelect }            from '@/components/select/section-select';
-// import { Session } from '@/models/section.model';
-// import { cn, tempoFormat }              from '@/lib/utils';
-// import { useAvailableDates }            from '@/hooks/use-available-dates';
-// import { Session }                      from '@/types/section.model';
-// import { DayModule }                    from '@/types/day-module.model';
-// import { OfferSection, OfferSession }   from '@/types/offer-section.model';
 
 
 interface Props {
@@ -119,9 +100,6 @@ export function SessionForm({
     const [ selectedDayModuleId, setSelectedDayModuleId ]   = useState<number | null>( null );
     const [ showCalendar, setShowCalendar ]                 = useState<boolean>( false );
     const [ shouldFetchDates, setShouldFetchDates ]         = useState<boolean>( false );
-    // const [ isUpdateDateSpace, setIsUpdateDateSpace  ]      = useState<boolean>( true );
-    // const [ isPlanningChangeOpen, setIsPlanningChangeOpen ] = useState<boolean>( false );
-
 	const [selectedSectionId, setSelectedSectionId] = useState<string | null>( null );
 
     // Fetch dayModules to calculate dayModuleId from dayId and moduleId
@@ -195,13 +173,8 @@ export function SessionForm({
             }
         }
 
-        // setSessionRequired( false );
         setShowCalendar( false );
         setShouldFetchDates( false );
-
-        // const isShowDayModules = !sectionSession;
-
-        // setIsUpdateDateSpace( isShowDayModules );
 
         // When editing a session, show the calendar with the current date as the only available date
         if ( sectionSession?.session.date ) {
@@ -352,7 +325,7 @@ export function SessionForm({
     const handleDayModuleIdsChange = useCallback(( dayModuleIds: number[] ) => {
         // Como multiple es false, solo habrá 0 o 1 elemento
         const dayModuleId = dayModuleIds.length > 0 ? dayModuleIds[0] : null;
-        
+
         setSelectedDayModuleId( dayModuleId );
         setShouldFetchDates( false );
 
@@ -401,11 +374,6 @@ export function SessionForm({
 
 
     function onSubmit( data: FormData ): void {
-        // if ( !data.name ) {
-        //     // setSessionRequired( true );
-        //     return;
-        // }
-
         // Validar que se haya seleccionado un dayModuleId
         if ( !selectedDayModuleId ) {
             setDayModuleRequired( true );
@@ -413,40 +381,20 @@ export function SessionForm({
             return;
         }
 
-        // if ( isLoading ) return;
-
-        // if ( isError ) {
-        //     toast( 'Error al cargar los días y los módulos', errorToast );
-        //     return;
-        // }
-
         const {
             name,
             spaceId,
             isEnglish,
-            // correctedRegistrants,
-            // realRegistrants,
-            // plannedBuilding,
-            // chairsAvailable,
             professorId,
             date
         } = data;
 
         const sessionData = {
-            // name,
-            // dayModuleId : selectedDayModuleId,
-            // ...(spaceId && { spaceId }),
-            // ...(isEnglish !== null && isEnglish !== undefined && { isEnglish }),
-            // ...( correctedRegistrants && { correctedRegistrants }),
-            // ...( realRegistrants && { realRegistrants }),
-            // ...( plannedBuilding && { plannedBuilding }),
-            // ...( chairsAvailable && { chairsAvailable }),
             ...( professorId && { professorId }),
-            // ...(dayModuleId && { dayModuleId }),
             ...( date && { date }),
         };
 
-        console.log('🚀 ~ file: session-form.tsx:377 ~ sessionData:', sessionData)
+        // console.log('🚀 ~ file: session-form.tsx:377 ~ sessionData:', sessionData)
 
         if ( sectionSession ) {
             const updatedSession: UpdateSessionRequest = {
@@ -458,7 +406,7 @@ export function SessionForm({
                 id: sectionSession.session.id,
             };
 
-            console.log("🚀 ~ file: session-form.tsx ~ updatedSession:", updatedSession)
+            // console.log("🚀 ~ file: session-form.tsx ~ updatedSession:", updatedSession)
 
             updateSessionMutation.mutate( updatedSession );
         } else {
@@ -472,7 +420,7 @@ export function SessionForm({
                 ...( isEnglish !== null && isEnglish !== undefined && { isEnglish }),
             }
 
-            console.log("🚀 ~ file: session-form.tsx ~ createSession:", createSession)
+            // console.log("🚀 ~ file: session-form.tsx ~ createSession:", createSession)
 
             createSessionMutation.mutate( createSession );
         }
@@ -481,10 +429,6 @@ export function SessionForm({
 
     function handleClose(): void {
         form.reset({});
-        // setSelectedDayModuleId( null );
-        // setShowCalendar( false );
-        // setModuleDaySelections( [] );
-        // setShouldFetchDates( false );
         onClose();
     };
 
@@ -504,68 +448,24 @@ export function SessionForm({
                         }
                     </DialogDescription>
 
-                    {/* <div className="space-y-4 text-sm">
-                        <Card>
-                            <CardHeader className="py-3 px-5 border-b grid grid-cols-4 gap-4 items-center">
-                                <span className="font-medium">SSEC</span>
-                                <span className="font-medium">Periodo</span>
-                                <span className="font-medium">Fecha Inicio</span>
-                                <span className="font-medium">Fecha Fin</span>
-                            </CardHeader>
-
-                            <CardContent className="py-3 px-5 grid grid-cols-4 gap-4">
-                                <span>{ section?.subject.id }-{ section?.code }</span>
-                                <span>{ section?.period?.name }</span>
-                                <span>{ section?.startDate && tempoFormat( section.startDate )}</span>
-                                <span>{ section?.endDate && tempoFormat( section.endDate )}</span>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader className="py-3 px-5 border-b grid grid-cols-4 gap-4 items-center">
-                                <span className="font-medium">Cupos</span>
-                                <span className="font-medium">Registrados</span>
-                                <span className={cn(( session?.chairsAvailable ?? 0 ) < 0 && "text-destructive", 'font-medium')}>Sillas disponibles</span>
-                            </CardHeader>
-
-                            <CardContent className="py-3 px-5 grid grid-cols-4 gap-4">
-                                <span>{ section?.quota }</span>
-                                <span>{ section?.registered }</span>
-                                <span className={ cn(( session?.chairsAvailable ?? 0 ) < 0 && "text-destructive font-bold", 'font-medium' )}>
-                                    { session?.chairsAvailable }
-                                </span>
-                            </CardContent>
-                        </Card>
-
-                        { !isUpdateDateSpace &&
+                    {/* Display SSEC and chairsAvailable only when editing */}
+                    { sectionSession && (
+                        <div className="space-y-4 text-sm mt-4">
                             <Card>
-                                <CardHeader className="py-1 px-5 border-b grid grid-cols-4 gap-4 items-center">
-                                    <span className="font-medium">Espacio</span>
-                                    <span className="font-medium">Profesor</span>
-                                    <span className="font-medium">Fecha</span>
-
-                                    <div className="flex items-center gap-2 justify-between">
-                                        <span className="font-medium">Módulo</span>
-
-                                        <Button
-                                            size    = "icon"
-                                            onClick = {() => setIsUpdateDateSpace( true )}
-                                            title   = "Actualizar con verificación"
-                                        >
-                                            <RefreshCcw className="h-4 w-4" />
-                                        </Button>
-                                    </div>
+                                <CardHeader className="py-3 px-5 border-b grid grid-cols-2 gap-4 items-center">
+                                    <span className="font-medium">SSEC</span>
+                                    <span className="font-medium">Sillas disponibles</span>
                                 </CardHeader>
 
-                                <CardContent className="py-3 px-5 grid grid-cols-4 gap-4">
-                                    <span>{ session?.spaceId ?? '-' }</span>
-                                    <span>{ session?.professor?.name ?? '-' }</span>
-                                    <span>{ session?.date && tempoFormat( session?.date )  }</span>
-                                    <span>{ session?.module?.name ?? '-' }</span>
+                                <CardContent className="py-3 px-5 grid grid-cols-2 gap-4">
+                                    <span>{ sectionSession.subject.id }-{ sectionSession.code }</span>
+                                    <span className={ sectionSession.session.chairsAvailable < 0 ? "text-destructive font-bold" : "" }>
+                                        { sectionSession.session.chairsAvailable }
+                                    </span>
                                 </CardContent>
                             </Card>
-                        }
-                    </div> */}
+                        </div>
+                    )}
                 </DialogHeader>
 
                 <Form {...form}>
@@ -750,30 +650,16 @@ export function SessionForm({
                                 />
                             </div>
 
-                            {/* <div className="flex gap-2"> */}
-                                {/* { !!session && */}
-                                    {/* <Button
-                                        type        = "button"
-                                        variant     = "outline"
-                                        // onClick     = {() => setIsUpdateDateSpace( false )}
-                                        className   = "w-full gap-2"
-                                    >
-                                        Cancelar
-                                    </Button> */}
-                                {/* } */}
 
-                                <Button
-                                    type        = "button"
-                                    onClick     = { handleFetchAvailableDates }
-                                    className   = "w-full gap-2"
-                                    disabled    = { !selectedDayModuleId || isLoadingDates }
-                                >
-                                    <Calendar className="h-4 w-4" />
-                                    { isLoadingDates ? 'Buscando...' : 'Buscar fechas disponibles' }
-                                </Button>
-                            {/* </div> */}
-                        {/* </> */}
-                        {/* } */}
+                            <Button
+                                type        = "button"
+                                onClick     = { handleFetchAvailableDates }
+                                className   = "w-full gap-2"
+                                disabled    = { !selectedDayModuleId || isLoadingDates }
+                            >
+                                <Calendar className="h-4 w-4" />
+                                { isLoadingDates ? 'Buscando...' : 'Buscar fechas disponibles' }
+                            </Button>
 
                         {/* Action Buttons */}
                         <DialogFooter className="flex items-center justify-between border-t pt-4">
@@ -787,26 +673,11 @@ export function SessionForm({
                             </Button>
 
                             <div className="flex gap-2 items-center">
-                                {/* { session && (
-                                    <Button
-                                        onClick     = {() => setIsPlanningChangeOpen( true )}
-                                        title       = "Abrir solicitud"
-                                        className   = "w-full gap-2"
-                                        type        = "button"
-                                        variant     = { session?.planningChangeId ? "default" : "outline"}
-                                    >
-                                        <BookCopy className="h-4 w-4" />
-
-                                        { `${session?.planningChangeId ? 'Ver' : 'Solicitar'} cambio de planificación` }
-                                    </Button>
-                                )} */}
-
                                 <Button
                                     type        = "submit"
                                     disabled    = { 
                                         createSessionMutation.isPending || 
                                         updateSessionMutation.isPending 
-                                        // ( selectedDayModuleId !== null && !form.watch( 'date' )) 
                                     }
                                 >
                                     {( createSessionMutation.isPending || updateSessionMutation.isPending )
@@ -821,20 +692,6 @@ export function SessionForm({
                     </form>
                 </Form>
             </DialogContent>
-
-            {/* <PlanningChangeForm
-                isOpen      = { isPlanningChangeOpen }
-                onClose     = {() => setIsPlanningChangeOpen( false )}
-                onCancel    = {() => setIsPlanningChangeOpen( false )}
-                onSuccess   = {() => {
-                    setIsPlanningChangeOpen( false );
-                    queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
-                    queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.OFFERS] });
-                    toast( 'Cambio de planificación guardado exitosamente', successToast );
-                }}
-                section     = { section }
-                session     = { session }
-            /> */}
         </Dialog>
     );
 }
