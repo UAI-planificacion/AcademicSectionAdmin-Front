@@ -77,6 +77,7 @@ export interface SectionSession {
     endDate     : Date;
     subject     : OfferSectionSubject;
     period      : OfferSectionPeriod;
+    size        : string | null;
     quota       : number;
     registered  : number | null;
     session     : SessionSec;

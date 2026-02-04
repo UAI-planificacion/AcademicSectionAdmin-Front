@@ -35,6 +35,7 @@ async function fetchSections(periodIds: string[]): Promise<SectionSession[]> {
             endDate     : apiSection.endDate,
             subject     : apiSection.subject,
             period      : apiSection.period,
+            size        : apiSection.spaceSizeId,
             quota       : apiSection.quota,
             registered  : apiSection.registered,
 
