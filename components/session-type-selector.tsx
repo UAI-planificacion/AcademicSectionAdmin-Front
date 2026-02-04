@@ -6,9 +6,7 @@ import {
     ToggleGroup,
     ToggleGroupItem
 }                           from "@/components/ui/toggle-group";
-// import { Session as SessionType }			from "@/models/section-session.model";
 import { SessionType, sessionLabels } from "@/models/section.model";
-// import { sessionLabels }	from "@/components/section/section.config";
 
 
 
@@ -93,7 +91,7 @@ export function SessionTypeSelector({
 			<ToggleGroupItem
 				value		= { SessionType.C }
 				aria-label	= { sessionLabels[SessionType.C] }
-				className	= "flex-1 rounded-tl-lg rounded-bl-lg rounded-tr-none rounded-br-none border-t border-l border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-blue-500 data-[state=on]:dark:bg-blue-600 data-[state=on]:text-white data-[state=on]:hover:bg-blue-600 data-[state=on]:dark:hover:bg-blue-700"
+				className	= "flex-1 rounded-tl-lg rounded-bl-lg rounded-tr-none rounded-br-none border-t border-l border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-[#1A9850] data-[state=on]:text-white data-[state=on]:hover:bg-[#157A3F]"
 				title		= { sessionLabels[SessionType.C] }
 			>
 				{ isShort ? 'C' : 'Cátedra' }
@@ -102,7 +100,7 @@ export function SessionTypeSelector({
 			<ToggleGroupItem
 				value		= { SessionType.A }
 				aria-label	= { sessionLabels[SessionType.A] }
-				className	= "flex-1 rounded-none border-t border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-green-500 data-[state=on]:dark:bg-green-600 data-[state=on]:text-white data-[state=on]:hover:bg-green-600 data-[state=on]:dark:hover:bg-green-700"
+				className	= "flex-1 rounded-none border-t border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-[#F76C3B] data-[state=on]:text-white data-[state=on]:hover:bg-[#E55A29]"
 				title		= { sessionLabels[SessionType.A] }
 			>
 				{ isShort ? 'A' : 'Ayudantía' }
@@ -111,7 +109,7 @@ export function SessionTypeSelector({
 			<ToggleGroupItem
 				value		= { SessionType.T }
 				aria-label	= { sessionLabels[SessionType.T] }
-				className	= "flex-1 rounded-none border-t border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-orange-500 data-[state=on]:dark:bg-orange-600 data-[state=on]:text-white data-[state=on]:hover:bg-orange-600 data-[state=on]:dark:hover:bg-orange-700"
+				className	= "flex-1 rounded-none border-t border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-[#1A9850] data-[state=on]:text-white data-[state=on]:hover:bg-[#157A3F]"
 				title		= { sessionLabels[SessionType.T] }
 			>
 				{ isShort ? 'T' : 'Taller' }
@@ -120,7 +118,7 @@ export function SessionTypeSelector({
 			<ToggleGroupItem
 				value		= { SessionType.L }
 				aria-label	= { sessionLabels[SessionType.L] }
-				className	= "flex-1 rounded-tl-none rounded-bl-none rounded-tr-lg rounded-br-lg border-t border-r border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-purple-500 data-[state=on]:dark:bg-purple-600 data-[state=on]:text-white data-[state=on]:hover:bg-purple-600 data-[state=on]:dark:hover:bg-purple-700"
+				className	= "flex-1 rounded-tl-none rounded-bl-none rounded-tr-lg rounded-br-lg border-t border-r border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-[#A6D96A] data-[state=on]:text-white data-[state=on]:hover:bg-[#8FC654]"
 				title		= { sessionLabels[SessionType.L] }
 			>
 				{ isShort ? 'L' : 'Laboratorio' }
