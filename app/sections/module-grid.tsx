@@ -111,6 +111,46 @@ export function ModuleGrid({
     const uniqueTypes       = useMemo(() => Array.from( new Set( spaces.map( room => room.type ))), [spaces]);
     const uniqueBuildings   = useMemo(() => Array.from( new Set( spaces.map( room => room.building ))), [spaces]);
 
+    // Memoize options arrays for MultiSelectCombobox to prevent re-renders
+    const roomOptions = useMemo(() => 
+        uniqueRoomIds.map(( id ) => ({ value: id, label: id })),
+        [uniqueRoomIds]
+    );
+
+    const typeOptions = useMemo(() => 
+        uniqueTypes.map(( type ) => ({ 
+            value: type,
+            label: getSpaceType( type )
+        })),
+        [uniqueTypes]
+    );
+
+    const buildingOptions = useMemo(() => 
+        uniqueBuildings.map((building) => ({ 
+            value: building, 
+            label: getBuildingName( building )
+        })),
+        [uniqueBuildings]
+    );
+
+    const sizeOptions = useMemo(() => 
+        sizes.map(( size ) => ({ 
+            value: size.id || '', 
+            label: size.label || '' 
+        })),
+        [sizes]
+    );
+
+    const capacityOptions = useMemo(() => 
+        Array.from( new Set( spaces.map( room => room.capacity )))
+            .sort(( a, b ) => a - b)
+            .map(capacity => ({
+                value: capacity.toString(),
+                label: capacity.toString()
+            })),
+        [spaces]
+    );
+
     // Función para aplicar filtros localmente
     const applyFilters = useCallback(( filters: Filters ) => {
         let filtered = [...spaces];
@@ -494,7 +534,7 @@ export function ModuleGrid({
                                             <PopoverContent className="w-64 h-[26rem] p-0" align="center">
                                                 <div className="p-2">
                                                     <MultiSelectCombobox
-                                                        options             = { uniqueRoomIds.map(( id ) => ({ value: id, label: id }))}
+                                                        options             = { roomOptions }
                                                         placeholder         = "Filtrar por sala"
                                                         onSelectionChange   = {( values ) => handleFilterChange( 'rooms', values as string[] )}
                                                         defaultValues       = { localFilters.rooms || [] }
@@ -553,10 +593,7 @@ export function ModuleGrid({
                                                         onSelectionChange   = {( values ) => handleFilterChange( 'types', values as string[] )}
                                                         defaultValues       = { localFilters.types || [] }
                                                         isOpen              = { true }
-                                                        options             = { uniqueTypes.map(( type ) => ({ 
-                                                            value: type,
-                                                            label: getSpaceType( type )
-                                                        }))}
+                                                        options             = { typeOptions }
                                                     />
                                                 </div>
                                             </PopoverContent>
@@ -607,14 +644,11 @@ export function ModuleGrid({
                                             <PopoverContent className="w-64 h-[25.8rem] p-0" align="center">
                                                 <div className="p-2">
                                                     <MultiSelectCombobox
-                                                        options={uniqueBuildings.map((building) => ({ 
-                                                            value: building, 
-                                                            label: building 
-                                                        }))}
-                                                        placeholder="Filtrar por edificio"
-                                                        onSelectionChange={(values) => handleFilterChange('buildings', values as string[])}
-                                                        defaultValues={localFilters.buildings}
-                                                        isOpen={true}
+                                                        options             = { buildingOptions }
+                                                        placeholder         = "Filtrar por edificio"
+                                                        onSelectionChange   = {( values ) => handleFilterChange('buildings', values as string[])}
+                                                        defaultValues       = { localFilters.buildings }
+                                                        isOpen              = { true }
                                                     />
                                                 </div>
                                             </PopoverContent>
@@ -669,10 +703,7 @@ export function ModuleGrid({
                                                         onSelectionChange   = {( values ) => handleFilterChange('sizes', values as string[])}
                                                         defaultValues       = { localFilters.sizes }
                                                         isOpen              = { true }
-                                                        options             = { sizes.map(( size ) => ({ 
-                                                            value: size.id || '', 
-                                                            label: size.label || '' 
-                                                        }))}
+                                                        options             = { sizeOptions }
                                                     />
                                                 </div>
                                             </PopoverContent>
@@ -727,13 +758,7 @@ export function ModuleGrid({
                                                         onSelectionChange   = {( values ) => handleFilterChange( 'capacities', values as string[] )}
                                                         defaultValues       = { localFilters.capacities || [] }
                                                         isOpen              = { true }
-                                                        options             = { Array.from( new Set( spaces.map( room => room.capacity )))
-                                                            .sort(( a, b ) => a - b)
-                                                            .map(capacity => ({
-                                                                value: capacity.toString(),
-                                                                label: capacity.toString()
-                                                            }))
-                                                        }
+                                                        options             = { capacityOptions }
                                                     />
                                                 </div>
                                             </PopoverContent>
