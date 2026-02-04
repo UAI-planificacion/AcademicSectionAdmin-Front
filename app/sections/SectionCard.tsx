@@ -2,14 +2,15 @@
 
 import React, { useState, memo, useCallback, useMemo } from 'react';
 
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, X } from 'lucide-react';
 
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
-} from '@/components/ui/tooltip';
+}                   from '@/components/ui/tooltip';
+import { Badge }    from '@/components/ui/badge';
 
 import {
     SectionSession,
@@ -45,6 +46,7 @@ interface Props {
     onClearSelection        : () => void;
     hoveredConsecutiveId    : string | null;
     onConsecutiveHover      : ( consecutiveId: string | null ) => void;
+    onSingleSessionDelete   : ( sessionId: string ) => void;
 }
 
 
@@ -70,6 +72,7 @@ export const SectionCard = memo( function SectionCard({
     onClearSelection,
     hoveredConsecutiveId,
     onConsecutiveHover,
+    onSingleSessionDelete,
 }: Props): React.ReactElement {
     const [isMoving, setIsMoving] = useState<boolean>( false );
     const { staff } = useSession();
@@ -107,7 +110,8 @@ export const SectionCard = memo( function SectionCard({
 
     const handleSectionClick = useCallback(() => {
         if (section) {
-            onSectionClick(section.id);
+            // Use session.id for unique identification (not section.id which can be shared)
+            onSectionClick(section.session.id);
         }
     }, [section, onSectionClick]);
 
@@ -217,11 +221,22 @@ export const SectionCard = memo( function SectionCard({
                             </div>
                         </TooltipTrigger>
 
+                        <Badge 
+                            variant     = "destructive" 
+                            className   = "absolute -top-2 -right-2 h-4 w-4 p-0 flex items-center justify-center text-xs z-50 cursor-pointer hover:bg-destructive/90"
+                            onClick     = {( e ) => {
+                                e.stopPropagation();
+                                onSingleSessionDelete( section.session.id );
+                            }}
+                        >
+                            <X className="w-3 h-3" />
+                        </Badge>
+
                         { !isMoving && <TooltipContent>
                             <div className="grid">
-                                <span className="truncate">
+                                {/* <span className="truncate">
                                     ID: { section.session.id }
-                                </span>
+                                </span> */}
 
                                 <span className="truncate">
                                     SSEC: { section.subject.id }-{ section.code }
