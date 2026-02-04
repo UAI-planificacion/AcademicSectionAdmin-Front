@@ -16,7 +16,11 @@ import {
     SectionSession,
     SessionType
 }                       from '@/models/section.model';
-import { cn }           from '@/lib/utils';
+import {
+    cn,
+    sessionNames,
+    tempoFormat
+}                       from '@/lib/utils';
 import { useModules }   from '@/hooks/use-modules';
 import { useSession }   from '@/hooks/use-session';
 
@@ -251,7 +255,7 @@ export const SectionCard = memo( function SectionCard({
                                 </span>
 
                                 <span className="truncate">
-                                    Fecha: { section.session.date.toString().split('T')[0] }
+                                    Fecha: { tempoFormat( section.session.date )}
                                 </span>
 
                                 <span className="truncate">
@@ -266,12 +270,12 @@ export const SectionCard = memo( function SectionCard({
                                     Consecutivo: { section.session.consecutiveId ? 'Si': 'No' }
                                 </span>
 
-                                {/* <span className="truncate">
+                                <span className="truncate">
                                     Tamaño: { section.size }
-                                </span> */}
+                                </span>
 
                                 <span className="truncate">
-                                    Sesión: { section.session.name }
+                                    Sesión: { sessionNames[section.session.name] }
                                 </span>
 
                                 <span className="truncate">
