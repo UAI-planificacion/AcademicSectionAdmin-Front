@@ -53,7 +53,6 @@ export const typeOptions: SpaceType[] = [
 ]
 
 
-
 export const getSpaceType = ( spaceType: SpaceType ) => ({
     [SpaceType.ROOM]                : "Sala",
     [SpaceType.LABPC]               : "Laboratorio de Computación",
@@ -94,3 +93,10 @@ export const sessionColors = {
     [SessionType.L]: 'bg-[#A6D96A]',
 };
 
+
+export const sessionNames = {
+    [SessionType.C]: 'Cátedra',
+    [SessionType.A]: 'Ayudantía',
+    [SessionType.T]: 'Taller',
+    [SessionType.L]: 'Laboratorio',
+};
