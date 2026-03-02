@@ -1,7 +1,7 @@
 "use client"
 
-import type React from "react";
-import { useState, useEffect } from "react";
+import type React               from "react";
+import { useState, useEffect }  from "react";
 
 import { toast } from "sonner";
 
@@ -22,18 +22,19 @@ import { Button }   from "@/components/ui/button";
 import { Input }    from "@/components/ui/input";
 import { Label }    from "@/components/ui/label";
 
-import { Size, Space, Type } from "@/lib/types";
-
 import {
     errorToast,
     successToast
-}               from "@/config/toast/toast.config";
-import { ENV }  from "@/config/envs/env";
-
-import LoaderMini from "@/icons/LoaderMini";
-import { fetchApi } from "@/services/fetch";
-import { saveSpaceStorage } from "@/stores/local-storage-spaces";
-import { getSpaceType, typeOptions } from "@/lib/utils";
+}                       from "@/config/toast/toast.config";
+import {
+    getSpaceType,
+    typeOptions
+}                       from "@/lib/utils";
+import { ENV }          from "@/config/envs/env";
+import LoaderMini       from "@/icons/LoaderMini";
+import { fetchApi }     from "@/services/fetch";
+import { SpaceType }    from "@/models/section-session.model";
+import { Size, Space }  from "@/lib/types";
 
 
 interface SpaceModalProps {
@@ -50,7 +51,7 @@ const sizeOptions: Size[] = ["XS", "XE", "S", "SE", "MS", "M", "L", "XL", "XXL"]
 const spaceEmpty: Space = {
     id          : "",
     capacity    : 0,
-    type        : "ROOM",
+    type        : SpaceType.ROOM,
     sizeId      : "M",
     building    : "A",
 }
