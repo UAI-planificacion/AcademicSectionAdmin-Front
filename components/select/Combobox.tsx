@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect, useId } from "react";
 
 import { Check, ChevronDown, X, Search } from "lucide-react";
 import { FixedSizeList as List } from "react-window";
@@ -83,6 +83,7 @@ export function MultiSelectCombobox({
 }: ComboboxProps) {
     const [open, setOpen] = useState( isOpen );
     const [searchValue, setSearchValue] = useState( "" );
+    const listboxId = useId();
 
     // Normalize defaultValues to a Set for efficient lookups
     const initialSelectedValues = useMemo(() => {
@@ -405,7 +406,9 @@ export function MultiSelectCombobox({
                 <Button
                     variant="outline"
                     role="combobox"
-                    aria-expanded={open}
+                    aria-expanded={ open }
+                    aria-haspopup="listbox"
+                    aria-controls={ listboxId }
                     className={cn("w-full justify-between min-h-10", className)}
                     ref={triggerRef}
                     disabled={ disabled }
@@ -469,6 +472,8 @@ export function MultiSelectCombobox({
                     />
                 </div>
                 <div
+                    id={ listboxId }
+                    role="listbox"
                     ref={scrollContainerRef}
                     className="max-h-[300px] overflow-x-hidden overflow-y-auto mt-1"
                     onWheel={(e) => e.stopPropagation()}
