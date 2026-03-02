@@ -26,7 +26,8 @@ export default function Header() {
     const { periods }                                       = usePeriods();
     const { selectedPeriodIds, setSelectedPeriodIds }       = usePeriodContext();
     const [showAuthMessage, setShowAuthMessage]             = useState( false );
-    const [tempSelectedPeriodIds, setTempSelectedPeriodIds] = useState<string[]>([]);
+    const [tempSelectedPeriodIds, setTempSelectedPeriodIds] = useState<string[]>( selectedPeriodIds );
+    const [prevSelectedPeriodIds, setPrevSelectedPeriodIds] = useState<string[]>( selectedPeriodIds );
 
 
     useEffect(() => {
@@ -41,10 +42,11 @@ export default function Header() {
 		}
 	}, []);
 
-    // Sync temp state with context when context changes externally
-    useEffect(() => {
+    // Sync temp state when context changes externally (computed during render, no useEffect)
+    if ( selectedPeriodIds !== prevSelectedPeriodIds ) {
+        setPrevSelectedPeriodIds( selectedPeriodIds );
         setTempSelectedPeriodIds( selectedPeriodIds );
-    }, [selectedPeriodIds]);
+    }
 
     /**
      * Calculate which periods should be disabled based on overlap logic
