@@ -79,7 +79,6 @@ export function ModuleGrid({
     const { staff } = useSession();
     const isAdmin   = staff?.role === 'ADMIN' || staff?.role === 'ADMIN_FACULTY';
     // Filtrar las salas localmente
-    const [filteredSpaces, setFilteredSpaces]   = useState<SpaceData[]>( spaces );
     const [draggedSection, setDraggedSection]   = useState<string | null>( null );
     const [dragOverCell, setDragOverCell]       = useState<string | null>( null );
     const [dragOverCells, setDragOverCells]     = useState<Map<string, boolean>>( new Map() ); // Map<cellId, isOccupied>
@@ -152,8 +151,8 @@ export function ModuleGrid({
     );
 
     // Función para aplicar filtros localmente
-    const applyFilters = useCallback(( filters: Filters ) => {
-        let filtered = [...spaces];
+    const applyFilters = useCallback(( filters: Filters, sourceSpaces: SpaceData[] = spaces ) => {
+        let filtered = [...sourceSpaces];
 
         // Filtrar por sala (ID)
         if (filters.rooms && filters.rooms.length > 0) {
@@ -180,7 +179,7 @@ export function ModuleGrid({
             filtered = filtered.filter(room => filters.capacities!.includes(room.capacity.toString()));
         }
 
-        setFilteredSpaces(filtered);
+        return filtered;
     }, [spaces]);
 
     // Manejar cambios en los filtros
@@ -188,28 +187,19 @@ export function ModuleGrid({
         setLocalFilters(prev => {
             const newFilters = { ...prev, [filterType]: values };
 
-            applyFilters( newFilters );
-
             if ( onFilterChange ) {
                 onFilterChange( newFilters );
             }
 
             return newFilters;
         });
-    }, [onFilterChange, applyFilters]);
+    }, [onFilterChange]);
 
-
-    useEffect(() => {
-        setFilteredSpaces( spaces );
-        applyFilters( localFilters );
-    }, [spaces, applyFilters, localFilters]);
-
-
-    useEffect(() => {
-        if ( onFilterChange ) {
-            onFilterChange( localFilters );
-        }
-    }, [onFilterChange, localFilters]);
+    // Derived: computed inline during render instead of useEffect
+    const filteredSpaces = useMemo(
+        () => applyFilters( localFilters, spaces ),
+        [spaces, localFilters, applyFilters]
+    );
 
 
     const handleScroll = ( e: React.UIEvent<HTMLDivElement> ) => {
