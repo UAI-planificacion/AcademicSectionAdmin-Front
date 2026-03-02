@@ -120,7 +120,7 @@ export default function Header() {
 
     return (
         <>
-            <header className="bg-black py-4 sm:py-1.5 border-b border-gray-200 dark:border-gray-800 transition-colors">
+            <header className="bg-black py-4 sm:py-1 border-b border-gray-200 dark:border-gray-800 transition-colors">
                 <div className="flex justify-between items-center container mx-auto gap-2">
                     <div className="hidden sm:flex items-center gap-2">
                         <a href="/">
