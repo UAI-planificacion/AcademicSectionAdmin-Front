@@ -227,7 +227,7 @@ export const SectionCard = memo( function SectionCard({
 
                         <Badge 
                             variant     = "destructive" 
-                            className   = "absolute -top-2 -right-2 h-4 w-4 p-0 flex items-center justify-center text-xs z-50 cursor-pointer hover:bg-destructive/90"
+                            className   = "absolute -top-2 -right-2 h-4 w-4 p-0 flex items-center justify-center text-xs z-10 cursor-pointer hover:bg-destructive/90"
                             onClick     = {( e ) => {
                                 e.stopPropagation();
                                 onSingleSessionDelete( section.session.id );
@@ -317,9 +317,9 @@ export const SectionCard = memo( function SectionCard({
     ) {
         return false;
     }
-    
+
     // Compare hoveredConsecutiveId to allow re-renders on hover
-    if (prevProps.hoveredConsecutiveId !== nextProps.hoveredConsecutiveId) {
+    if ( prevProps.hoveredConsecutiveId !== nextProps.hoveredConsecutiveId ) {
         return false;
     }
 
