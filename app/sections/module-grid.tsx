@@ -798,7 +798,7 @@ export function ModuleGrid({
 
                                     {/* Edificio */}
                                     <td
-                                        title       = { `Edificio: ${ room.building }` }
+                                        title       = { `Edificio: ${ getBuildingName( room.building )}` }
                                         className   = { cn(
                                             "border-x text-[12px] p-2 bg-white dark:bg-zinc-900 transition-colors",
                                             fixedColumnsConfig.building.widthClass
