@@ -96,25 +96,20 @@ export function MultiSelectCombobox({
         }
     }, [defaultValues, multiple]);
 
-    const [selectedValues, setSelectedValues] = useState<Set<string>>( initialSelectedValues );
+    const [selectedValues, setSelectedValues]          = useState<Set<string>>( initialSelectedValues );
+    const [prevInitialSelectedValues, setPrevInitialSelectedValues] = useState<Set<string>>( initialSelectedValues );
 
-
-    const isInitialMount = useRef( true );
-
-
-    useEffect(() => {
-        if ( isInitialMount.current ) {
-            isInitialMount.current = false;
-            return;
-        }
-
-        const currentValues = Array.from( selectedValues ).sort().join( ',' );
+    // Sync selectedValues when external defaultValues change (inline during render)
+    if ( initialSelectedValues !== prevInitialSelectedValues ) {
+        const currentValues = Array.from( prevInitialSelectedValues ).sort().join( ',' );
         const newValues     = Array.from( initialSelectedValues ).sort().join( ',' );
+
+        setPrevInitialSelectedValues( initialSelectedValues );
 
         if ( currentValues !== newValues ) {
             setSelectedValues( initialSelectedValues );
         }
-    }, [initialSelectedValues, selectedValues]);
+    }
 
 
     const listRef = useRef<List>(null)
